@@ -7,4 +7,4 @@ all:
 
         search:
           hosts:
-            10.202.37.251:
+            my-dev-host:
