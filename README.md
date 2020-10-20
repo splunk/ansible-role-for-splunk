@@ -79,19 +79,23 @@ That said, there are a few variables that you'll definitely need to configure to
 In addition, you may want to configure some of the optional variables that are mentioned in roles/splunk/defaults/main.yml to manage things like splunk.secret, send Slack notifications, automatically install useful scripts, additional Linux packages, etc.
 
 In order to use the app management functionality, you will need to configure the following additional variables:
-    git_server: ssh://git@git.mydomain.com
-    git_key: ~/.ssh/mygit.key
-    git_project: FOO
-    git_version: bar
-    git_apps:
-        - name: myapp
+```
+git_server: ssh://git@git.mydomain.com
+git_key: ~/.ssh/mygit.key
+git_project: FOO
+git_version: bar
+git_apps:
+  - name: myapp
+```
 
-You will find additional examples in the sample group_vars and host_vars files. Note that you may also specify git_server, git_key, git_project, and git_version within git_apps down to the repository (name) level.
-Tip: If you only use one git server, you may want to define the git_server and related values in an all.yml group_var.
+You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. Note that you may also specify git_server, git_key, git_project, and git_version within git_apps down to the repository (name) level.
+**Tip:** If you only use one git server, you may want to define the git_server and related values in an all.yml group_var file.
 
-**Configure admin user's password at install**
-    splunk_user_seed: true
-    splunk_admin_password: yourpassword
+**Configure local splunk admin password at install**
+```
+splunk_user_seed: true
+splunk_admin_password: yourpassword
+```
 
 **Note:** If you do not configure these 2 variables, new Splunk installations will be installed without an admin account present. This has no impact on upgrades to existing installations.
 
@@ -144,8 +148,13 @@ Note: Any task with an **adhoc** prefix means that it is intended to be used adh
 - **upgrade_splunk.yml** - Called by check_splunk.yml. Performs an upgrade of an existing splunk installation. Configures .bash_profile and .bashrc for splunk user (by calling configure_bash.yml), disables THP and increases ulimits (by calling configure_os.yml), disables boot-start (this addresses a bug in 7.2.x -- it gets re-enabled by a hander at the end), kills any stale splunkd processes present (by calling kill_splunkd.yml). Note: You should NOT run the upgrade_splunk.yml task directly from a playbook. check_splunk.yml will call upgrade_splunk.yml if it determines that an upgrade is needed; It will then download and unarchive the new version of Splunk (by calling download_and_unarchive.yml), ensure that mongod is in a good stopped state (by calling fix_mongo.yml), and will then perform post-installation tasks using the post_install.yml task.
 
 ## Frequently Asked Questions
-What is the difference between this and splunk-ansible?
-The splunk-ansible project was built for the docker-splunk project, which is a completely different use case. The way that docker-splunk works is by spinning-up an image that already has splunk-ansible inside of it, and then any arguments provided to Docker are passed into splunk-ansible so that it can run locally inside of the container to install and configure Splunk there. While it's a cool use case, we didn't feel that splunk-ansible met our needs as Splunk administrators to manage production Splunk deployments, so we wrote our own.
+**Q:** What is the difference between this and splunk-ansible?
+**A:** The splunk-ansible project was built for the docker-splunk project, which is a completely different use case. The way that docker-splunk works is by spinning-up an image that already has splunk-ansible inside of it, and then any arguments provided to Docker are passed into splunk-ansible so that it can run locally inside of the container to install and configure Splunk there. While it's a cool use case, we didn't feel that splunk-ansible met our needs as Splunk administrators to manage production Splunk deployments, so we wrote our own.
+##
+
+**Q:** When using configure_apps.yml, the play fails on the synchronize module. What gives?
+**A:** This is due to a [known Ansible bug](https://github.com/ansible/ansible/issues/56629) related to password-based authentication. To workaround this issue, use a key pair for SSH authentication instead by setting the ansible_user and ansible_ssh_private_key_file variables.
+##
 
 ## Support
 Use the [GitHub issue tracker](https://github.com/splunk/splunk-ansible/issues) to submit bugs or request features.
