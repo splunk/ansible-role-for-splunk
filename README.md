@@ -24,9 +24,9 @@ ansible-role-for-splunk is used by the Splunk@Splunk team to manage Splunk's cor
 ## Purpose
 
 #### What is ansible-role-for-splunk?
-ansible-role-for-splunk is a single Ansible role for managing Splunk deployments remotely over SSH. It supports all Splunk deployment roles (Universal Forwarder, Heavy Forwarder, Indexer, Search Head, Deployment Server, Cluster Master, SHC Deployer) as well as management of all apps and configurations (via git repositories).
+ansible-role-for-splunk is a single Ansible role for managing Splunk deployments remotely over SSH. It supports all Splunk deployment roles (Universal Forwarder, Heavy Forwarder, Indexer, Search Head, Deployment Server, Cluster Master, SHC Deployer, DMC, License Master) as well as management of all apps and configurations (via git repositories).
 
-This codebase is used by the Splunk@Splunk team internally to manage our deployment, so it has been thoroughly vetted. For more information, checkout [our related .conf20 session](https://conf.splunk.com/learn/session-catalog.html?search=TRU1537C) for this project.
+This codebase is used by the Splunk@Splunk team internally to manage our deployment, so it has been thoroughly vetted since its development in late 2018. For more information, checkout [our related .conf20 session](https://conf.splunk.com/learn/session-catalog.html?search=TRU1537C) for this project.
 
 #### Design Philosophy
 A few different design philosophies have been applied in the development of this project.
@@ -67,16 +67,19 @@ Note that in Ansible you may nest groups within groups, and we depend on this he
 You may also specify additional groups for provide further layers of abstraction nested within the aforementioned required groups. e.g. full -> indexer -> cluster_a | cluster_b | cluster_c
 
 #### Variables
-As proper usage of this role requires a thorough understanding of variables, familiarity with [Ansible variable precedence](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#ansible-variable-precedence) is highly recommended. Almost all variables used in this role have been added to defaults/main.yml (lowest precendence) for reference. Default values of "unconfigured" are automatically ignored at the task level.
+As proper usage of this role requires a thorough understanding of variables, familiarity with [Ansible variable precedence](https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#ansible-variable-precedence) is highly recommended. Almost all variables used in this role have been added to [roles/splunk/defaults/main.yml](https://github.com/splunk/ansible-role-for-splunk/blob/master/roles/splunk/defaults/main.yml) (lowest precendence) for reference. Default values of "unconfigured" are automatically ignored at the task level.
 
-A number of variables ship with this role, but many of them automatically configure themselves when the play is executed. For example, during the upgrade check, the desired version of Splunk that you want to be at is based solely upon the value of splunk_package_url_full or splunk_package_url_uf. We extract the version and build numbers from the URL automagically, and then compare those to the output of the "splunk version" command during the check_splunk.yml task to determine if an upgrade is required or not.
+A number of variables ship with this role, but many of them automatically configure themselves when the play is executed. For example, during the upgrade check, the desired version of Splunk that you want to be at is based solely upon the value of `splunk_package_url_full` or `splunk_package_url_uf`. We extract the version and build numbers from the URL automagically, and then compare those to the output of the "splunk version" command during the check_splunk.yml task to determine if an upgrade is required or not.
 
 That said, there are a few variables that you'll definitely need to configure to use this role with your environment:
-    splunk_uri_lm - The URI for your license master (e.g. https://my_license_master:8089)
-    ansible_user - The username that you want Ansible to connect as for SSH access
-    ansible_ssh_private_key_file - The file path to the private key that the Ansible user should use for SSH access authentication
 
-In addition, you may want to configure some of the optional variables that are mentioned in roles/splunk/defaults/main.yml to manage things like splunk.secret, send Slack notifications, automatically install useful scripts, additional Linux packages, etc.
+```
+splunk_uri_lm - The URI for your license master (e.g. https://my_license_master:8089)
+ansible_user - The username that you want Ansible to connect as for SSH access
+ansible_ssh_private_key_file - The file path to the private key that the Ansible user should use for SSH access authentication
+```
+
+In addition, you may want to configure some of the optional variables that are mentioned in [roles/splunk/defaults/main.yml](https://github.com/splunk/ansible-role-for-splunk/blob/master/roles/splunk/defaults/main.yml) to manage things like splunk.secret, send Slack notifications, automatically install useful scripts, additional Linux packages, and so on.
 
 In order to use the app management functionality, you will need to configure the following additional variables:
 ```
@@ -88,8 +91,8 @@ git_apps:
   - name: myapp
 ```
 
-You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. Note that you may also specify git_server, git_key, git_project, and git_version within git_apps down to the repository (name) level.
-**Tip:** If you only use one git server, you may want to define the git_server and related values in an all.yml group_var file.
+You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. Note that you may also specify `git_server`, `git_key`, `git_project`, and `git_version` within `git_apps` down to the repository (`name`) level.
+**Tip:** If you only use one git server, you may want to define the `git_server` and related values in an all.yml group_var file.
 
 **Configure local splunk admin password at install**
 ```
@@ -155,7 +158,7 @@ Note: Any task with an **adhoc** prefix means that it is intended to be used adh
 
 **Q:** When using configure_apps.yml, the play fails on the synchronize module. What gives?
 
-**A:** This is due to a [known Ansible bug](https://github.com/ansible/ansible/issues/56629) related to password-based authentication. To workaround this issue, use a key pair for SSH authentication instead by setting the ansible_user and ansible_ssh_private_key_file variables.
+**A:** This is due to a [known Ansible bug](https://github.com/ansible/ansible/issues/56629) related to password-based authentication. To workaround this issue, use a key pair for SSH authentication instead by setting the `ansible_user` and `ansible_ssh_private_key_file` variables.
 ##
 
 ## Support
