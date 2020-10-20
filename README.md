@@ -149,10 +149,12 @@ Note: Any task with an **adhoc** prefix means that it is intended to be used adh
 
 ## Frequently Asked Questions
 **Q:** What is the difference between this and splunk-ansible?
+
 **A:** The splunk-ansible project was built for the docker-splunk project, which is a completely different use case. The way that docker-splunk works is by spinning-up an image that already has splunk-ansible inside of it, and then any arguments provided to Docker are passed into splunk-ansible so that it can run locally inside of the container to install and configure Splunk there. While it's a cool use case, we didn't feel that splunk-ansible met our needs as Splunk administrators to manage production Splunk deployments, so we wrote our own.
 ##
 
 **Q:** When using configure_apps.yml, the play fails on the synchronize module. What gives?
+
 **A:** This is due to a [known Ansible bug](https://github.com/ansible/ansible/issues/56629) related to password-based authentication. To workaround this issue, use a key pair for SSH authentication instead by setting the ansible_user and ansible_ssh_private_key_file variables.
 ##
 
