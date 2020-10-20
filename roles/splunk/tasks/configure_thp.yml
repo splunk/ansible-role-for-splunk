@@ -1,0 +1,34 @@
+---
+# Authored by Mason Morales for Splunk, Inc.
+# References:
+# https://blacksaildivision.com/how-to-disable-transparent-huge-pages-on-centos
+# https://github.com/objectrocket/ansible-hadoop/blob/master/playbooks/roles/common/tasks/main.yml
+- name: Install disable-thp service to systemd (CentOS/RHEL 7+)
+  copy:
+    src: disable-thp.service
+    dest: /etc/systemd/system/disable-thp.service
+    mode: 0755
+    owner: root
+    group: root
+  become: yes
+  notify:
+    - reload systemctl daemon
+  # NOTE ansible_connection!="docker" is not included in the when expression
+  # because we want to test this task's functionality, we want it to run even though it does nothing for a container
+  # but the notified handlers above will be skipped by their when expressions
+  when:
+    - ansible_os_family == "RedHat"
+    - ansible_distribution_major_version|int > 6
+
+- name: Disable THP service
+  service:
+    name: disable-thp
+    enabled: no
+    state: stopped
+  become: yes
+  # no (real) services in docker containers
+  # and no need to bother for molecule testing
+  when:
+    - ansible_connection!="docker"
+    - "'full' in group_names"
+  ignore_errors: yes

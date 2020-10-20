@@ -1,0 +1,5 @@
+{
+    postrotate
+        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log
+    endscript
+}

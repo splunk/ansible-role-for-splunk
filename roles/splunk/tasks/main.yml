@@ -1,0 +1,32 @@
+---
+- name: Configure vars for full package
+  tags: always
+  set_fact:
+    splunk_home: "{{ splunk_install_path }}/splunk"
+    splunk_package_url: "{{ splunk_package_url_full }}"
+    splunk_product: "Splunk"
+    splunk_install_type: full
+  changed_when: false
+  when: "'full' in group_names"
+
+- name: Configure vars for uf package
+  tags: always
+  set_fact:
+    splunk_home: "{{ splunk_install_path }}/splunkforwarder"
+    splunk_package_url: "{{ splunk_package_url_uf }}"
+    splunk_product: "Splunk Universal Forwarder"
+    splunk_install_type: uf
+  changed_when: false
+  when: "'uf' in group_names"
+
+- name: Send Slack messages
+  include_tasks: slack_messenger.yml
+  tags: always
+  when:
+    - slack_token != 'undefined'
+    - slack_channel != 'undefined'
+
+# Always set the deployment_task var to your desired task in the playbook! e.g. check_splunk.yml (install|upgrade) or configure_apps.yml  (app/addon install|upgrade)
+- name: Include the specified task file
+  tags: always
+  include_tasks: "{{ deployment_task }}"

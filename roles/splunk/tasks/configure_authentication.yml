@@ -1,0 +1,12 @@
+---
+- name: Install authentication.conf for admins
+  template:
+    src: "{{ splunk_authenticationconf }}"
+    dest: "{{ splunk_home }}/etc/system/local/authentication.conf"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: yes
+  when:
+    - splunk_authenticationconf is defined
+    - ad_bind_password != 'undefined'
+  notify: restart splunk

@@ -1,0 +1,8 @@
+---
+- name: "{{ state }} maintenance mode on cm"
+  shell: "{{ splunk_home }}/bin/splunk {{ state }} maintenance-mode --answer-yes --skip-validation -auth {{ splunk_auth }}"
+  become: yes
+  become_user: "{{ splunk_nix_user}}"
+  when:
+    - state is defined and splunk_auth is defined
+    - "'clustermaster' in group_names"

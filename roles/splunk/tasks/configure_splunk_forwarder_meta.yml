@@ -1,0 +1,29 @@
+---
+# This task creates a new indexed field in each event's metadata that identifies the heavy forwarder's hostname
+- name: create splunk_forwarder reference in props.conf
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/props.conf"
+    section: host::*
+    option: TRANSFORMS-splunk_forwarder_field
+    value: splunk_forwarder_field
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: yes
+  notify: restart splunk
+  when: "'full' in group_names"
+
+- name: create splunk_forwarder field in transforms.conf
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/transforms.conf"
+    section: splunk_forwarder_field
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: yes
+  notify: restart splunk
+  when: "'full' in group_names"
+  loop:
+    - { option: "REGEX", value: ".*" }
+    - { option: "FORMAT", value: "splunk_forwarder::{{ ansible_hostname }}" }
+    - { option: "WRITE_META", value: "true" }

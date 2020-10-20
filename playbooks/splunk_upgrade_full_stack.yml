@@ -1,0 +1,67 @@
+---
+# Example playbook to properly upgrade a single-site indexer cluster and search head cluster using the splunk role from ansible-role-for-splunk
+- hosts:
+    - clustermaster
+  become: yes
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: check_splunk.yml
+
+- hosts:
+    - licensemaster
+    - shdeployer
+    - deploymentserver
+  become: yes
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: check_splunk.yml
+
+- hosts:
+    - search
+  serial: 50
+  become: yes
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: check_splunk.yml
+
+- hosts:
+    - clustermaster
+  become: yes
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: set_maintenance_mode.yml
+    state: enable
+
+- hosts:
+    - indexer
+  serial: 100
+  become: yes
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: check_splunk.yml
+
+- hosts:
+    - clustermaster
+  become: yes
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: set_maintenance_mode.yml
+    state: disable

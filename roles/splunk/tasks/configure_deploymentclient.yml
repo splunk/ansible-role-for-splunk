@@ -1,0 +1,12 @@
+---
+- name: Create deploymentclient.conf config
+  template:
+    src: deploymentclient.conf.j2
+    dest: "{{ splunk_home }}/etc/system/local/deploymentclient.conf"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: yes
+  notify: restart splunk
+  when:
+    - clientName != 'undefined'
+    - splunk_uri_ds != 'undefined'

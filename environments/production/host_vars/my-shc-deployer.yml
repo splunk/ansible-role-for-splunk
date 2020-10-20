@@ -1,0 +1,5 @@
+---
+deploy_target: my-shc-target-sh-uri
+git_version: 1.0.0 # This is the golden repo branch for this host! It retires all ID/ED/SB/CM projects and repos
+git_apps:
+    - name: myapp

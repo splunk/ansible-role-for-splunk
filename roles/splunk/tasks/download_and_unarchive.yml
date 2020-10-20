@@ -1,0 +1,30 @@
+---
+- debug:
+    msg: "The splunk_package_url is set to: {{ splunk_package_url }}"
+
+- debug:
+    msg: "The filename that will be downloaded is {{ splunk_file }}"
+
+- debug:
+    msg: "The upgrade file will be downloaded to {{ splunk_package_path }}/{{ splunk_file }}"
+
+- name: "Download Splunk {{ splunk_install_type }} package"
+  local_action:
+                module: get_url
+                url: "{{ splunk_package_url }}"
+                dest: "{{ splunk_package_path }}/{{ splunk_file }}"
+  register: download_result
+  retries: 3
+  delay: 10
+  until: download_result is success
+  run_once: True
+
+- name: "Unarchive Splunk {{ splunk_install_type }} package to {{ splunk_home }}"
+  unarchive:
+             src: "{{ splunk_package_path }}/{{ splunk_file }}"
+             dest: "{{ splunk_install_path }}"
+             owner: "{{ splunk_nix_user }}"
+             group: "{{ splunk_nix_group }}"
+  become: yes
+  notify:
+    - start splunk

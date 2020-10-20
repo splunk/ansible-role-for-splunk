@@ -1,0 +1,8 @@
+---
+- name: "Run splunk upgrade-{{ peer_state }} cluster-peers on CM"
+  shell: "{{ splunk_home }}/bin/splunk upgrade-{{ peer_state }} cluster-peers -auth {{ splunk_auth }}"
+  become: yes
+  become_user: "{{ splunk_nix_user}}"
+  when:
+    - peer_state is defined and splunk_auth is defined
+    - "'clustermaster' in group_names"

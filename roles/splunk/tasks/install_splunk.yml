@@ -1,0 +1,60 @@
+---
+#  This task should be used for fresh installations of Splunk, refer to upgrade_splunk.yml for upgrades
+- name: Block for non-root splunk user setup
+  block:
+    - name: Add nix splunk group
+      group:
+             name: "{{ splunk_nix_group }}"
+             state: present
+      become: yes
+
+    - name: Add nix splunk user
+      user:
+            name: "{{ splunk_nix_user }}"
+            groups: "{{ splunk_nix_group }}"
+            home: "{{ splunk_home }}"
+            state: present
+            shell: /bin/bash
+      become: yes
+
+    - name: Allow splunk user to read /var/log
+      include_tasks: configure_facl.yml
+
+    - name: Configure .bash_profile and .bashrc for splunk user
+      include_tasks: configure_bash.yml
+
+  when: splunk_nix_user != 'root'
+
+- name: Configure OS to disable THP and increase ulimits for splunk process
+  include_tasks: configure_os.yml
+
+- name: Include download and unarchive task
+  include_tasks: download_and_unarchive.yml
+
+- name: Include configure splunk.secret task to standardize splunk.secret
+  include_tasks: configure_splunk_secret.yml
+  when: splunk_configure_secret
+
+- name: Include configure deployment client task
+  include_tasks: configure_deploymentclient.yml
+  when:
+    - clientName != 'undefined'
+    - splunk_uri_ds != 'undefined'
+
+- name: Include configure user-seed task
+  include_tasks: configure_user-seed.yml
+  when: 
+    - splunk_user_seed
+    - splunk_admin_password != 'undefined'
+
+- name: Include configure default authentication.conf for AD authentication and admin role mapping
+  include_tasks: configure_authentication.yml
+  when: 
+    - splunk_configure_authentication
+    - ad_bind_password != 'undefined'
+
+- name: Include post-install tasks
+  include_tasks: post_install.yml
+
+- name: Enable boot start and accept license
+  include_tasks: configure_splunk_boot.yml

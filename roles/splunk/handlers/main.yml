@@ -1,0 +1,71 @@
+---
+# handlers file for splunk role
+# handlers are run in the order defined in this file
+# thus "set ulimits in init.d" has been placed at the top to ensure it runs before splunk is started
+- name: set ulimits in init.d
+  lineinfile:
+    path: /etc/init.d/splunk
+    insertafter: ^\s+echo Starting Splunk\.\.\.$
+    line: "{{ item }}"
+    state: present
+  loop:
+    - ulimit -Hn 65536
+    - ulimit -Sn 32768
+  become: yes
+  ignore_errors: true
+  when: splunk_use_initd == "true" and ansible_os_family == "RedHat" and ansible_distribution_major_version|int > 6
+
+- name: stop splunk
+  service:
+    name: splunk
+    state: stopped
+  become: yes
+
+- name: start splunk
+  shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+
+- name: apply indexer cluster bundle
+  shell: "{{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }}"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+  no_log: true
+  when: "'clustermaster' in group_names"
+
+- name: reload deployment server
+  shell: "{{ splunk_home }}/bin/splunk reload deploy-server -auth {{ splunk_auth }}"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+  no_log: true
+  when: "'deploymentserver' in group_names"
+
+- name: apply shcluster-bundle
+  shell: "{{ splunk_home }}/bin/splunk apply shcluster-bundle -preserve-lookups true --answer-yes -auth {{ splunk_auth }} -target {{ deploy_target }}"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+  no_log: true
+  when: "'shdeployer' in group_names and deploy_target is defined"
+
+- name: reload systemctl daemon
+  shell: systemctl daemon-reload
+  become: yes
+  when: ansible_connection!="docker"
+
+- name: restart splunk
+  shell: "{{ splunk_home }}/bin/splunk restart"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+
+- name: restart splunk service
+  service:
+    name: splunk
+    state: restarted
+  become: yes
+
+- name: restart auditd service
+  service:
+    name: auditd
+    state: restarted
+  become: yes
+  ignore_errors: true

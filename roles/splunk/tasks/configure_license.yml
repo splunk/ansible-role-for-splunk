@@ -1,0 +1,14 @@
+---
+- name: Set license master_uri
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: license
+    option: master_uri
+    value: "{{ splunk_uri_lm }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: yes
+  notify: restart splunk
+  when:
+    - "'full' in group_names"
+    - splunk_uri_lm != 'undefined'

@@ -1,0 +1,15 @@
+---
+# This task feeds messags to Slack about what Ansible is doing
+- name: "Send Slack message to {{ slack_channel }} indicating Ansible play information"
+  local_action:
+    module: slack
+    msg: "{{ item }}"
+    token: "{{ slack_token }}"
+    channel: "{{ slack_channel }}"
+  ignore_errors: true
+  run_once: true
+  loop:
+    - "****************\n*Starting new Ansible play...*\n```Ansible Role: {{ role_name }}\nAnsible Task: {{ deployment_task }}\nTarget Host: {{ ansible_fqdn }}\nStart Time: {{ ansible_date_time.iso8601 }}```"
+  when:
+    - slack_token != 'undefined'
+    - slack_channel != 'undefined'

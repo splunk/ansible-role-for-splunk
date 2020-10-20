@@ -1,0 +1,4 @@
+#!/bin/bash
+# Delete diags older than 30 days
+find {{ splunk_home }} -name "diag*.tar.gz" -mtime +30 -exec rm {} \;
+exit

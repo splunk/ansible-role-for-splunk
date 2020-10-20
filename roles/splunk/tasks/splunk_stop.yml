@@ -1,0 +1,5 @@
+---
+- name: stop splunk
+  shell: "{{ splunk_home }}/bin/splunk stop"
+  become: yes
+  ignore_errors: yes

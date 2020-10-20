@@ -1,0 +1,5 @@
+---
+- name: start splunk
+  shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"

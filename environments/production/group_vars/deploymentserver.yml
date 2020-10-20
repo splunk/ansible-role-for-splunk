@@ -1,0 +1,13 @@
+---
+# group_vars for deployment server
+splunk_app_deploy_path: etc/deployment-apps
+git_version: master
+git_apps:
+    # Example of cloning a repository from a different git server and then deploying it to a path other than etc/deployment-apps
+    - name: my_outputs
+      git_version: 1.0.0
+      git_server: ssh://git@anotherserver.com
+      git_key: ~/.ssh/anotherkey
+      git_project: SPLK
+      splunk_app_deploy_path: etc/apps
+    - name: disable_rest

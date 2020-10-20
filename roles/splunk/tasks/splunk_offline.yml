@@ -1,0 +1,6 @@
+---
+- name: splunk offline
+  shell: "{{ splunk_home }}/bin/splunk offline -auth {{ splunk_auth }}"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+  no_log: true
