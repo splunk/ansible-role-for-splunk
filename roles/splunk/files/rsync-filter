@@ -1,0 +1,9 @@
+- /.git
+- /*/.git
+- /.gitignore
+- /*/README.txt
+- /*/README.MD
+- /*/README.md
+- /*/app.manifest
+- /*/githash
+- /*/package.json

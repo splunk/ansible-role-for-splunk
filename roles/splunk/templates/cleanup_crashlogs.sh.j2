@@ -1,0 +1,4 @@
+#!/bin/bash
+# Delete crash logs older than 7 days
+find {{ splunk_home }}/var/log/splunk -name "crash*.log" -mtime +7 -exec rm {} \;
+exit

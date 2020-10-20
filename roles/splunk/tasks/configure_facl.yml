@@ -1,0 +1,33 @@
+---
+- name: Configure file access control list (facl) settings for splunk user
+  block:
+  - name: Set facl to allow splunk user to read /var/log
+    acl:
+      path: /var/log
+      entity: "{{ splunk_nix_user }}"
+      etype: user
+      permissions: rx
+      default: yes
+      recursive: yes
+      state: present
+    become: yes
+
+  - name: Add logrotate script to enforce splunk user facls
+    template:
+      src: splunk_facl.j2
+      dest: /etc/logrotate.d/splunk_facl
+      owner: root
+      group: root
+    become: yes
+
+  - name: Allow splunk to read /var/log/audit.log
+    ini_file:
+      path: /etc/audit/auditd.conf
+      section: null
+      option: log_group
+      value: "{{ splunk_nix_group }}"
+    become: yes
+    notify: restart auditd service
+    ignore_errors: true
+
+  when: splunk_nix_user != 'root'

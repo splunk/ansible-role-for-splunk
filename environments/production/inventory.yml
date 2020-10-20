@@ -1,0 +1,57 @@
+---
+# YAML format inventory with nested groups for variable inheritance
+# Mason Morales, Splunk, Inc.
+# References:
+# https://docs.ansible.com/ansible/latest/user_guide/intro_inventory.html
+# Read this: https://docs.ansible.com/ansible/2.9/plugins/inventory/yaml.html
+# https://www.digitalocean.com/community/tutorials/how-to-manage-multistage-environments-with-ansible
+# ##########################################################################
+all:
+  children:
+
+    full:
+      children:
+
+        licensemaster:
+          hosts:
+            my-lm-host:
+
+        dmc:
+          hosts:
+            my-dmc-host:
+
+        shdeployer:
+          hosts:
+            my-shc-deployer:
+
+        search:
+          children:
+
+            west_coast_shc:
+              hosts:
+                sh-01:
+                sh-02:
+                sh-03:
+
+        heavyforwarder:
+          hosts:
+            my-hf-01:
+            some-other-hf:
+
+        standalone:
+            hosts:
+              my-standalone-splunk-server:
+              my-other-standalone-splunk-server:
+
+    universalforwarder:
+      children:
+
+        vmware:
+          hosts:
+            my-vm-ware-host-[001:100]:
+          vars:
+            clientName: vmware
+
+        web:
+          hosts:
+            my-web-host-[01-05]:

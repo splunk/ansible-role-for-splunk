@@ -1,0 +1,28 @@
+#!/bin/bash
+# Script by Mason Morales, Splunk, Inc.
+SPLUNK_HOME={{ splunk_home }}
+OUTPUT_DIR=/tmp/splunk_pstacks
+SAMPLES=100
+SAMPLE_PERIOD=3
+HOST=$(hostname)
+USER={{ ansible_user }}
+mkdir -p $OUTPUT_DIR
+i=0
+echo "########## GENERATING PSTACKS, PLEASE WAIT.... THIS WILL TAKE 5 MINUTES TO COMPLETE. ##########"
+while [ $i -lt $SAMPLES ]
+do
+    pstack `head -1 $SPLUNK_HOME/var/run/splunk/splunkd.pid` > $OUTPUT_DIR/pstack_splunkd-$i-`date +%s`.out
+    let "i+=1"
+    sleep $SAMPLE_PERIOD
+done
+TIMESTAMP=$(date +"%Y%m%dT%H%M")
+TARBALL=$HOST-pstacks-$TIMESTAMP.tar
+echo "########## DONE, CREATING TARBALL.... ##########"
+tar czvf $TARBALL $OUTPUT_DIR/
+echo "########## DONE, CLEANING UP.... ##########"
+rm -rf $OUTPUT_DIR/*.out
+# Test
+mv $TARBALL /tmp/
+chown $USER /tmp/$TARBALL
+echo "########## PSTACK CAPUTRE COMPLETE! ##########"
+echo "Transfer command: scp $USER@$HOST:/tmp/$TARBALL ."

@@ -1,0 +1,18 @@
+---
+- name: Add cleanup_crashlogs.sh
+  template:
+    src: cleanup_crashlogs.sh.j2
+    dest: "{{ splunk_home }}/cleanup_crashlogs.sh"
+    owner: root
+    group: root
+    mode: 0755
+  become: yes
+
+- name: Configure cron to run cleanup_crashlogs.sh daily at midnight
+  cron:
+    name: "Run cleanup_crashlogs.sh"
+    state: present
+    job: "{{ splunk_home }}/cleanup_crashlogs.sh"
+    hour: 0
+    minute: 0
+  become: yes

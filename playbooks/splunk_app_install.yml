@@ -1,0 +1,8 @@
+# Example playbook to install/upgrade apps on a Splunk host
+- hosts:
+    - all
+  roles:
+    - ../roles/splunk
+  serial: 50
+  vars:
+    - deployment_task: configure_apps.yml

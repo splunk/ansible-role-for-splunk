@@ -1,0 +1,7 @@
+---
+splunk_uri_lm: https://my_license_master:8089
+ansible_user: my_ansible_ssh_user
+ansible_ssh_private_key_file: ~/.ssh/my_ansible_ssh.key
+git_server: ssh://git@mygithost:1234
+git_key: ~/.ssh/my-git-key
+git_project: SOMEPROJECT

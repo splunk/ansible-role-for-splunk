@@ -1,0 +1,17 @@
+---
+# Task to configure ulimits and THP for Splunk
+- name: Include OS family-specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Set ulimits for splunk
+  copy:
+    src: splunk_ulimits.conf
+    dest: /etc/security/limits.d/splunk_ulimits.conf
+    owner: root
+    group: root
+    mode: 0644
+  become: yes
+
+- name: Disable THP
+  include_tasks: configure_thp.yml
+  when: "'full' in group_names"

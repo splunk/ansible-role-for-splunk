@@ -1,0 +1,10 @@
+---
+all:
+  children:
+
+    full:
+      children:
+
+        search:
+          hosts:
+            10.202.37.251:

@@ -1,0 +1,54 @@
+---
+- name: Check if Splunk is installed
+  stat:
+    path: "{{ splunk_home }}/bin/splunk"
+    follow: yes
+  register: splunkd_path
+  become: yes
+
+# If installed, check version, if version is good, don't install but continue
+- name: Install Splunk if not installed
+  include_tasks: install_splunk.yml
+  when: splunkd_path.stat.exists == false
+
+# Configure the license for both fresh and old installs
+- name: Configure license
+  include_tasks: configure_license.yml
+
+- name: Execute this block only if splunk is already installed
+  block:
+ # If Splunk is installed, get the current version
+  - name: Run splunk version command to check currently installed version
+    shell: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
+    register: current_version
+    become: yes
+    become_user: "{{ splunk_nix_user }}"
+    changed_when: false
+
+  - name: "Checkpoint: Version" ##########################
+    debug:
+      msg: "The value of splunk_version is: {{ splunk_version }} and the current_version is: {{ current_version.stdout }}"
+
+  - name: "Checkpoint: Package"
+    debug:
+      msg: "We will download the latest release from {{ splunk_package_url }}"
+    when: current_version.stdout != splunk_version
+
+  - name: Check if Splunk needs to be stopped if we are not at the expected version
+    shell: "{{ splunk_home }}/bin/splunk status"
+    register: splunk_status
+    become: yes
+    become_user: "{{ splunk_nix_user }}"
+    when: current_version.stdout != splunk_version
+    changed_when: false
+    ignore_errors: true
+
+  - name: Stop Splunk if not at expected version and not currently stopped
+    include_tasks: splunk_stop.yml
+    when: current_version.stdout != splunk_version and splunk_status.stdout != 'splunkd is not running.'
+
+  - name: Upgrade Splunk if not at expected version
+    include_tasks: upgrade_splunk.yml
+    when: current_version.stdout != splunk_version
+# Conditional for this block
+  when: splunkd_path.stat.exists == true

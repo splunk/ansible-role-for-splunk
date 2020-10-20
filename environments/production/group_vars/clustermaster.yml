@@ -1,0 +1,7 @@
+---
+# group vars for cluster master
+splunk_app_deploy_path: etc/master-apps # default subdirectory in splunk_home that apps from git should be installed to, overridable in git_apps if you want to install to etc/apps
+git_version: 1.0.0
+git_apps:
+    - name: my_outputs
+    - name: Splunk_TA_nix

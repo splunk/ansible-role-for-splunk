@@ -1,0 +1,27 @@
+---
+- name: Check permissions of splunk.key for mongo
+  file:
+    state: file
+    path: "{{ splunk_home }}/var/lib/splunk/kvstore/mongo/splunk.key"
+    mode: 0600
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: yes
+
+- name: Delete mongod.lock if present
+  file:
+    state: absent
+    path: "{{ splunk_home }}/var/lib/splunk/kvstore/mongo/mongod.lock"
+  become: yes
+
+- name: Update file permissions for journal
+  file:
+    state: directory
+    recurse: yes
+    path: "{{ splunk_home }}/var/lib/splunk/kvstore/mongo/journal"
+    mode: 0710
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: yes
+
+# Also consider adhoc_fix_server_certificate.yml if the cert is expired and you are using the default cert for kvstore

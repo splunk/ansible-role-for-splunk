@@ -1,0 +1,26 @@
+---
+# This task is called by check_splunk.yml to perform splunk upgrades. Do not run this task directly as check_splunk.yml will stop splunk first.
+- name: Configure .bash_profile and .bashrc for splunk user
+  include_tasks: configure_bash.yml
+  when: splunk_nix_user != 'root'
+
+- name: Configure OS to disable THP and increase ulimits for splunk process
+  include_tasks: configure_os.yml
+
+- name: Disable boot-start to ensure restart is successful in 7.2.2+ (this will get re-enabled by a handler with the correct parameters at the end)
+  shell: "{{ splunk_home }}/bin/splunk disable boot-start -user {{ splunk_nix_user }}"
+  become: yes
+  ignore_errors: true
+
+- name: Include task to kill any stale splunkd processes
+  include_tasks: kill_splunkd.yml
+
+- name: Include download and unarchive task
+  include_tasks: download_and_unarchive.yml
+
+- name: Include mongod tasks to ensure it's in a good state
+  include_tasks: fix_mongo.yml
+  when: "'full' in group_names"
+
+- name: Include post-install tasks
+  include_tasks: post_install.yml

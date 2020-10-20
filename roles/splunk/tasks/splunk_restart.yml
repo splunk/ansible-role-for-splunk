@@ -1,0 +1,5 @@
+---
+- name: restart splunk
+  shell: "{{ splunk_home }}/bin/splunk restart"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"

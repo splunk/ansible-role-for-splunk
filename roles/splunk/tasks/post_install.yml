@@ -1,0 +1,32 @@
+---
+- name: Touch .ui_login file to disable first-time login prompt
+  file:
+        dest: "{{ splunk_home }}/etc/.ui_login"
+        state: touch
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+  when: "'full' in group_names"
+
+- name: "Ensure correct ownership for {{ splunk_home }}/etc"
+  file:
+    path: "{{ splunk_home }}/etc"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    recurse: yes
+  become: yes
+
+- name: Configure cron job to cleanup crash logs older than 7 days
+  include_tasks: add_crashlog_script.yml
+  when: add_crashlog_script
+
+- name: Configure cron job to cleanup diags older than 30 days
+  include_tasks: add_diag_script.yml
+  when: add_diag_script
+
+- name: Install pstack shell script for troubleshooting purposes
+  include_tasks: add_pstack_script.yml
+  when: add_pstack_script
+
+- name: Install additional utilities and troubleshooting tools
+  include_tasks: install_utilities.yml
+  when: install_utilities
