@@ -13,7 +13,7 @@
   ignore_errors: true
 
 - name: Include task to kill any stale splunkd processes
-  include_tasks: kill_splunkd.yml
+  include_tasks: adhoc_kill_splunkd.yml
 
 - name: Include download and unarchive task
   include_tasks: download_and_unarchive.yml
