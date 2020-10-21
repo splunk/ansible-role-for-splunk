@@ -19,7 +19,7 @@
   include_tasks: download_and_unarchive.yml
 
 - name: Include mongod tasks to ensure it's in a good state
-  include_tasks: fix_mongo.yml
+  include_tasks: adhoc_fix_mongo.yml
   when: "'full' in group_names"
 
 - name: Include post-install tasks
