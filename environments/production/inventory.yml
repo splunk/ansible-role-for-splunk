@@ -23,6 +23,8 @@ all:
         shdeployer:
           hosts:
             my-shc-deployer:
+          vars:
+            target_shc_group_name: west_coast_shc
 
         search:
           children:
