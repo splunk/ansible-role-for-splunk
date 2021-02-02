@@ -81,6 +81,8 @@ ansible_ssh_private_key_file - The file path to the private key that the Ansible
 
 In addition, you may want to configure some of the optional variables that are mentioned in [roles/splunk/defaults/main.yml](https://github.com/splunk/ansible-role-for-splunk/blob/master/roles/splunk/defaults/main.yml) to manage things like splunk.secret, send Slack notifications, automatically install useful scripts, additional Linux packages, and so on.
 
+As of the v1.0.4 release for this role, an additional variable called `target_shc_group_name` must be defined in the host_vars for each SHC Deployer host. The additional variable tells Ansible which group of hosts in the inventory contain the SHC members that the SHC Deployer host is managing. This change improves the app deployment process for SHCs by performing a REST call to the first SH in the list from the inventory group whose name matches the value of `target_shc_group_name`. If the SHC is not in a ready state, then the play will halt and no changes will be made. It will also automatically grab the captain URI and use the captain as the deploy target for the `apply shcluster-bundle` handler. 
+
 In order to use the app management functionality, you will need to configure the following additional variables:
 ```
 git_server: ssh://git@git.mydomain.com
@@ -90,17 +92,21 @@ git_version: bar
 git_apps:
   - name: myapp
 ```
-
 You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. Note that you may also specify `git_server`, `git_key`, `git_project`, and `git_version` within `git_apps` down to the repository (`name`) level.
+You may also override the auto-configured splunk_app_deploy_path at the repository level as well. For example, to deploy apps so $SPLUNK_HOME/etc/apps on a deployment server. If not set, configure_apps.yml will determine the app deployment path based on the host's group membership within the inventory.
 **Tip:** If you only use one git server, you may want to define the `git_server` and related values in an all.yml group_var file.
 
 **Configure local splunk admin password at install**
 ```
 splunk_user_seed: true
+splunk_admin_username: youradminusername (optional, defaults to admin)
 splunk_admin_password: yourpassword
 ```
 
 **Note:** If you do not configure these 2 variables, new Splunk installations will be installed without an admin account present. This has no impact on upgrades to existing installations.
+
+**Configure splunk admin password for existing installations**
+We recommend that the `splunk_admin_username` and `splunk_admin_password` variables be configured in either group_vars or host_vars. If you use the same username and/or password across your deployment, then all.yml is a suitable location. If you have different passwords for different hosts, then place these variables in a corresponding group_vars or host_vars file. You can then encrypt the password to use in-line with other unencrypted variables by using the following command: `ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'splunk_admin_password'`. Once that is done, use either the `--ask-vault-pass` or `--vault-password-file` argument when running the playbook to have Ansible automatically decrypt the value for the play to use.
 
 #### Playbooks
 The following example playbooks have been included in this project for your reference:
