@@ -86,7 +86,7 @@
       - "--no-times"
   become: yes
   become_user: "{{ splunk_nix_user }}"
-  register: app_updated
+  notify: "{{ handler }}"
 
 - name: Ensure correct permissions are set
   file:
@@ -95,23 +95,3 @@
     group: "{{ splunk_nix_group }}"
     recurse: yes
   become: yes
-
-- name: Trigger handler if SHC is ready and apps have changed
-  debug:
-    msg: "SHC is ready, calling handler: {{ handler }}"
-  changed_when: true
-  notify: "{{ handler }}"
-  when:
-    - handler == "apply shcluster-bundle"
-    - service_ready_state == true
-    - app_updated.changed
-  run_once: true
-
-- name: "Triggler handler if apps have changed"
-  debug:
-    msg: "Calling handler: {{ handler }}"
-  changed_when: true
-  notify: "{{ handler }}"
-  when:
-    - app_updated.changed
-    - handler != "apply shcluster-bundle"
