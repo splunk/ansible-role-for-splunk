@@ -2,11 +2,11 @@
 - name: enable splunk boot-start via initd
   shell: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 0 --answer-yes --auto-ports --no-prompt --accept-license"
   become: yes
-  when: splunk_use_initd == "true"
+  when: splunk_use_initd
   notify:
     - set ulimits in init.d
 
 - name: enable splunk boot-start via systemd
   shell: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 1 --answer-yes --auto-ports --no-prompt --accept-license"
   become: yes
-  when: splunk_use_initd == "false"
+  when: not splunk_use_initd
