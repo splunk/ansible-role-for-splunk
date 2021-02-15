@@ -1,13 +1,24 @@
 ---
 - name: Configure file access control list (facl) settings for splunk user
   block:
-  - name: Set facl to allow splunk user to read /var/log
+  - name: Set default facl to allow splunk user to read /var/log
     acl:
       path: /var/log
       entity: "{{ splunk_nix_user }}"
       etype: user
       permissions: rx
       default: yes
+      recursive: yes
+      state: present
+    become: yes
+
+  - name: Set effective facl to allow splunk user to read /var/log
+    acl:
+      path: /var/log
+      entity: "{{ splunk_nix_user }}"
+      etype: user
+      permissions: rx
+      default: no
       recursive: yes
       state: present
     become: yes
@@ -20,6 +31,12 @@
       group: root
     become: yes
 
+  - name: Check if auditd.conf is present
+    stat:
+      path: /etc/audit/auditd.conf
+    register: result_auditd_conf
+    become: yes
+
   - name: Allow splunk to read /var/log/audit.log
     ini_file:
       path: /etc/audit/auditd.conf
@@ -29,5 +46,6 @@
     become: yes
     notify: restart auditd service
     ignore_errors: true
+    when: result_auditd_conf.stat.exists
 
   when: splunk_nix_user != 'root'
