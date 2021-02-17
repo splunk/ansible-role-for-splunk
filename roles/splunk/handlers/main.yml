@@ -64,8 +64,6 @@
   become: yes
 
 - name: restart auditd service
-  service:
-    name: auditd
-    state: restarted
+  command: service auditd condrestart
   become: yes
-  ignore_errors: true
+
