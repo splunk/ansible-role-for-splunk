@@ -7,21 +7,13 @@
       entity: "{{ splunk_nix_user }}"
       etype: user
       permissions: rx
-      default: yes
+      default: "{{ item }}"
       recursive: yes
       state: present
     become: yes
-
-  - name: Set effective facl to allow splunk user to read /var/log
-    acl:
-      path: /var/log
-      entity: "{{ splunk_nix_user }}"
-      etype: user
-      permissions: rx
-      default: no
-      recursive: yes
-      state: present
-    become: yes
+    loop:
+      - yes
+      - no
 
   - name: Add logrotate script to enforce splunk user facls
     template:
