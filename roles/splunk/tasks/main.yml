@@ -19,6 +19,28 @@
   changed_when: false
   when: "'uf' in group_names"
 
+- name: Configure var for splunk init.d service handler
+  tags: always
+  set_fact:
+    splunk_service: splunk
+  when: splunk_use_initd
+
+- name: Configure var for splunk systemd service handler
+  tags: always
+  set_fact:
+    splunk_service: Splunkd
+  when: 
+    - not splunk_use_initd
+    - "'full' in group_names"
+
+- name: Configure var for splunkforwarder systemd service handler
+  tags: always
+  set_fact:
+    splunk_service: SplunkForwarder
+  when: 
+    - not splunk_use_initd
+    - "'uf' in group_names"
+
 - name: Send Slack messages
   include_tasks: slack_messenger.yml
   tags: always

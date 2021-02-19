@@ -13,18 +13,19 @@
     - ulimit -Sn 32768
   become: yes
   ignore_errors: true
-  when: splunk_use_initd and ansible_os_family == "RedHat" and ansible_distribution_major_version|int > 6
+  when: splunk_use_initd and ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 6
 
 - name: stop splunk
   service:
-    name: splunk
+    name: "{{ splunk_service }}"
     state: stopped
   become: yes
 
 - name: start splunk
-  shell: "{{ splunk_home }}/bin/splunk start --answer-yes --auto-ports --no-prompt --accept-license"
+  service:
+    name: "{{ splunk_service }}"
+    state: started
   become: yes
-  become_user: "{{ splunk_nix_user }}"
 
 - name: apply indexer cluster bundle
   shell: "{{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }}"
@@ -53,13 +54,8 @@
   when: ansible_connection!="docker"
 
 - name: restart splunk
-  shell: "{{ splunk_home }}/bin/splunk restart"
-  become: yes
-  become_user: "{{ splunk_nix_user }}"
-
-- name: restart splunk service
   service:
-    name: splunk
+    name: "{{ splunk_service }}"
     state: restarted
   become: yes
 

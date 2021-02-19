@@ -10,8 +10,15 @@
 - name: Include task to kill any stale splunkd processes
   include_tasks: adhoc_kill_splunkd.yml
 
+- name: Disable boot-start to ensure that we are using the desired boot-start method post-upgrade
+  shell: "{{ splunk_home }}/bin/splunk disable boot-start"
+  become: yes
+
 - name: Include download and unarchive task
   include_tasks: download_and_unarchive.yml
+
+- name: Enable boot start and accept license 
+ include_tasks: configure_splunk_boot.yml
 
 - name: Include mongod tasks to ensure it's in a good state
   include_tasks: adhoc_fix_mongo.yml
