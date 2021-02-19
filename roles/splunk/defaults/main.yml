@@ -6,9 +6,8 @@ slack_token: undefined
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
-splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.0.6&product=splunk&filename=splunk-8.0.6-152fb4b2bb96-Linux-x86_64.tgz&wget=true
-#splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.0.4.1&product=splunk&filename=splunk-8.0.4.1-ab7a85abaa98-Linux-x86_64.tgz&wget=true
-splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.0.4&product=universalforwarder&filename=splunkforwarder-8.0.4-767223ac207f-Linux-x86_64.tgz&wget=true
+splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.2&product=splunk&filename=splunk-8.1.2-545206cc9f70-Linux-x86_64.tgz&wget=true
+splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.2&product=universalforwarder&filename=splunkforwarder-8.1.2-545206cc9f70-Linux-x86_64.tgz&wget=true
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
 splunk_nix_user: splunk
