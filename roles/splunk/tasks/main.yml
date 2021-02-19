@@ -1,23 +1,64 @@
 ---
-- name: Configure vars for full package
-  tags: always
-  set_fact:
-    splunk_home: "{{ splunk_install_path }}/splunk"
-    splunk_package_url: "{{ splunk_package_url_full }}"
-    splunk_product: "Splunk"
-    splunk_install_type: full
-  changed_when: false
+- block:
+    - name: Configure vars for full package
+      tags: always
+      set_fact:
+        splunk_home: "{{ splunk_install_path }}/splunk"
+        splunk_package_url: "{{ splunk_package_url_full }}"
+        splunk_product: "Splunk"
+        splunk_install_type: full
+      changed_when: false
+
+    - name: Check if current boot-start configuration is systemd
+      stat:
+        path: /etc/systemd/system/Splunkd.service
+        follow: yes
+      register: systemd_boot
+      become: yes
   when: "'full' in group_names"
 
-- name: Configure vars for uf package
-  tags: always
-  set_fact:
-    splunk_home: "{{ splunk_install_path }}/splunkforwarder"
-    splunk_package_url: "{{ splunk_package_url_uf }}"
-    splunk_product: "Splunk Universal Forwarder"
-    splunk_install_type: uf
-  changed_when: false
+- block:
+    - name: Configure vars for uf package
+      tags: always
+      set_fact:
+        splunk_home: "{{ splunk_install_path }}/splunkforwarder"
+        splunk_package_url: "{{ splunk_package_url_uf }}"
+        splunk_product: "Splunk Universal Forwarder"
+        splunk_install_type: uf
+      changed_when: false
+
+    - name: Check if current boot-start configuration is systemd
+      stat:
+        path: /etc/systemd/system/SplunkForwarder.service
+        follow: yes
+      register: systemd_boot
+      become: yes
   when: "'uf' in group_names"
+
+- name: Check if current boot-start method is init.d
+  stat:
+    path: /etc/init.d/splunk
+    follow: yes
+  register: initd_boot
+  become: yes
+
+- name: Check if Splunk is installed when no boot-start config has been found
+  stat:
+    path: "{{ splunk_home }}/bin/splunk"
+    follow: yes
+  register: splunkd_found
+  become: yes
+
+- name: Fail the play if the currently configured boot-start method does match the expected state or boot-start is not enabled
+  fail:
+    msg:
+      - "ERROR: Misconfiguration detected! Unable to proceed as handlers will fail in the play later."
+      - "Either splunk boot-start is not enabled on this host, or its current boot-start method does not matched the expected value of splunk_use_initd."
+      - "To correct this: Either run configure_splunk_boot.yml or update the value of splunk_use_initd in your group_vars."
+  when:
+    - splunkd_found.stat.exists
+    - (systemd_boot.stat.exists and splunk_use_initd) or (initd_boot.stat.exists and not splunk_use_initd) or (not systemd_boot.stat.exists and not initd_boot.stat.exists)
+    - not deployment_task == "configure_splunk_boot.yml"
 
 - name: Configure var for splunk init.d service handler
   tags: always
@@ -29,7 +70,7 @@
   tags: always
   set_fact:
     splunk_service: Splunkd
-  when: 
+  when:
     - not splunk_use_initd
     - "'full' in group_names"
 
@@ -37,7 +78,7 @@
   tags: always
   set_fact:
     splunk_service: SplunkForwarder
-  when: 
+  when:
     - not splunk_use_initd
     - "'uf' in group_names"
 
