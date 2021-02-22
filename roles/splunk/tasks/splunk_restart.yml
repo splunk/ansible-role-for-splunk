@@ -1,5 +1,6 @@
 ---
 - name: restart splunk
-  shell: "{{ splunk_home }}/bin/splunk restart"
+  service:
+    name: "{{ splunk_service }}"
+    state: restarted
   become: yes
-  become_user: "{{ splunk_nix_user }}"

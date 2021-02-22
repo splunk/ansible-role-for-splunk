@@ -90,7 +90,8 @@ git_key: ~/.ssh/mygit.key
 git_project: FOO
 git_version: bar
 git_apps:
-  - name: myapp
+  - name: my_app
+    version: master
 ```
 You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. Note that you may also specify `git_server`, `git_key`, `git_project`, and `git_version` within `git_apps` down to the repository (`name`) level.
 You may also override the auto-configured `splunk_app_deploy_path` at the repository level as well. For example, to deploy apps to $SPLUNK_HOME/etc/apps on a deployment server rather than the default of $SPLUNK_HOME/etc/deployment-apps. If not set, configure_apps.yml will determine the app deployment path based on the host's group membership within the inventory.

@@ -56,5 +56,5 @@
 - name: Include post-install tasks
   include_tasks: post_install.yml
 
-- name: Enable boot start and accept license
+- name: Enable boot start
   include_tasks: configure_splunk_boot.yml

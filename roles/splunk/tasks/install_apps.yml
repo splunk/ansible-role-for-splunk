@@ -15,6 +15,14 @@
     handler: "apply shcluster-bundle"
   when: app_dest == 'etc/shcluster/apps'
 
+- name: "Set default restart splunk handler for all other paths (e.g. etc/auth)"
+  set_fact:
+    handler: "restart splunk"
+  when:
+    - app_dest != 'etc/shcluster/apps'
+    - app_dest != 'etc/deployment-apps'
+    - app_dest != 'etc/master-apps'
+
 - name: Check if correct vars are defined for SHC app management
   block:
     - name: Trigger failure if target_shc_group_name var is undefined
@@ -61,14 +69,6 @@
         - service_ready_state == false
 
   when: handler == "apply shcluster-bundle"
-
-- name: "Set default restart splunk handler for all other paths (e.g. etc/auth)"
-  set_fact:
-    handler: "restart splunk"
-  when:
-    - app_dest != 'etc/shcluster/apps'
-    - app_dest != 'etc/deployment-apps'
-    - app_dest != 'etc/master-apps'
 
 # Note: By using the synchronize module, if the repo already exists on the target host, we are able to only update the diff while preserving the local/ folder
 - name: "Synchronize {{ item.name }} repo from local Ansible host to {{ splunk_home }}/{{ app_dest }}/{{ item.name }} on remote host"

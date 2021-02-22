@@ -27,4 +27,5 @@
              group: "{{ splunk_nix_group }}"
   become: yes
   notify:
+    - update init.d to accept license
     - start splunk
