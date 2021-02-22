@@ -1,5 +1,5 @@
 ---
-- name: update systemd
+- name: Update the systemd file for Splunk
   ini_file:
     path: "/etc/systemd/system/{{ splunk_service }}.service"
     section: Service
