@@ -7,6 +7,7 @@ splunk_home: auto_determined # This gets set by main.yml but we have to define i
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
 splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.2&product=splunk&filename=splunk-8.1.2-545206cc9f70-Linux-x86_64.tgz&wget=true
+#splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.0.4&product=universalforwarder&filename=splunkforwarder-8.0.4-767223ac207f-Linux-x86_64.tgz&wget=true
 splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.2&product=universalforwarder&filename=splunkforwarder-8.1.2-545206cc9f70-Linux-x86_64.tgz&wget=true
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
@@ -24,7 +25,7 @@ splunk_configure_secret: false # If set to true, you need to update files/splunk
 splunk_configure_authentication: false
 ad_bind_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_authenticationconf: authentication.conf.j2
-splunk_use_initd: true # if set to false, the role will use systemd instead
+splunk_use_initd: false  # if set to false, the role will use systemd instead
 git_local_clone_path: ~/ # Base directory under which repositories for app deplyoment should be cloned to
 git_server: undefined # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
 git_key: undefined # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
