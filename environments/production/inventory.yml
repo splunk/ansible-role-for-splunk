@@ -45,14 +45,14 @@ all:
               my-standalone-splunk-server:
               my-other-standalone-splunk-server:
 
-    universalforwarder:
+    uf:
       children:
 
         vmware:
           hosts:
             my-vm-ware-host-[001:100]:
           vars:
-            clientName: vmware
+            clientName: vmware # Or create a "vmware.yml" file under group_vars and assign clientName there, either works
 
         web:
           hosts:

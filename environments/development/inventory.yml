@@ -2,8 +2,16 @@
 all:
   children:
 
+    uf: # Note that you can nest additional groups under here to use with group_vars, e.g. to assign clientName - see production inventory file for more examples
+      hosts:
+        my_first_uf:
+        my_second_uf:
+
     full:
       children:
+        hf:
+          hosts:
+            some_hf:
 
         search:
           hosts:
