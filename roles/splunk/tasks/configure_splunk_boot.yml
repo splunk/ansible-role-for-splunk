@@ -78,3 +78,7 @@
   notify:
     - reload systemctl daemon
     - start splunk
+
+- name: Update systemd file
+  include_tasks: configure_systemd.yml
+  when: not splunk_use_initd

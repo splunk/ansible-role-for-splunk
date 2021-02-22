@@ -1,0 +1,20 @@
+---
+- name: update systemd
+  ini_file:
+    path: "/etc/systemd/system/{{ splunk_service }}.service"
+    section: Service
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+  become: yes
+  loop:
+    - { option: "ExecStart", value: "{{ splunk_home }}/bin/splunk start --accept-license --answer-yes --no-prompt" }
+    - { option: "ExecStop", value: "{{ splunk_home }}/bin/splunk start stop" }
+    - { option: "ExecReload", value: "{{ splunk_home }}/bin/splunk restart" }
+    - { option: "Restart", value: "on-failure" }
+    - { option: "RestartSec", value: "30s" }
+    - { option: "TimeoutStopSec", value: "10min" }
+    - { option: "Type", value: "forking" }
+    - { option: "RemainAfterExit", value: "False" }
+    - { option: "User", value: "{{ splunk_nix_user }}" }
+    - { option: "Group", value: "{{ splunk_nix_group }}" }
+    - { option: "PIDFile", value: "{{ splunk_home }}/var/run/splunk/splunkd.pid" }
