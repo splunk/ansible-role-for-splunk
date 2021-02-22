@@ -49,7 +49,6 @@
                   key_file: "{{ git_key }}"
                   force: yes
     loop: "{{ git_apps }}"
-    ignore_errors: true
     changed_when: false
     check_mode: no
 
