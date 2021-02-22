@@ -23,11 +23,24 @@
   become: yes
   when: splunk_use_initd
 
+- name: update systemd
+  lineinfile:
+    path: "/etc/systemd/system/{{ splunk_server }}.service"
+    section: Service
+    options: "{{ item.option }}"
+    value: "{{ item.value }}"
+  loop:
+    - { option: "ExecStart", value: "{{ splunk_home }}/bin/splunk start --accept-license --answer-yes --no-prompt" }
+    - { option: "ExecStop", value: "{{ splunk_home }}/bin/splunk start stop" }
+    - { option: "ExecReload", value: "{{ splunk_home }}/bin/splunk restart" }
+    - { option: "Restart", value: "on-failure" }
+    - { option: "RestartSec", value: "30s" }
+    - { option: "TimeoutStopSec", value: "10min" }
+
 - name: reload systemctl daemon
   systemd:
     daemon_reload: yes
   become: yes
-  when: ansible_connection!="docker"
 
 - name: stop splunk
   service:
