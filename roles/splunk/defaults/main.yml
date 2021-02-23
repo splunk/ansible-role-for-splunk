@@ -19,7 +19,6 @@ splunk_uri_ds: undefined # e.g. mydeploymentserver.mydomain.com:8089 ; Note that
 clientName: undefined
 splunk_admin_username: admin
 splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
-splunk_user_seed: false # Requires splunk_admin_password var to be set
 splunk_configure_secret: false # If set to true, you need to update files/splunk.secret
 # Although there are tasks for the following Splunk configurations in this role, they are not included in any tasks by default. You can add them to your install_splunk.yml if you would like to have Ansible manage any of these files
 splunk_configure_authentication: false

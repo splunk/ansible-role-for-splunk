@@ -16,5 +16,4 @@
   become: yes
   when:
     - not splunk_etc_passwd.stat.exists
-    - splunk_user_seed
     - splunk_admin_password != 'undefined'

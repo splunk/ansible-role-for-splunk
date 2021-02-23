@@ -44,7 +44,6 @@
 - name: Include configure user-seed task
   include_tasks: configure_user-seed.yml
   when: 
-    - splunk_user_seed
     - splunk_admin_password != 'undefined'
 
 - name: Include configure default authentication.conf for AD authentication and admin role mapping
