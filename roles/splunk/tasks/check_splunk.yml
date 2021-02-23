@@ -39,9 +39,9 @@
         include_tasks: check_splunk_status.yml
         changed_when: false
 
-      - name: Stop Splunk if not at expected version and not currently stopped
+      - name: Stop Splunk if not at expected version and splunk is currently running
         include_tasks: splunk_stop.yml
-        when: splunk_status.rc != 0
+        when: splunk_status.rc == 0
 
       - name: Upgrade Splunk if not at expected version
         include_tasks: upgrade_splunk.yml
