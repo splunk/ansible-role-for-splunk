@@ -41,9 +41,14 @@
   become: yes
 
 - name: apply indexer cluster bundle
-  shell: "{{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }}"
+  command: "{{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }}"
   become: yes
   become_user: "{{ splunk_nix_user }}"
+  register: apply_cluster_bundle_result
+  changed_when: apply_cluster_bundle_result.rc == 0
+  failed_when: apply_cluster_bundle_result.rc != 0
+  retries: "{{ splunk_apply_cluster_bundle_retries }}"
+  delay: "{{ splunk_apply_cluster_bundle_delay }}"
   no_log: true
   when: "'clustermaster' in group_names"
 
@@ -55,9 +60,14 @@
   when: "'deploymentserver' in group_names"
 
 - name: apply shcluster-bundle
-  shell: "{{ splunk_home }}/bin/splunk apply shcluster-bundle -preserve-lookups true --answer-yes -auth {{ splunk_auth }} -target {{ deploy_target }}"
+  command: "{{ splunk_home }}/bin/splunk apply shcluster-bundle -preserve-lookups true --answer-yes -auth {{ splunk_auth }} -target {{ deploy_target }}"
   become: yes
   become_user: "{{ splunk_nix_user }}"
+  register: apply_shcluster_bundle_result
+  changed_when: apply_shcluster_bundle_result.rc == 0
+  failed_when: apply_shcluster_bundle_result.rc != 0 
+  retries: "{{ splunk_apply_shcluster_bundle_retries }}"
+  delay: "{{ splunk_apply_shcluster_bundle_delay }}"
   no_log: true
   when: "'shdeployer' in group_names and deploy_target is defined"
 
