@@ -13,7 +13,7 @@
       stat:
         path: /etc/systemd/system/Splunkd.service
         follow: yes
-      register: systemd_boot
+      register: systemd_boot_full
       become: yes
   when: "'full' in group_names"
 
@@ -31,9 +31,14 @@
       stat:
         path: /etc/systemd/system/SplunkForwarder.service
         follow: yes
-      register: systemd_boot
+      register: systemd_boot_uf
       become: yes
   when: "'uf' in group_names"
+
+- name: Set systemd_boot var to true if systemd is being used for splunk
+  set_fact:
+    systemd_boot: true
+  when: (systemd_boot_uf.stat is defined and systemd_boot_uf.stat.exists) or (systemd_boot_full.stat is defined and systemd_boot_full.stat.exists) 
 
 - name: Check if current boot-start method is init.d
   stat:
@@ -57,7 +62,7 @@
       - "To correct this: Either run configure_splunk_boot.yml or update the value of splunk_use_initd in your group_vars."
   when:
     - splunkd_found.stat.exists
-    - (systemd_boot.stat.exists and splunk_use_initd) or (initd_boot.stat.exists and not splunk_use_initd) or (not systemd_boot.stat.exists and not initd_boot.stat.exists)
+    - (systemd_boot and splunk_use_initd) or (initd_boot.stat.exists and not splunk_use_initd) or (not systemd_boot and not initd_boot.stat.exists)
     - not deployment_task == "configure_splunk_boot.yml"
 
 - name: Configure var for splunk init.d service handler

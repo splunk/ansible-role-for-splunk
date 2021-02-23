@@ -1,6 +1,7 @@
 ---
 # defaults file for splunk role
 # Anything that is undefined here should be configured. I recommend setting the values in your group_vars under an all.yml file.
+systemd_boot: false # Do NOT change the value of this. It automatically gets changed in main.yml if the role finds an existing systemd file configured for splunk.
 slack_channel: undefined
 slack_token: undefined
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
@@ -31,6 +32,16 @@ git_key: undefined # Path to SSH key for cloning repositories - Note that this m
 git_project: undefined
 git_version: master # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
 splunk_app_deploy_path: undefined # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+# SHC Vars
+splunk_shc_key: mypass4symmkey
+splunk_shc_label: myshc
+splunk_shc_rf: 3
+splunk_shc_rep_port: 8100
+splunk_shc_target_group: shc
+splunkd_port: 8089
+splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
+splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
+# Linux and scripting related vars
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
 add_diag_script: false # Set to true to install a script and cron job to automatically cleanup splunk diag files older than 30 days
 add_pstack_script: false # Set to true to install a pstack generation script for troubleshooting purposes in $SPLUNK_HOLME/genpstacks.sh

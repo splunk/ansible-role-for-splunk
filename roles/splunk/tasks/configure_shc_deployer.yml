@@ -1,0 +1,13 @@
+---
+- name: Configure shclustering stanza for deployer
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: shclustering
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+  become: yes
+  become_user: "{{ splunk_nix_user }}"
+  notify: restart splunk
+  loop:
+    - { option: "pass4SymmKey", value: "{{ splunk_shc_key }}" }
+    - { option: "shcluster_label", value: "{{ splunk_shc_label }}" }
