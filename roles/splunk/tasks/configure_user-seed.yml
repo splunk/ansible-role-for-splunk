@@ -12,7 +12,6 @@
     dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-  notify: restart splunk
   become: yes
   when:
     - not splunk_etc_passwd.stat.exists
