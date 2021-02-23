@@ -4,12 +4,8 @@
   block:
     
   - name: Check if Splunk needs to be stopped if boot-start isn't configured as Ansible expects (or boot-start is not configured at all)
-    command: "{{ splunk_home }}/bin/splunk status"
-    register: splunk_status
-    become: yes
-    become_user: "{{ splunk_nix_user }}"
+    include_tasks: check_splunk_status.yml
     changed_when: false
-    failed_when: false
     when: >
       ((systemd_boot and splunk_use_initd) or
       (initd_boot.stat.exists and not splunk_use_initd) or
@@ -34,7 +30,7 @@
           - "'uf' in group_names"
     when:
       - systemd_boot and splunk_use_initd
-      - splunk_status.stdout != 'splunkd is not running.'
+      - splunk_status.rc != 0
 
   - name: Stop Splunk via init.d to prepare for conversion to systemd
     service:
@@ -43,7 +39,7 @@
     become: yes
     when:
       - initd_boot.stat.exists and not splunk_use_initd
-      - splunk_status.stdout != 'splunkd is not running.'
+      - splunk_status.rc != 0
 
   - name: Stop Splunk via command if boot-start is not configured at all and systemd is configured in Ansible
     command: "{{ splunk_home }}/bin/splunk stop"
@@ -52,7 +48,7 @@
       - not systemd_boot
       - not initd_boot.stat.exists
       - not splunk_use_initd
-      - splunk_status.stdout != 'splunkd is not running.'
+      - splunk_status.rc != 0
 
   - name: Disable boot-start if current configuration does not matched expected configuration
     shell: "{{ splunk_home }}/bin/splunk disable boot-start"

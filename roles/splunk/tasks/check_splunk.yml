@@ -17,7 +17,7 @@
 
 - name: Execute this block only if splunk is already installed
   block:
- # If Splunk is installed, get the current version
+
   - name: Run splunk version command to check currently installed version
     shell: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
     register: current_version
@@ -29,26 +29,23 @@
     debug:
       msg: "The value of splunk_version is: {{ splunk_version }} and the current_version is: {{ current_version.stdout }}"
 
-  - name: "Checkpoint: Package"
-    debug:
-      msg: "We will download the latest release from {{ splunk_package_url }}"
-    when: current_version.stdout != splunk_version
+  - name: Execute this block only if the current version does not match the expected version
+    block:
+      - name: "Checkpoint: Package"
+        debug:
+          msg: "We will download the latest release from {{ splunk_package_url }}"
 
-  - name: Check if Splunk needs to be stopped if we are not at the expected version
-    shell: "{{ splunk_home }}/bin/splunk status"
-    register: splunk_status
-    become: yes
-    become_user: "{{ splunk_nix_user }}"
-    when: current_version.stdout != splunk_version
-    changed_when: false
-    ignore_errors: true
+      - name: Check if Splunk needs to be stopped if we are not at the expected version
+        include_tasks: check_splunk_status.yml
+        changed_when: false
 
-  - name: Stop Splunk if not at expected version and not currently stopped
-    include_tasks: splunk_stop.yml
-    when: current_version.stdout != splunk_version and splunk_status.stdout != 'splunkd is not running.'
+      - name: Stop Splunk if not at expected version and not currently stopped
+        include_tasks: splunk_stop.yml
+        when: splunk_status.rc != 0
 
-  - name: Upgrade Splunk if not at expected version
-    include_tasks: upgrade_splunk.yml
+      - name: Upgrade Splunk if not at expected version
+        include_tasks: upgrade_splunk.yml
+# Conditional for version mismatch block
     when: current_version.stdout != splunk_version
 # Conditional for this block
   when: splunkd_path.stat.exists == true
