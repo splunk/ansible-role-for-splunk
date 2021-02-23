@@ -1,20 +1,20 @@
 ---
-- name: "Check for existing {{ splunk_home }}/etc/passwd"
-  stat:
-    path: "{{ splunk_home }}/etc/passwd"
-  register: splunk_etc_passwd
-  become: yes
-  become_user: "{{ splunk_nix_user }}"
+- name: Execute this block only when splunk_admin_password has been configured
+  block:
+    - name: "Check for existing {{ splunk_home }}/etc/passwd"
+      stat:
+        path: "{{ splunk_home }}/etc/passwd"
+      register: splunk_etc_passwd
+      become: yes
+      become_user: "{{ splunk_nix_user }}"
 
-- name: Create user-seed.conf file with splunk_admin_username and splunk_admin_password
-  template:
-    src: user-seed.conf.j2
-    dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
-    owner: "{{ splunk_nix_user }}"
-    group: "{{ splunk_nix_group }}"
-  notify: restart splunk
-  become: yes
+    - name: Create user-seed.conf file with splunk_admin_username and splunk_admin_password
+      template:
+        src: user-seed.conf.j2
+        dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+      become: yes
+      when: not splunk_etc_passwd.stat.exists
   when:
-    - not splunk_etc_passwd.stat.exists
-    - splunk_user_seed
     - splunk_admin_password != 'undefined'

@@ -99,7 +99,6 @@ You may also override the auto-configured `splunk_app_deploy_path` at the reposi
 
 **Configure local splunk admin password at install**
 ```
-splunk_user_seed: true
 splunk_admin_username: youradminusername (optional, defaults to admin)
 splunk_admin_password: yourpassword
 ```
