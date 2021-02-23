@@ -18,34 +18,34 @@
 - name: Execute this block only if splunk is already installed
   block:
 
-  - name: Run splunk version command to check currently installed version
-    shell: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
-    register: current_version
-    become: yes
-    become_user: "{{ splunk_nix_user }}"
-    changed_when: false
+    - name: Run splunk version command to check currently installed version
+      shell: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
+      register: current_version
+      become: yes
+      become_user: "{{ splunk_nix_user }}"
+      changed_when: false
 
-  - name: "Checkpoint: Version" ##########################
-    debug:
-      msg: "The value of splunk_version is: {{ splunk_version }} and the current_version is: {{ current_version.stdout }}"
+    - name: "Checkpoint: Version" ##########################
+      debug:
+        msg: "The value of splunk_version is: {{ splunk_version }} and the current_version is: {{ current_version.stdout }}"
 
-  - name: Execute this block only if the current version does not match the expected version
-    block:
-      - name: "Checkpoint: Package"
-        debug:
-          msg: "We will download the latest release from {{ splunk_package_url }}"
+    - name: Execute this block only if the current version does not match the expected version
+      block:
+        - name: "Checkpoint: Package"
+          debug:
+            msg: "We will download the latest release from {{ splunk_package_url }}"
 
-      - name: Check if Splunk needs to be stopped if we are not at the expected version
-        include_tasks: check_splunk_status.yml
-        changed_when: false
+        - name: Check if Splunk needs to be stopped if we are not at the expected version
+          include_tasks: check_splunk_status.yml
+          changed_when: false
 
-      - name: Stop Splunk if not at expected version and splunk is currently running
-        include_tasks: splunk_stop.yml
-        when: splunk_status.rc == 0
+        - name: Stop Splunk if not at expected version and splunk is currently running
+          include_tasks: splunk_stop.yml
+          when: splunk_status.rc == 0
 
-      - name: Upgrade Splunk if not at expected version
-        include_tasks: upgrade_splunk.yml
+        - name: Upgrade Splunk if not at expected version
+          include_tasks: upgrade_splunk.yml
 # Conditional for version mismatch block
-    when: current_version.stdout != splunk_version
+      when: current_version.stdout != splunk_version
 # Conditional for this block
   when: splunkd_path.stat.exists == true
