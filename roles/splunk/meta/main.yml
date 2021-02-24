@@ -16,8 +16,8 @@ galaxy_info:
       versions:
         - xenial
         - bionic
-      - name: Debian
-        versions:
+    - name: Debian
+      versions:
         - jessie
         - stretch
 
