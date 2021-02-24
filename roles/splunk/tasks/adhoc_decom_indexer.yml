@@ -1,7 +1,7 @@
 ---
 - name: Execute splunk offline --enforce-counts
-  shell: "{{ splunk_home }}/bin/splunk offline --enforce-counts -auth {{ splunk_auth }}"
-  become: yes
+  command: "{{ splunk_home }}/bin/splunk offline --enforce-counts -auth {{ splunk_auth }}"
+  become: true
   become_user: "{{ splunk_nix_user }}"
   no_log: true
   when: "'indexer' in group_names"

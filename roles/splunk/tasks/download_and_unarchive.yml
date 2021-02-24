@@ -9,23 +9,23 @@
     msg: "The upgrade file will be downloaded to {{ splunk_package_path }}/{{ splunk_file }}"
 
 - name: "Download Splunk {{ splunk_install_type }} package"
-  local_action:
-                module: get_url
-                url: "{{ splunk_package_url }}"
-                dest: "{{ splunk_package_path }}/{{ splunk_file }}"
+  get_url:
+    url: "{{ splunk_package_url }}"
+    dest: "{{ splunk_package_path }}/{{ splunk_file }}"
+  delegate_to: localhost
   register: download_result
   retries: 3
   delay: 10
   until: download_result is success
-  run_once: True
+  run_once: true
 
 - name: "Unarchive Splunk {{ splunk_install_type }} package to {{ splunk_home }}"
   unarchive:
-             src: "{{ splunk_package_path }}/{{ splunk_file }}"
-             dest: "{{ splunk_install_path }}"
-             owner: "{{ splunk_nix_user }}"
-             group: "{{ splunk_nix_group }}"
-  become: yes
+    src: "{{ splunk_package_path }}/{{ splunk_file }}"
+    dest: "{{ splunk_install_path }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: true
   notify:
     - update init.d to accept license
     - start splunk

@@ -5,7 +5,7 @@
     dest: "{{ splunk_home }}/etc/system/local/authentication.conf"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-  become: yes
+  become: true
   when:
     - splunk_authenticationconf is defined
     - ad_bind_password != 'undefined'

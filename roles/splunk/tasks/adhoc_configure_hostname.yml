@@ -2,7 +2,7 @@
 - name: Set the system's hostname to the inventory_hostname
   hostname:
     name: "{{ inventory_hostname }}"
-  become: yes
+  become: true
 
 - name: "Update serverName in {{ splunk_home }}/etc/system/local/server.conf"
   lineinfile:
@@ -10,7 +10,7 @@
     state: present
     regexp: "^serverName = .*"
     line: "serverName = {{ ansible_hostname }}"
-  become: yes
+  become: true
   become_user: "{{ splunk_nix_user }}"
   notify: restart splunk
 
@@ -20,6 +20,6 @@
     state: present
     regexp: "^host = .*"
     line: "host = {{ ansible_hostname }}"
-  become: yes
+  become: true
   become_user: "{{ splunk_nix_user }}"
   notify: restart splunk

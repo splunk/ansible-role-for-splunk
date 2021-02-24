@@ -2,6 +2,6 @@
 - name: Check if Splunk is currently running or stopped
   command: "{{ splunk_home }}/bin/splunk status"
   register: splunk_status
-  become: yes
+  become: true
   become_user: "{{ splunk_nix_user }}"
   changed_when: false

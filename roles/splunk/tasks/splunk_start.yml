@@ -1,6 +1,6 @@
 ---
-- name: start splunk
+- name: Start splunk
   service:
     name: "{{ splunk_service }}"
     state: started
-  become: yes
+  become: true

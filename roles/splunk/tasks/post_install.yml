@@ -1,9 +1,9 @@
 ---
 - name: Touch .ui_login file to disable first-time login prompt
   file:
-        dest: "{{ splunk_home }}/etc/.ui_login"
-        state: touch
-  become: yes
+    dest: "{{ splunk_home }}/etc/.ui_login"
+    state: touch
+  become: true
   become_user: "{{ splunk_nix_user }}"
   when: "'full' in group_names"
 
@@ -12,8 +12,8 @@
     path: "{{ splunk_home }}/etc"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-    recurse: yes
-  become: yes
+    recurse: true
+  become: true
 
 - name: Configure cron job to cleanup crash logs older than 7 days
   include_tasks: add_crashlog_script.yml

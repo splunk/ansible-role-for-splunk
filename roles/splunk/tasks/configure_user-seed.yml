@@ -5,7 +5,7 @@
       stat:
         path: "{{ splunk_home }}/etc/passwd"
       register: splunk_etc_passwd
-      become: yes
+      become: true
       become_user: "{{ splunk_nix_user }}"
 
     - name: Create user-seed.conf file with splunk_admin_username and splunk_admin_password
@@ -14,7 +14,8 @@
         dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
         owner: "{{ splunk_nix_user }}"
         group: "{{ splunk_nix_group }}"
-      become: yes
+        mode: 0644
+      become: true
       when: not splunk_etc_passwd.stat.exists
   when:
     - splunk_admin_password != 'undefined'

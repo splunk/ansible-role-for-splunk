@@ -2,13 +2,13 @@
 - include_tasks: splunk_stop.yml
 
 - name: Disable boot-start
-  shell: "{{ splunk_home }}/bin/splunk disable boot-start"
-  become: yes
+  command: "{{ splunk_home }}/bin/splunk disable boot-start"
+  become: true
 
 - name: Remove splunk folder
   file:
     path: "{{ splunk_home }}"
     state: absent
-  become: yes
+  become: true
 
 # Todo: Remove user, group, THP/ulimit files, check for cron jobs/scripts and remove those if present

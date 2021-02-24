@@ -1,6 +1,6 @@
 ---
-- name: restart splunk
+- name: Restart splunk
   service:
     name: "{{ splunk_service }}"
     state: restarted
-  become: yes
+  become: true

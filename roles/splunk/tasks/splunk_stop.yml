@@ -1,6 +1,6 @@
 ---
-- name: stop splunk
+- name: Stop splunk
   service:
     name: "{{ splunk_service }}"
     state: stopped
-  become: yes
+  become: true

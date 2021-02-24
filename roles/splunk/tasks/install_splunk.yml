@@ -4,18 +4,18 @@
   block:
     - name: Add nix splunk group
       group:
-             name: "{{ splunk_nix_group }}"
-             state: present
-      become: yes
+        name: "{{ splunk_nix_group }}"
+        state: present
+      become: true
 
     - name: Add nix splunk user
       user:
-            name: "{{ splunk_nix_user }}"
-            groups: "{{ splunk_nix_group }}"
-            home: "{{ splunk_home }}"
-            state: present
-            shell: /bin/bash
-      become: yes
+        name: "{{ splunk_nix_user }}"
+        groups: "{{ splunk_nix_group }}"
+        home: "{{ splunk_home }}"
+        state: present
+        shell: /bin/bash
+      become: true
 
     - name: Allow splunk user to read /var/log
       include_tasks: configure_facl.yml
@@ -43,12 +43,12 @@
 
 - name: Include configure user-seed task
   include_tasks: configure_user-seed.yml
-  when: 
+  when:
     - splunk_admin_password != 'undefined'
 
 - name: Include configure default authentication.conf for AD authentication and admin role mapping
   include_tasks: configure_authentication.yml
-  when: 
+  when:
     - splunk_configure_authentication
     - ad_bind_password != 'undefined'
 

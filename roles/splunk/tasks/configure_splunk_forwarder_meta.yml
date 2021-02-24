@@ -8,7 +8,8 @@
     value: splunk_forwarder_field
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-  become: yes
+    mode: 0644
+  become: true
   notify: restart splunk
   when: "'full' in group_names"
 
@@ -20,7 +21,8 @@
     value: "{{ item.value }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-  become: yes
+    mode: 0644
+  become: true
   notify: restart splunk
   when: "'full' in group_names"
   loop:

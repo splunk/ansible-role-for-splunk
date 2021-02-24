@@ -2,8 +2,8 @@
 # To check if cert is expired:  splunk cmd openssl x509 -in /opt/splunk/etc/auth/server.pem -text -noout
 # Note: Genereates new default certificate. Do not use this if you generate/sign your own splunkd certificate
 - name: Remove old server.pem certificate and generate a new one
-  shell: "{{ item }}"
-  become: yes
+  command: "{{ item }}"
+  become: true
   become_user: "{{ splunk_nix_user }}"
   loop:
     - "rm {{ splunk_home }}/etc/auth/server.pem"

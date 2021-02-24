@@ -5,8 +5,10 @@
     section: shclustering
     option: "{{ item.option }}"
     value: "{{ item.value }}"
-  become: yes
-  become_user: "{{ splunk_nix_user }}"
+    mode: 0644
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: true
   notify: restart splunk
   loop:
     - { option: "pass4SymmKey", value: "{{ splunk_shc_key }}" }

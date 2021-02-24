@@ -2,16 +2,16 @@
 - name: Check if Splunk is installed
   stat:
     path: "{{ splunk_home }}/bin/splunk"
-    follow: yes
+    follow: true
   register: splunkd_path
-  become: yes
+  become: true
 
-# If installed, check version, if version is good, don't install but continue
+  # If installed, check version, if version is good, don't install but continue
 - name: Install Splunk if not installed
   include_tasks: install_splunk.yml
   when: splunkd_path.stat.exists == false
 
-# Configure the license for both fresh and old installs
+  # Configure the license for both fresh and old installs
 - name: Configure license
   include_tasks: configure_license.yml
 
@@ -19,9 +19,9 @@
   block:
 
     - name: Run splunk version command to check currently installed version
-      shell: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
+      command: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
       register: current_version
-      become: yes
+      become: true
       become_user: "{{ splunk_nix_user }}"
       changed_when: false
 
@@ -45,7 +45,7 @@
 
         - name: Upgrade Splunk if not at expected version
           include_tasks: upgrade_splunk.yml
-# Conditional for version mismatch block
+      # Conditional for version mismatch block
       when: current_version.stdout != splunk_version
-# Conditional for this block
+  # Conditional for this block
   when: splunkd_path.stat.exists == true

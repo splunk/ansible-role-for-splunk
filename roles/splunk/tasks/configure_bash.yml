@@ -1,11 +1,12 @@
 ---
 - name: Install .bashrc and .bash_profile files
   template:
-    src: "{{ item.bashtemplate}}"
+    src: "{{ item.bashtemplate }}"
     dest: "{{ splunk_home }}/{{ item.bashfilepath }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-  become: yes
+    mode: 0644
+  become: true
   loop:
     - { bashtemplate: 'bashrc.j2', bashfilepath: '.bashrc' }
     - { bashtemplate: 'bash_profile.j2', bashfilepath: '.bash_profile' }

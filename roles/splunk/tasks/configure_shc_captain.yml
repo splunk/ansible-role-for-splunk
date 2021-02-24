@@ -1,7 +1,10 @@
 ---
 - name: Bring up cluster captain
   command: "{{ splunk_home }}/bin/splunk bootstrap shcluster-captain -servers_list {{ splunk_shc_uri_list }} -auth {{ splunk_auth }}"
-  become: yes
+  become: true
   become_user: "{{ splunk_nix_user }}"
+  register: shc_bootstrap_result
+  changed_when: shc_bootstrap_result.rc == 0
+  failed_when: shc_bootstrap_result.rc != 0
   run_once: true
   no_log: true
