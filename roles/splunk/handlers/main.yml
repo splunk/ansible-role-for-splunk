@@ -11,7 +11,7 @@
   loop:
     - ulimit -Hn 65536
     - ulimit -Sn 32768
-  become: yes
+  become: true
   ignore_errors: true
   when: splunk_use_initd and ansible_os_family == "RedHat" and ansible_distribution_major_version|int > 6
 
@@ -20,29 +20,29 @@
     path: /etc/init.d/splunk
     regexp: '(start --no-prompt --answer-yes)$'
     replace: '\1 --accept-license'
-  become: yes
+  become: true
   when: splunk_use_initd
 
 - name: reload systemctl daemon
   systemd:
-    daemon_reload: yes
-  become: yes
+    daemon_reload: true
+  become: true
 
 - name: stop splunk
   service:
     name: "{{ splunk_service }}"
     state: stopped
-  become: yes
+  become: true
 
 - name: start splunk
   service:
     name: "{{ splunk_service }}"
     state: started
-  become: yes
+  become: true
 
 - name: apply indexer cluster bundle
   command: "{{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }}"
-  become: yes
+  become: true
   become_user: "{{ splunk_nix_user }}"
   register: apply_cluster_bundle_result
   changed_when: apply_cluster_bundle_result.rc == 0
@@ -53,15 +53,15 @@
   when: "'clustermaster' in group_names"
 
 - name: reload deployment server
-  shell: "{{ splunk_home }}/bin/splunk reload deploy-server -auth {{ splunk_auth }}"
-  become: yes
+  command: "{{ splunk_home }}/bin/splunk reload deploy-server -auth {{ splunk_auth }}"
+  become: true
   become_user: "{{ splunk_nix_user }}"
   no_log: true
   when: "'deploymentserver' in group_names"
 
 - name: apply shcluster-bundle
   command: "{{ splunk_home }}/bin/splunk apply shcluster-bundle -preserve-lookups true --answer-yes -auth {{ splunk_auth }} -target {{ deploy_target }}"
-  become: yes
+  become: true
   become_user: "{{ splunk_nix_user }}"
   register: apply_shcluster_bundle_result
   changed_when: apply_shcluster_bundle_result.rc == 0
@@ -75,9 +75,8 @@
   service:
     name: "{{ splunk_service }}"
     state: restarted
-  become: yes
+  become: true
 
 - name: restart auditd service
   command: service auditd condrestart
-  become: yes
-
+  become: true

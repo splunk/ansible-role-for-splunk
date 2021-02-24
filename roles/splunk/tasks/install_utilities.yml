@@ -3,9 +3,9 @@
 - name: Install useful packages for Linux troubleshooting
   package:
     name: "{{ item }}"
-    state: latest
+    state: present
     update_cache: true
   loop: "{{ linux_packages }}"
-  ignore_errors: yes
-  become: yes
+  ignore_errors: true
+  become: true
   when: install_utilities

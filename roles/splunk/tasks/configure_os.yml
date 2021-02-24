@@ -10,7 +10,7 @@
     owner: root
     group: root
     mode: 0644
-  become: yes
+  become: true
 
 - name: Disable THP
   include_tasks: configure_thp.yml

@@ -7,10 +7,10 @@
   copy:
     src: disable-thp.service
     dest: /etc/systemd/system/disable-thp.service
-    mode: 0755
+    mode: 0644
     owner: root
     group: root
-  become: yes
+  become: true
   notify:
     - reload systemctl daemon
   # NOTE ansible_connection!="docker" is not included in the when expression
@@ -23,12 +23,12 @@
 - name: Disable THP service
   service:
     name: disable-thp
-    enabled: no
+    enabled: false
     state: stopped
-  become: yes
+  become: true
   # no (real) services in docker containers
   # and no need to bother for molecule testing
   when:
     - ansible_connection!="docker"
     - "'full' in group_names"
-  ignore_errors: yes
+  ignore_errors: true

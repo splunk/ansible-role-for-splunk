@@ -6,4 +6,4 @@
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
     mode: 0755
-  become: yes
+  become: true

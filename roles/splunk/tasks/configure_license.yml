@@ -7,7 +7,8 @@
     value: "{{ splunk_uri_lm }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-  become: yes
+    mode: 0644
+  become: true
   notify: restart splunk
   when:
     - "'full' in group_names"

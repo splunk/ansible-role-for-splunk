@@ -5,7 +5,8 @@
     section: Service
     option: "{{ item.option }}"
     value: "{{ item.value }}"
-  become: yes
+    mode: 0644
+  become: true
   loop:
     - { option: "ExecStart", value: "{{ splunk_home }}/bin/splunk start --accept-license --answer-yes --no-prompt" }
     - { option: "ExecStop", value: "{{ splunk_home }}/bin/splunk start stop" }

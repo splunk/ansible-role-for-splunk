@@ -2,76 +2,80 @@
 # Note: Splunk must be stopped when creating or altering systemd related configurations for it
 - name: Block for checking boot-start when an existing Splunk installation has been found
   block:
-    
-  - name: Check if Splunk needs to be stopped if boot-start isn't configured as Ansible expects (or boot-start is not configured at all)
-    include_tasks: check_splunk_status.yml
-    changed_when: false
-    when: >
-      ((systemd_boot and splunk_use_initd) or
-      (initd_boot.stat.exists and not splunk_use_initd) or
-      (not systemd_boot and not initd_boot.stat.exists and not splunk_use_initd))
 
-  - name: Block to stop splunk when systemd was detected but init.d is configured in Ansible
-    block:
-      - name: Stop Splunkd via systemd service name to prepare for conversion to init.d
-        service:
-          name: Splunkd
-          state: stopped
-        become: yes
-        when:
-          - "'full' in group_names"
+    - name: Check if Splunk needs to be stopped if boot-start isn't configured as Ansible expects (or boot-start is not configured at all)
+      include_tasks: check_splunk_status.yml
+      changed_when: false
+      when: >
+        ((systemd_boot and splunk_use_initd) or
+        (initd_boot.stat.exists and not splunk_use_initd) or
+        (not systemd_boot and not initd_boot.stat.exists and not splunk_use_initd))
 
-      - name: Stop SplunkForwarder via systemd service name to prepare for conversion to init.d
-        service:
-          name: SplunkForwarder
-          state: stopped
-        become: yes
-        when:
-          - "'uf' in group_names"
-    when:
-      - systemd_boot and splunk_use_initd
-      - splunk_status.rc == 0
+    - name: Block to stop splunk when systemd was detected but init.d is configured in Ansible
+      block:
+        - name: Stop Splunkd via systemd service name to prepare for conversion to init.d
+          service:
+            name: Splunkd
+            state: stopped
+          become: true
+          when:
+            - "'full' in group_names"
 
-  - name: Stop Splunk via init.d to prepare for conversion to systemd
-    service:
-      name: splunk
-      state: stopped
-    become: yes
-    when:
-      - initd_boot.stat.exists and not splunk_use_initd
-      - splunk_status.rc == 0
+        - name: Stop SplunkForwarder via systemd service name to prepare for conversion to init.d
+          service:
+            name: SplunkForwarder
+            state: stopped
+          become: true
+          when:
+            - "'uf' in group_names"
 
-  - name: Stop Splunk via command if boot-start is not configured at all and systemd is configured in Ansible
-    command: "{{ splunk_home }}/bin/splunk stop"
-    become: yes
-    when:
-      - not systemd_boot
-      - not initd_boot.stat.exists
-      - not splunk_use_initd
-      - splunk_status.rc == 0
+      when:
+        - systemd_boot and splunk_use_initd
+        - splunk_status.rc == 0
 
-  - name: Disable boot-start if current configuration does not matched expected configuration
-    shell: "{{ splunk_home }}/bin/splunk disable boot-start"
-    become: yes
-    when: >
-      (systemd_boot and splunk_use_initd) or
-      (initd_boot.stat.exists and not splunk_use_initd)
-      
+    - name: Stop Splunk via init.d to prepare for conversion to systemd
+      service:
+        name: splunk
+        state: stopped
+      become: true
+      when:
+        - initd_boot.stat.exists and not splunk_use_initd
+        - splunk_status.rc == 0
+
+    - name: Stop Splunk via command if boot-start is not configured at all and systemd is configured in Ansible
+      command: "{{ splunk_home }}/bin/splunk stop"
+      register: splunk_stop_command_result
+      changed_when: splunk_stop_command_result.rc == 0
+      failed_when: splunk_stop_command_result.rc != 0
+      become: true
+      when:
+        - not systemd_boot
+        - not initd_boot.stat.exists
+        - not splunk_use_initd
+        - splunk_status.rc == 0
+
+    - name: Disable boot-start if current configuration does not matched expected configuration
+      command: "{{ splunk_home }}/bin/splunk disable boot-start"
+      become: true
+      when: >
+        (systemd_boot and splunk_use_initd) or
+        (initd_boot.stat.exists and not splunk_use_initd)
+
   when: splunkd_found.stat.exists
 
 - name: Enable splunk boot-start via initd
-  shell: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 0 --answer-yes --auto-ports --no-prompt --accept-license"
-  become: yes
+  command: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 0 --answer-yes --auto-ports --no-prompt --accept-license"
+  become: true
   when:
-    - splunk_use_initd and not initd_boot.stat.exists 
+    - splunk_use_initd and not initd_boot.stat.exists
   notify:
     - set ulimits in init.d
     - reload systemctl daemon
     - start splunk
 
 - name: Enable splunk boot-start via systemd
-  shell: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 1 --answer-yes --auto-ports --no-prompt --accept-license"
-  become: yes
+  command: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 1 --answer-yes --auto-ports --no-prompt --accept-license"
+  become: true
   when:
     - not splunk_use_initd and not systemd_boot
   notify:

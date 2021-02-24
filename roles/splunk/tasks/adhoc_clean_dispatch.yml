@@ -3,8 +3,8 @@
   include_tasks: splunk_stop.yml
 
 - name: Clean dispatch directory of all files
-  shell: "rm -rf {{ splunk_home }}/var/run/splunk/dispatch/*"
-  become: yes
+  command: "rm -rf {{ splunk_home }}/var/run/splunk/dispatch/*"
+  become: true
 
 - name: Start Splunk
   include_tasks: splunk_start.yml

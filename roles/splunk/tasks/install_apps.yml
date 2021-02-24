@@ -66,7 +66,7 @@
       fail:
         msg: "The SHC has service ready state of FALSE. Please investigate and re-run Ansible play after resolving."
       when:
-        - service_ready_state == false
+        - not service_ready_state
 
   when: handler == "apply shcluster-bundle"
 
@@ -75,16 +75,16 @@
   synchronize:
     src: "{{ app_src }}"
     dest: "{{ splunk_home }}/{{ app_dest }}/"
-    recursive: yes
-    delete: yes
-    checksum: yes
+    recursive: true
+    delete: true
+    checksum: true
     rsync_opts:
       - "--prune-empty-dirs"
       - "--itemize-changes"
       - "--no-owner"
       - "--no-group"
       - "--no-times"
-  become: yes
+  become: true
   become_user: "{{ splunk_nix_user }}"
   notify: "{{ handler }}"
 
@@ -93,5 +93,5 @@
     path: "{{ splunk_home }}/{{ app_dest }}/{{ item.name }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-    recurse: yes
-  become: yes
+    recurse: true
+  become: true

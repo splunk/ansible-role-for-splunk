@@ -6,7 +6,7 @@
     owner: root
     group: root
     mode: 0755
-  become: yes
+  become: true
 
 - name: Configure cron to run cleanup_diags.sh daily at midnight
   cron:
@@ -15,4 +15,4 @@
     job: "{{ splunk_home }}/cleanup_diags.sh"
     hour: 0
     minute: 0
-  become: yes
+  become: true
