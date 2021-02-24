@@ -1,9 +1,27 @@
 galaxy_info:
   author: Mason Morales
-  description: Ansible role for deploying Splunk
+  description: Splunk's official Ansible role for installing Splunk, upgrading Splunk, and installing apps/addons from Git repositories to Splunk deployments
   company: Splunk Inc.
-  license: Apache 2.0
+
+  license: Apache-2.0
+
   min_ansible_version: 2.7
+
+  platforms:
+    - name: EL
+      versions:
+        - 6
+        - 7
+    - name: Ubuntu
+      versions:
+        - xenial
+        - bionic
+      - name: Debian
+        versions:
+        - jessie
+        - stretch
+
   galaxy_tags:
     - splunk
+    - splunkforwarder
 dependencies: []
