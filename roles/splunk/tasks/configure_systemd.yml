@@ -19,3 +19,9 @@
     - { option: "User", value: "{{ splunk_nix_user }}" }
     - { option: "Group", value: "{{ splunk_nix_group }}" }
     - { option: "PIDFile", value: "{{ splunk_home }}/var/run/splunk/splunkd.pid" }
+    - { option: "LimitNOFILE", value: "1024000" }
+    - { option: "LimitNPROC", value: "512000" }
+    - { option: "LimitFSIZE", value: "infinity" }
+    - { option: "LimitDATA", value: "infinity" }
+    - { option: "LimitCORE", value: "infinity" }
+    - { option: "TasksMax", value: "infinity" }
