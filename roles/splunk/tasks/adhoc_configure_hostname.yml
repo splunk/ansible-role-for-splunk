@@ -4,22 +4,17 @@
     name: "{{ inventory_hostname }}"
   become: true
 
-- name: "Update serverName in {{ splunk_home }}/etc/system/local/server.conf"
-  lineinfile:
-    dest: "{{ splunk_home }}/etc/system/local/server.conf"
-    state: present
-    regexp: "^serverName = .*"
-    line: "serverName = {{ ansible_hostname }}"
+- name: Update serverName in server.conf and host in inputs.conf
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/{{ item.file }}"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ inventory_hostname }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
   become: true
-  become_user: "{{ splunk_nix_user }}"
   notify: restart splunk
-
-- name: "Update host in {{ splunk_home }}/etc/system/local/inputs.conf"
-  lineinfile:
-    dest: "{{ splunk_home }}/etc/system/local/inputs.conf"
-    state: present
-    regexp: "^host = .*"
-    line: "host = {{ ansible_hostname }}"
-  become: true
-  become_user: "{{ splunk_nix_user }}"
-  notify: restart splunk
+  loop:
+    - { file: "server.conf", section: "general", option: "serverName" }
+    - { file: "inputs.conf", section: "default", option: "host" }
