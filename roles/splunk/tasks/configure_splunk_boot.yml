@@ -5,7 +5,6 @@
 
     - name: Check if Splunk needs to be stopped if boot-start isn't configured as Ansible expects (or boot-start is not configured at all)
       include_tasks: check_splunk_status.yml
-      changed_when: false
       when: >
         ((systemd_boot and splunk_use_initd) or
         (initd_boot.stat.exists and not splunk_use_initd) or
