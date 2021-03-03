@@ -36,8 +36,9 @@
         option: log_group
         value: "{{ splunk_nix_group }}"
       become: true
-      notify: restart auditd service
-      ignore_errors: true
+      notify:
+        - restart redhat auditd service
+        - restart non-redhat auditd service
       when: result_auditd_conf.stat.exists
 
   when: splunk_nix_user != 'root'
