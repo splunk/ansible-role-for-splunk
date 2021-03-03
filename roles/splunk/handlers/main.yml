@@ -77,6 +77,14 @@
     state: restarted
   become: true
 
-- name: restart auditd service
+- name: restart redhat auditd service
   command: service auditd condrestart
   become: true
+  when: ansible_os_family == 'RedHat'
+
+- name: restart non-redhat auditd service
+  service:
+    name: auditd
+    state: restarted
+  become: true
+  when: ansible_os_family != 'RedHat'
