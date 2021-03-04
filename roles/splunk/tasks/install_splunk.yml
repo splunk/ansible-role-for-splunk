@@ -13,6 +13,7 @@
         name: "{{ splunk_nix_user }}"
         groups: "{{ splunk_nix_group }}"
         home: "{{ splunk_home }}"
+        append: true
         state: present
         shell: /bin/bash
       become: true

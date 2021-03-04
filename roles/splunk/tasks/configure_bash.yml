@@ -10,3 +10,4 @@
   loop:
     - { bashtemplate: 'bashrc.j2', bashfilepath: '.bashrc' }
     - { bashtemplate: 'bash_profile.j2', bashfilepath: '.bash_profile' }
+  changed_when: False
