@@ -15,7 +15,6 @@
     - { option: "RestartSec", value: "30s" }
     - { option: "TimeoutStopSec", value: "10min" }
     - { option: "Type", value: "forking" }
-    - { option: "RemainAfterExit", value: "False" }
     - { option: "User", value: "{{ splunk_nix_user }}" }
     - { option: "Group", value: "{{ splunk_nix_group }}" }
     - { option: "PIDFile", value: "{{ splunk_home }}/var/run/splunk/splunkd.pid" }
