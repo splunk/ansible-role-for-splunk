@@ -52,6 +52,11 @@
   when: 
     - splunk_configure_authentication
     - ad_bind_password != 'undefined'
+    
+- name: include configure web proxy
+  include_tasks: configure_web_proxy.yml
+  when:
+    - (http_proxy_url != 'undefined') or (https_proxy_url != 'undefined')
 
 - name: Include post-install tasks
   include_tasks: post_install.yml
