@@ -1,0 +1,43 @@
+- name: create the app path
+  file:
+    path: "{{ splunk_home }}/etc/system/local"
+    state: directory
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: '0755'
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  when:
+    - (http_proxy_url != 'undefined') or (https_proxy_url != 'undefined')
+
+- name: configure http proxy
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    state: present
+    mode: '0600'
+    owner: "{{ splunk_nix_user }}"
+  with_items:
+    - { section: proxyConfig, option: http_proxy, value: "{{ http_proxy_url }}" }
+  become: True
+  become_user: "{{ splunk_nix_user }}"
+  notify: "restart splunk"
+  when: http_proxy_url != 'undefined'
+
+- name: configure httpS proxy
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    state: present
+    mode: '0600'
+    owner: "{{ splunk_nix_user }}"
+  with_items:
+  - { section: proxyConfig, option: https_proxy, value: "{{ https_proxy_url }}" }
+  become: True
+  become_user: "{{ splunk_nix_user }}"
+  notify: "restart splunk"
+  when: https_proxy_url != 'undefined'
