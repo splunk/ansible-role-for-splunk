@@ -11,6 +11,7 @@
     group: root
     mode: 0644
   become: true
+  when: splunk_use_initd
 
 - name: Disable THP
   include_tasks: configure_thp.yml
