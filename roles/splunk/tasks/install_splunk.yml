@@ -1,4 +1,27 @@
 ---
+- name: Windows - Save Splunk UF package name in variable
+  set_fact:
+    splunk_file: splunkforwarder-{{ splunk_package_winurl_uf | regex_search('(\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?)') }}.msi
+  when: ansible_system == "Win32NT"
+
+- name: Windows - Download Splunk UF package
+  get_url:
+    url: "{{ splunk_package_url }}"
+    dest: /tmp/{{ splunk_file }}
+  delegate_to: localhost
+  register: download_result
+  retries: 3
+  delay: 10
+  until: download_result is success
+  run_once: true
+  when: ansible_system == "Win32NT"
+
+- name: Windows - Copy Splunk UF package to managed nodes
+  win_copy:
+    src: /tmp/{{ splunk_file }}
+    dest: C:\\Windows\\Temp
+  when: ansible_system == "Win32NT"
+
 #  This task should be used for fresh installations of Splunk, refer to upgrade_splunk.yml for upgrades
 - name: Block for non-root splunk user setup
   block:
@@ -7,8 +30,9 @@
         name: "{{ splunk_nix_group }}"
         state: present
       become: true
+      when: ansible_system == "Linux"
 
-    - name: Add nix splunk user
+    - name: Linux - Add nix splunk user
       user:
         name: "{{ splunk_nix_user }}"
         groups: "{{ splunk_nix_group }}"
@@ -17,20 +41,39 @@
         state: present
         shell: /bin/bash
       become: true
+      when: ansible_system == "Linux"
+
+    - name: Windows - Add nix splunk user
+      win_user:
+        name: "{{ splunk_nix_user }}"
+        password: "{{ splunk_admin_password }}"
+        state: present
+      when: ansible_system == "Win32NT"
 
     - name: Allow splunk user to read /var/log
       include_tasks: configure_facl.yml
+      when: ansible_system == "Linux"
 
     - name: Configure .bash_profile and .bashrc for splunk user
       include_tasks: configure_bash.yml
+      when: ansible_system == "Linux"
 
-  when: splunk_nix_user != 'root'
+  when: splunk_nix_user not in ["root","administrator"]
+
+- name: Windows - Install Latest Splunk Forwarder
+  win_package:
+    path: C:\\Windows\\Temp\\{{ splunk_file }}
+    arguments: AGREETOLICENSE=Yes SET_ADMIN_USER=0 LOGON_USERNAME="{{ ansible_hostname }}\{{ splunk_nix_user }}" LOGON_PASSWORD="{{ splunk_admin_password }}" SPLUNKUSERNAME="{{ splunk_admin_username }}" SPLUNKPASSWORD="{{ splunk_admin_password }}" /quiet
+    state: present
+  when: ansible_system == "Win32NT"
 
 - name: Configure OS to disable THP and increase ulimits for splunk process
   include_tasks: configure_os.yml
+  when: ansible_system == "Linux"
 
 - name: Include download and unarchive task
   include_tasks: download_and_unarchive.yml
+  when: ansible_system == "Linux"
 
 - name: Include configure splunk.secret task to standardize splunk.secret
   include_tasks: configure_splunk_secret.yml
@@ -58,3 +101,4 @@
 
 - name: Enable boot start
   include_tasks: configure_splunk_boot.yml
+  when: ansible_system == "Linux"

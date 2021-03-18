@@ -1,5 +1,5 @@
 ---
-- name: Create deploymentclient.conf config
+- name: Linux - Create deploymentclient.conf config
   template:
     src: deploymentclient.conf.j2
     dest: "{{ splunk_home }}/etc/system/local/deploymentclient.conf"
@@ -10,3 +10,15 @@
   when:
     - clientName != 'undefined'
     - splunk_uri_ds != 'undefined'
+    - ansible_system == "Linux"
+
+- name: Windows - Create deploymentclient.conf config
+  win_template:
+    src: deploymentclient.conf.j2
+    dest: "{{ splunk_home }}\\etc\\system\\local\\deploymentclient.conf"
+    owner: "{{ splunk_nix_user }}"
+  notify: restart windows splunk
+  when:
+    - clientName != 'undefined'
+    - splunk_uri_ds != 'undefined'
+    - ansible_system == "Win32NT"

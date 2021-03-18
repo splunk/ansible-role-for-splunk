@@ -1,5 +1,5 @@
 ---
-- name: Install authentication.conf for admins
+- name: Linux - Install authentication.conf for admins
   template:
     src: "{{ splunk_authenticationconf }}"
     dest: "{{ splunk_home }}/etc/system/local/authentication.conf"
@@ -9,4 +9,16 @@
   when:
     - splunk_authenticationconf is defined
     - ad_bind_password != 'undefined'
+    - ansible_system == "Linux"
   notify: restart splunk
+
+- name: Windows - Install authentication.conf for admins
+  win_template:
+    src: "{{ splunk_authenticationconf }}"
+    dest: "{{ splunk_home }}\\etc\\system\\local\\authentication.conf"
+    owner: "{{ splunk_nix_user }}"
+  when:
+    - splunk_authenticationconf is defined
+    - ad_bind_password != 'undefined'
+    - ansible_system == "Win32NT"
+  notify: restart windows splunk

@@ -1,6 +1,13 @@
 ---
-- name: Stop splunk
+- name: Linux - Stop splunk
   service:
     name: "{{ splunk_service }}"
     state: stopped
   become: true
+  when: ansible_system == "Linux"
+
+- name: Windows - Stop splunk
+  win_service:
+    name: "{{ splunk_service }}"
+    state: stopped
+  when: ansible_system == "Win32NT"

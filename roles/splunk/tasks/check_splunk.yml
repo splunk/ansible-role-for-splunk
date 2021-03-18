@@ -1,15 +1,23 @@
 ---
-- name: Check if Splunk is installed
+- name: Linux - Check if Splunk is installed
   stat:
     path: "{{ splunk_home }}/bin/splunk"
     follow: true
   register: splunkd_path
   become: true
+  when: ansible_system == "Linux"
+
+- name: Windows - Check if Splunk is installed
+  win_stat:
+    path: "{{ splunk_home }}\\bin\\splunk.exe"
+    follow: true
+  register: splunkd_path
+  when: ansible_system == "Win32NT"
 
   # If installed, check version, if version is good, don't install but continue
 - name: Install Splunk if not installed
   include_tasks: install_splunk.yml
-  when: splunkd_path.stat.exists == false
+  when: not splunkd_path.stat.exists
 
   # Configure the license for both fresh and old installs
 - name: Configure license
@@ -18,16 +26,28 @@
 - name: Execute this block only if splunk is already installed
   block:
 
-    - name: Run splunk version command to check currently installed version
+    - name: Linux - Run splunk version command to check currently installed version
       command: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
       register: current_version
       become: true
       become_user: "{{ splunk_nix_user }}"
       changed_when: false
+      when: ansible_system == "Linux"
+
+    - name: Windows - Run splunk version command to check currently installed version
+      win_command: |
+        "{{ splunk_home }}\\bin\\splunk.exe" version --answer-yes --auto-ports --no-prompt --accept-license
+      register: current_version
+      changed_when: false
+      when: ansible_system == "Win32NT"
+
+    - name: Save current version in variable
+      set_fact:
+        splunk_current_version: "{{ current_version.stdout | regex_search('(\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?)') }}"
 
     - name: "Checkpoint: Version" ##########################
       debug:
-        msg: "The value of splunk_version is: {{ splunk_version }} and the current_version is: {{ current_version.stdout }}"
+        msg: "The value of splunk_version is: {{ splunk_v }} and the current_version is: {{ splunk_current_version }}"
 
     - name: Execute this block only if the current version does not match the expected version
       block:
@@ -40,11 +60,19 @@
 
         - name: Stop Splunk if not at expected version and splunk is currently running
           include_tasks: splunk_stop.yml
-          when: splunk_status.rc == 0
+          when:
+            (
+              splunk_status.rc is defined and
+              splunk_status.rc == 0
+            ) or
+            (
+              win_splunk_status.stderr_lines is defined and
+              win_splunk_status.stderr_lines | length == 0
+            )
 
         - name: Upgrade Splunk if not at expected version
           include_tasks: upgrade_splunk.yml
       # Conditional for version mismatch block
-      when: current_version.stdout != splunk_version
+      when: current_version.stdout != splunk_v
   # Conditional for this block
-  when: splunkd_path.stat.exists == true
+  when: splunkd_path.stat.exists
