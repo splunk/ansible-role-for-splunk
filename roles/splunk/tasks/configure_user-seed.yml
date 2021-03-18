@@ -1,14 +1,21 @@
 ---
 - name: Execute this block only when splunk_admin_password has been configured
   block:
-    - name: "Check for existing {{ splunk_home }}/etc/passwd"
+    - name: "Linux - Check for existing {{ splunk_home }}/etc/passwd"
       stat:
         path: "{{ splunk_home }}/etc/passwd"
       register: splunk_etc_passwd
       become: true
       become_user: "{{ splunk_nix_user }}"
+      when: ansible_system == "Linux"
 
-    - name: Create user-seed.conf file with splunk_admin_username and splunk_admin_password
+    - name: "Windows - Check for existing {{ splunk_home }}/etc/passwd"
+      win_stat:
+        path: "{{ splunk_home }}\\etc\\passwd"
+      register: splunk_etc_passwd
+      when: ansible_system == "Win32NT"
+
+    - name: Linux - Create user-seed.conf file with splunk_admin_username and splunk_admin_password
       template:
         src: user-seed.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
@@ -16,6 +23,17 @@
         group: "{{ splunk_nix_group }}"
         mode: 0644
       become: true
-      when: not splunk_etc_passwd.stat.exists
+      when:
+        - not splunk_etc_passwd.stat.exists
+        - ansible_system == "Linux"
+
+    - name: Windows - Create user-seed.conf file with splunk_admin_username and splunk_admin_password
+      win_template:
+        src: user-seed.conf.j2
+        dest: "{{ splunk_home }}\\etc\\system\\local\\user-seed.conf"
+        owner: "{{ splunk_nix_user }}"
+      when:
+        - not splunk_etc_passwd.stat.exists
+        - ansible_system == "Win32NT"
   when:
     - splunk_admin_password != 'undefined'

@@ -77,6 +77,12 @@
     state: restarted
   become: true
 
+- name: restart windows splunk
+  win_service:
+    name: "{{ splunk_service }}"
+    state: restarted
+  ignore_errors: True
+
 - name: restart redhat auditd service
   command: service auditd condrestart
   become: true
