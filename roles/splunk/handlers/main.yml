@@ -27,6 +27,7 @@
   systemd:
     daemon_reload: true
   become: true
+  when: not splunk_use_initd
 
 - name: stop splunk
   service:
