@@ -12,6 +12,7 @@
   get_url:
     url: "{{ splunk_package_url }}"
     dest: "{{ splunk_package_path }}/{{ splunk_file }}"
+    checksum: "md5:{{ splunk_package_url_checksum }}"
   delegate_to: localhost
   register: download_result
   retries: 3

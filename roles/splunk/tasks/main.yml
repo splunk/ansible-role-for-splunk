@@ -5,6 +5,7 @@
       set_fact:
         splunk_home: "{{ splunk_install_path }}/splunk"
         splunk_package_url: "{{ splunk_package_url_full }}"
+        splunk_package_url_checksum: "{{ splunk_package_url_full_checksum }}"
         splunk_product: "Splunk"
         splunk_install_type: full
       changed_when: false
@@ -23,6 +24,7 @@
       set_fact:
         splunk_home: "{{ splunk_install_path }}/splunkforwarder"
         splunk_package_url: "{{ splunk_package_url_uf }}"
+        splunk_package_url_checksum: "{{ splunk_package_url_uf_checksum }}"
         splunk_product: "Splunk Universal Forwarder"
         splunk_install_type: uf
       changed_when: false
