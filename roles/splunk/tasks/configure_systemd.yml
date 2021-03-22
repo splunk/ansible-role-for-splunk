@@ -24,3 +24,4 @@
     - { option: "LimitDATA", value: "infinity" }
     - { option: "LimitCORE", value: "infinity" }
     - { option: "TasksMax", value: "infinity" }
+  notify: reload systemctl daemon
