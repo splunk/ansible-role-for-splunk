@@ -1,0 +1,13 @@
+---
+- name: Configure custom splunkd management port
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/web.conf"
+    section: settings
+    option: mgmtHostPort
+    value: "0.0.0.0:{{ splunkd_port }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  notify: restart splunk
+  when: splunkd_port != '8089'

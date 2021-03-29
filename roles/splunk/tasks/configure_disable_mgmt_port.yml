@@ -1,0 +1,13 @@
+---
+- name: Disable splunkd management port
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: httpServer
+    option: disableDefaultPort
+    value: "{{ splunk_disable_mgmt_port }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  notify: restart splunk
+  when: splunk_disable_mgmt_port
