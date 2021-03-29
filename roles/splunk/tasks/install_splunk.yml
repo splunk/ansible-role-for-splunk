@@ -53,6 +53,14 @@
     - splunk_configure_authentication
     - ad_bind_password != 'undefined'
 
+- name: Include custom management port task
+  include_tasks: configure_custom_mgmt_port.yml
+  when: splunkd_port != '8089'
+
+- name: Include disable management port task
+  include_tasks: configure_disable_mgmt_port.yml
+  when: splunk_disable_mgmt_port
+
 - name: Include post-install tasks
   include_tasks: post_install.yml
 

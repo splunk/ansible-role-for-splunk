@@ -25,7 +25,9 @@ splunk_secret_file: splunk.secret # Used to specify your splunk.secret filename(
 splunk_configure_authentication: false
 ad_bind_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_authenticationconf: authentication.conf.j2
-splunk_use_initd: false  # if set to false, the role will use systemd instead
+splunk_use_initd: false  # If set to false, the role will use systemd instead
+splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
+splunkd_port: 8089 # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/ # Base directory under which repositories for app deplyoment should be cloned to
 git_server: undefined # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
 git_key: undefined # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
@@ -42,7 +44,6 @@ splunk_shc_label: myshc
 splunk_shc_rf: 3
 splunk_shc_rep_port: 8100
 splunk_shc_target_group: shc
-splunkd_port: 8089
 splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
 splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
 # Linux and scripting related vars

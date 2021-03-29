@@ -44,7 +44,7 @@
 
     - name: Get SHC status from first SH under the "target_shc_group_name" inventory group specified in the shdeployer host_vars
       uri:
-        url: "https://{{ groups[target_shc_group_name] | first }}:8089/services/shcluster/status"
+        url: "https://{{ groups[target_shc_group_name] | first }}:{{ splunkd_port }}/services/shcluster/status"
         method: GET
         user: "{{ splunk_admin_username }}"
         password: "{{ splunk_admin_password }}"
