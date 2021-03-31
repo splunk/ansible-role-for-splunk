@@ -42,12 +42,11 @@
     - name: Download defined Git repos to local Ansible host
       git:
         accept_hostkey: true
-        repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
+        repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}"
         version: "{{ item.git_version | default(git_version) }}"
-        dest: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}"
+        dest: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.git_project | default(git_project) }}"
         key_file: "{{ git_key }}"
         force: true
-      loop: "{{ git_apps }}"
       delegate_to: localhost
       changed_when: false
       check_mode: false
@@ -78,7 +77,7 @@
       loop: "{{ git_apps }}"
       vars:
         app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
-        app_src: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}"
+        app_src: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
 
     - name: Cleanup the local directory that was used to manage repos on the target host
       file:
