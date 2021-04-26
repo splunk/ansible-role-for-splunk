@@ -16,6 +16,11 @@ all:
           hosts:
             my-lm-host:
 
+        # You can preinstall licenses from roles files directory; even possible to have a list of licenses
+        #  vars:
+        #    splunk_licenses:
+        #      - splunk_enterprise.lic
+
         dmc:
           hosts:
             my-dmc-host:
