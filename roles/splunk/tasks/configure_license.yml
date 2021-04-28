@@ -2,31 +2,13 @@
 - block:
   - name: Copy licenses to the licensemaster
     copy:
-      src: "{{ item.src }}"
-      dest: "{{ item.dest }}"
+      src: "{{ item }}"
+      dest: "{{ splunk_home}}/etc/license/enterprise/{{ item }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
       mode: 0644
     loop: "{{ splunk_licenses }}"
-    
-  - name: Install licenses on the licensemaster
-    command: "{{ splunk_home }}/bin/splunk add licenses {{ item.dest }} -auth {{ splunk_auth }}"
-    become: true
-    become_user: "{{ splunk_nix_user }}"
-    loop: "{{ splunk_licenses }}"
-    ignore_errors: yes
-    no_log: true
-    register: license_result
-    changed_when: license_result.rc == 0
     notify: restart splunk
-
-  - name: Cleanup licenses on the licensemaster that were copied
-    file:
-      path: "{{ item.dest }}"
-      state: absent
-    become: true
-    loop: "{{ splunk_licenses }}"
-
   when:
     - "'licensemaster' in group_names"
     - splunk_licenses != 'undefined'

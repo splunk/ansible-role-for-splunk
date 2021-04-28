@@ -16,13 +16,6 @@ all:
           hosts:
             my-lm-host:
 
-        # You can preinstall licenses with defining a source and destination (on the licensemaster)
-        #  vars:
-        #    splunk_licenses:
-        #      - name: Name of the license, like Splunk Enterprise 200GB or Splunk ES Premium App
-        #        src: splunk_enterprise.lic
-        #        dest: /tmp/splunk_enterprise.lic
-
         dmc:
           hosts:
             my-dmc-host:
