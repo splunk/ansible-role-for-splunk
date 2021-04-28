@@ -1,31 +1,34 @@
 ---
 - block:
-  - name: Copy Licenses to Master
+  - name: Copy licenses to the licensemaster
     copy:
-      src: "{{ item }}"
-      dest: "/tmp/{{ item }}"
+      src: "{{ item.src }}"
+      dest: "{{ item.dest }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+      mode: 0644
     loop: "{{ splunk_licenses }}"
     
-  - name: Install license on licensemaster
-    command: "{{ splunk_home }}/bin/splunk add licenses /tmp/{{ item }} -auth {{ splunk_auth }}"
+  - name: Install licenses on the licensemaster
+    command: "{{ splunk_home }}/bin/splunk add licenses {{ item.dest }} -auth {{ splunk_auth }}"
     become: true
     become_user: "{{ splunk_nix_user }}"
     loop: "{{ splunk_licenses }}"
     ignore_errors: yes
+    no_log: true
     register: license_result
-    changed_when: '"The licenses object has been added" in license_result.stdout'
+    changed_when: license_result.rc == 0
     notify: restart splunk
 
-  - name: Clean Up licenses
+  - name: Cleanup licenses on the licensemaster that were copied
     file:
-      path: "/tmp/{{ item }}"
+      path: "{{ item.dest }}"
       state: absent
     become: true
     loop: "{{ splunk_licenses }}"
 
   when:
     - "'licensemaster' in group_names"
-    - splunk_licenses is defined
     - splunk_licenses != 'undefined'
 
 - name: Set license master_uri
