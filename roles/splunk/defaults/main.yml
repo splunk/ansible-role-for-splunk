@@ -9,7 +9,7 @@ splunk_package_url: auto_determined # This gets set by main.yml but we have to d
 splunk_package_path: ~/
 splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.3&product=splunk&filename=splunk-8.1.3-63079c59e632-Linux-x86_64.tgz&wget=true
 splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.3&product=universalforwarder&filename=splunkforwarder-8.1.3-63079c59e632-Linux-x86_64.tgz&wget=true
-splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
+splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "splunk_full" group or a "splunk_uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
 splunk_nix_user: splunk
 splunk_nix_group: splunk
@@ -45,8 +45,8 @@ splunk_shc_key: mypass4symmkey
 splunk_shc_label: myshc
 splunk_shc_rf: 3
 splunk_shc_rep_port: 8100
-splunk_shc_target_group: shc
-splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
+splunk_shc_target_group: splunk_shc
+splunk_shc_deployer: "{{ groups['splunk_shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
 splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
 # Linux and scripting related vars
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days

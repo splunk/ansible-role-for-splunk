@@ -1,35 +1,35 @@
 # Example playbook to install splunk and configure a basic SHC
 # Ensure that the following vars are configured: ansible_user, ansible_ssh_private_key_file, splunk_admin_password, splunk_user_seed: true
 - hosts:
-    - shdeployer
+    - splunk_shdeployer
   roles:
     - ../roles/splunk
   vars:
     - deployment_task: check_splunk.yml
 
 - hosts:
-    - shdeployer
+    - splunk_shdeployer
   roles:
     - ../roles/splunk
   vars:
     - deployment_task: configure_shc_deployer.yml
 
 - hosts:
-    - shc
+    - splunk_shc
   roles:
     - ../roles/splunk
   vars:
     - deployment_task: check_splunk.yml
 
 - hosts:
-    - shc
+    - splunk_shc
   roles:
     - ../roles/splunk
   vars:
     - deployment_task: configure_shc_members.yml
 
 - hosts:
-    - shc
+    - splunk_shc
   roles:
     - ../roles/splunk
   vars:

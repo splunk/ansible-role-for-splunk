@@ -4,4 +4,4 @@
   become: true
   become_user: "{{ splunk_nix_user }}"
   no_log: true
-  when: "'indexer' in group_names"
+  when: "'splunk_indexer' in group_names"

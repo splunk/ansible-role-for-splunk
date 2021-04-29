@@ -18,7 +18,7 @@
             state: stopped
           become: true
           when:
-            - "'full' in group_names"
+            - "'splunk_full' in group_names"
 
         - name: Stop SplunkForwarder via systemd service name to prepare for conversion to init.d
           service:
@@ -26,7 +26,7 @@
             state: stopped
           become: true
           when:
-            - "'uf' in group_names"
+            - "'splunk_uf' in group_names"
 
       when:
         - systemd_boot and splunk_use_initd

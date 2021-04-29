@@ -15,4 +15,4 @@
 
 - name: Disable THP
   include_tasks: configure_thp.yml
-  when: "'full' in group_names"
+  when: "'splunk_full' in group_names"

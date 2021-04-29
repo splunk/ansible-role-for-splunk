@@ -5,7 +5,7 @@
     state: touch
   become: true
   become_user: "{{ splunk_nix_user }}"
-  when: "'full' in group_names"
+  when: "'splunk_full' in group_names"
 
 - name: "Ensure correct ownership for {{ splunk_home }}/etc"
   file:

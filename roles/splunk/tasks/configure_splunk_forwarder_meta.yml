@@ -11,7 +11,7 @@
     mode: 0644
   become: true
   notify: restart splunk
-  when: "'full' in group_names"
+  when: "'splunk_full' in group_names"
 
 - name: create splunk_forwarder field in transforms.conf
   ini_file:
@@ -24,7 +24,7 @@
     mode: 0644
   become: true
   notify: restart splunk
-  when: "'full' in group_names"
+  when: "'splunk_full' in group_names"
   loop:
     - { option: "REGEX", value: ".*" }
     - { option: "FORMAT", value: "splunk_forwarder::{{ ansible_hostname }}" }

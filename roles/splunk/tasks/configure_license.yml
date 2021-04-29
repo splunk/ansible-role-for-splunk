@@ -11,5 +11,5 @@
   become: true
   notify: restart splunk
   when:
-    - "'full' in group_names"
+    - "'splunk_full' in group_names"
     - splunk_uri_lm != 'undefined'

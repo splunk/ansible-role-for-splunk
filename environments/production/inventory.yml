@@ -9,24 +9,24 @@
 all:
   children:
 
-    full:
+    splunk_full:
       children:
 
-        licensemaster:
+        splunk_licensemaster:
           hosts:
             my-lm-host:
 
-        dmc:
+        splunk_dmc:
           hosts:
             my-dmc-host:
 
-        shdeployer:
+        splunk_shdeployer:
           hosts:
             my-shc-deployer:
           vars:
             target_shc_group_name: west_coast_shc
 
-        search:
+        splunk_search:
           children:
 
             west_coast_shc:
@@ -35,17 +35,17 @@ all:
                 sh-02:
                 sh-03:
 
-        heavyforwarder:
+        splunk_hf:
           hosts:
             my-hf-01:
             some-other-hf:
 
-        standalone:
+        splunk_standalone:
             hosts:
               my-standalone-splunk-server:
               my-other-standalone-splunk-server:
 
-    uf:
+    splunk_uf:
       children:
 
         vmware:

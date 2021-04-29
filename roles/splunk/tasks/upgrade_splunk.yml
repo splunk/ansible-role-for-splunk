@@ -18,7 +18,7 @@
 
 - name: Include mongod tasks to ensure it's in a good state
   include_tasks: adhoc_fix_mongo.yml
-  when: "'full' in group_names"
+  when: "'splunk_full' in group_names"
 
 - name: Include post-install tasks
   include_tasks: post_install.yml

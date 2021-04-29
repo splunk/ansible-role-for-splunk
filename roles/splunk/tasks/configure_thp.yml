@@ -30,5 +30,5 @@
   # and no need to bother for molecule testing
   when:
     - ansible_connection!="docker"
-    - "'full' in group_names"
+    - "'splunk_full' in group_names"
   ignore_errors: true
