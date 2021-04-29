@@ -1,12 +1,52 @@
 ---
-- name: Create deploymentclient.conf config
-  template:
-    src: deploymentclient.conf.j2
-    dest: "{{ splunk_home }}/etc/system/local/deploymentclient.conf"
+- name: Configure DS URI in deploymentclient.conf
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/deploymentclient.conf"
+    section: 'target-broker:deploymentServer'
+    option: targetUri
+    value: "{{ splunk_uri_ds }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
+    mode: 0644
   become: true
   notify: restart splunk
-  when:
-    - clientName != 'undefined'
-    - splunk_uri_ds != 'undefined'
+  when: splunk_uri_ds != 'undefined'
+
+- name: Configure client name in deploymentclient.conf
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/deploymentclient.conf"
+    section: 'deployment-client'
+    option: clientName
+    value: "{{ clientName }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  notify: restart splunk
+  when: clientName != 'undefined'
+
+- name: Configure phoneHomeIntervalInSecs in deploymentclient.conf
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/deploymentclient.conf"
+    section: deployment-client
+    option: phoneHomeIntervalInSecs
+    value: "{{ phoneHomeIntervalInSecs }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  notify: restart splunk
+  when: phoneHomeIntervalInSecs != 'undefined'
+
+- name: Configure deployment server pass4SymmKey in server.conf
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: deployment
+    option: pass4SymmKey
+    value: "{{ splunk_ds_key }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  notify: restart splunk
+  when: splunk_ds_key != 'undefined'
