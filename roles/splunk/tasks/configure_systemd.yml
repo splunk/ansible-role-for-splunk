@@ -9,7 +9,6 @@
   become: true
   loop:
     - { option: "ExecStart", value: "{{ splunk_home }}/bin/splunk start --accept-license --answer-yes --no-prompt" }
-    - { option: "ExecStop", value: "{{ splunk_home }}/bin/splunk stop" }
     - { option: "ExecReload", value: "{{ splunk_home }}/bin/splunk restart" }
     - { option: "Restart", value: "on-failure" }
     - { option: "RestartSec", value: "30s" }
