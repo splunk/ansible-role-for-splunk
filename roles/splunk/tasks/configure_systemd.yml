@@ -8,8 +8,6 @@
     mode: 0644
   become: true
   loop:
-    - { option: "Restart", value: "on-failure" }
-    - { option: "RestartSec", value: "30s" }
     - { option: "User", value: "{{ splunk_nix_user }}" }
     - { option: "Group", value: "{{ splunk_nix_group }}" }
     - { option: "LimitNOFILE", value: "1024000" }

@@ -30,4 +30,4 @@
     - start splunk
 
 - name: Include accept license task
-  include_tasks: splunk_ftr.yml
+  include_tasks: splunk_license_accept.yml

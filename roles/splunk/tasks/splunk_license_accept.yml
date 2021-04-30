@@ -1,0 +1,8 @@
+---
+- name: Accept Splunk license
+  command: "{{ splunk_home }}/bin/splunk status --accept-license --answer-yes --no-prompt"
+  register: splunk_license_result
+  changed_when: splunk_license_result.rc != 0
+  failed_when: splunk_license_result.rc == 0
+  become: true
+  become_user: "{{ splunk_nix_user }}"
