@@ -1,5 +1,5 @@
 ---
-- name: splunk offline
+- name: Splunk offline
   command: "{{ splunk_home }}/bin/splunk offline -auth {{ splunk_auth }}"
   register: splunk_offline_result
   changed_when: splunk_offline_result.rc == 0

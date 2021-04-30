@@ -13,7 +13,7 @@
 - name: Include download and unarchive task
   include_tasks: download_and_unarchive.yml
 
-- name: Enable boot start and accept license
+- name: Enable boot start
   include_tasks: configure_splunk_boot.yml
 
 - name: Include mongod tasks to ensure it's in a good state

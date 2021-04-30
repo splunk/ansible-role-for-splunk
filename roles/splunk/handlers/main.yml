@@ -15,14 +15,6 @@
   ignore_errors: true
   when: splunk_use_initd and ansible_os_family == "RedHat" and ansible_distribution_major_version|int > 6
 
-- name: update init.d to accept license
-  replace:
-    path: /etc/init.d/splunk
-    regexp: '(start --no-prompt --answer-yes)$'
-    replace: '\1 --accept-license'
-  become: true
-  when: splunk_use_initd
-
 - name: reload systemctl daemon
   systemd:
     daemon_reload: true
@@ -39,6 +31,7 @@
     name: "{{ splunk_service }}"
     state: started
   become: true
+  register: start_splunk_handler_fired
 
 - name: apply indexer cluster bundle
   command: "{{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }}"
@@ -65,7 +58,7 @@
   become_user: "{{ splunk_nix_user }}"
   register: apply_shcluster_bundle_result
   changed_when: apply_shcluster_bundle_result.rc == 0
-  failed_when: apply_shcluster_bundle_result.rc != 0 
+  failed_when: apply_shcluster_bundle_result.rc != 0
   retries: "{{ splunk_apply_shcluster_bundle_retries }}"
   delay: "{{ splunk_apply_shcluster_bundle_delay }}"
   no_log: true
@@ -76,6 +69,7 @@
     name: "{{ splunk_service }}"
     state: restarted
   become: true
+  when: not start_splunk_handler_fired
 
 - name: restart redhat auditd service
   command: service auditd condrestart

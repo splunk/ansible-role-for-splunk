@@ -1,7 +1,0 @@
----
-- name: "Add accept-license argument to splunk init.d"
-  replace:
-    path: /etc/init.d/splunk
-    regexp: '(start --no-prompt --answer-yes)$'
-    replace: '\1 --accept-license'
-  become: true

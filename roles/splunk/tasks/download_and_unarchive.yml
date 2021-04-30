@@ -27,5 +27,7 @@
     group: "{{ splunk_nix_group }}"
   become: true
   notify:
-    - update init.d to accept license
     - start splunk
+
+- name: Include accept license task
+  include_tasks: splunk_license_accept.yml
