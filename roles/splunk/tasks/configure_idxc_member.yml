@@ -13,7 +13,7 @@
 # Splunk version < 8.1.X supports mode=slave
 # https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/ConfigurepeerswithCLI
 - name: Configure idxc member
-  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode peer -auth {{ splunk_auth }} -master_uri {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
+  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode slave -auth {{ splunk_auth }} -master_uri {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: idxc_init_result
