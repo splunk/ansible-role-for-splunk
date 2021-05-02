@@ -28,7 +28,7 @@
     - { option: "replication_factor", value: "{{ splunk_idxc_rf }}" }
     - { option: "search_factor", value: "{{ splunk_idxc_sf }}" }
     - { option: "pass4SymmKey", value: "{{ splunk_idxc_key }}" }
-    - { option: "shcluster_label", value: "{{ splunk_idxc_label }}" }
+    - { option: "cluster_label", value: "{{ splunk_idxc_label }}" }
   when: splunk_v_num_only_url is version('8.1.0','<') or splunk_v_num_only is version('8.1.0','<')
 
 # Splunk version >= 8.1.X supports mode=manager
