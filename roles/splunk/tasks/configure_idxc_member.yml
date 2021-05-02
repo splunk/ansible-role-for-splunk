@@ -1,4 +1,29 @@
 ---
+- name: Run splunk version command to check currently installed version
+  command: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
+  register: current_version
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  changed_when: false
+
+- name: Set splunk version number
+  set_fact:
+    splunk_v_num_only: "{{ current_version.stdout | regex_search ('\\d+\\.\\d+\\.\\d+') }}"
+
+# Splunk version < 8.1.X supports mode=slave
+# https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/ConfigurepeerswithCLI
+- name: Configure idxc member
+  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode peer -auth {{ splunk_auth }} -master_uri {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  register: idxc_init_result
+  changed_when: idxc_init_result.rc == 0
+  failed_when: idxc_init_result.rc != 0
+  notify: restart splunk
+  no_log: true
+  when: splunk_v_num_only_url is version('8.1.0','<') or splunk_v_num_only is version('8.1.0','<')
+
+# Splunk version >= 8.1.X supports mode=peer
 # https://docs.splunk.com/Documentation/Splunk/latest/Indexer/ConfigurepeerswithCLI
 - name: Configure idxc member
   command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode peer -auth {{ splunk_auth }} -master_uri {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
@@ -9,3 +34,4 @@
   failed_when: idxc_init_result.rc != 0
   notify: restart splunk
   no_log: true
+  when: splunk_v_num_only_url is version('8.1.0','>=') or splunk_v_num_only is version('8.1.0','>=')
