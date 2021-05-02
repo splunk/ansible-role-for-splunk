@@ -1,4 +1,5 @@
 ---
+# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremanagerwithserverconf
 - name: Configure clustering stanza for cluster manager node
   ini_file:
     path: "{{ splunk_home }}/etc/system/local/server.conf"

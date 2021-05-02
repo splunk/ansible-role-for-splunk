@@ -1,4 +1,5 @@
 ---
+# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/ConfigurepeerswithCLI
 - name: Configure idxc member
   command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode peer -auth {{ splunk_auth }} -master_uri {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
   become: true
