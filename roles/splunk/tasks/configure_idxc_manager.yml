@@ -16,4 +16,4 @@
     - { option: "replication_factor", value: "{{ splunk_idxc_rf }}" }
     - { option: "search_factor", value: "{{ splunk_idxc_sf }}" }
     - { option: "pass4SymmKey", value: "{{ splunk_idxc_key }}" }
-    - { option: "shcluster_label", value: "{{ splunk_idxc_label }}" }
+    - { option: "cluster_label", value: "{{ splunk_idxc_label }}" }
