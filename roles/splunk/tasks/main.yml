@@ -1,4 +1,10 @@
 ---
+- name: Reset value of start_splunk_handler_fired
+  tags: always
+  set_fact:
+    start_splunk_handler_fired: false
+  changed_when: false
+
 - block:
     - name: Configure vars for full package
       tags: always
