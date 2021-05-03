@@ -1,0 +1,23 @@
+# Example playbook to install Splunk and configure a basic indexer cluster
+# Ensure that the following vars are configured: ansible_user, ansible_ssh_private_key_file, splunk_uri_lm, and splunk_admin_password
+- hosts:
+    - clustermanager
+    - indexers
+  roles:
+    - ../roles/splunk
+  vars:
+    - deployment_task: check_splunk.yml
+
+- hosts:
+    - clustermanager
+  roles:
+    - ../roles/splunk
+  vars:
+    - deployment_task: configure_idxc_manager.yml
+
+- hosts:
+    - indexers
+  roles:
+    - ../roles/splunk
+  vars:
+    - deployment_task: configure_idxc_member.yml

@@ -1,0 +1,29 @@
+---
+- name: Run splunk version command to check currently installed version
+  include_tasks: check_splunk_version.yml
+
+# Splunk version < 8.1 supports mode=master
+# https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/Configuremasterwithserverconf
+# Splunk version >= 8.1 supports mode=manager
+# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremanagerwithserverconf
+- name: Setting clustering mode based on Splunk version number
+  set_fact:
+    mode_value: "{% if splunk_version_release | int < 8.1 %}master{% else %}manager{% endif %}"
+
+- name: Configure clustering stanza for cluster manager node
+  ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: clustering
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: 0644
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: true
+  notify: restart splunk
+  loop:
+    - { option: "mode", value: "{{ mode_value}}" }
+    - { option: "replication_factor", value: "{{ splunk_idxc_rf }}" }
+    - { option: "search_factor", value: "{{ splunk_idxc_sf }}" }
+    - { option: "pass4SymmKey", value: "{{ splunk_idxc_key }}" }
+    - { option: "cluster_label", value: "{{ splunk_idxc_label }}" }
