@@ -27,6 +27,3 @@
     - { option: "search_factor", value: "{{ splunk_idxc_sf }}" }
     - { option: "pass4SymmKey", value: "{{ splunk_idxc_key }}" }
     - { option: "cluster_label", value: "{{ splunk_idxc_label }}" }
-
-- name: Force handlers to run
-  meta: flush_handlers
