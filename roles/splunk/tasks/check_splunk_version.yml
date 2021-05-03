@@ -5,6 +5,6 @@
   become_user: "{{ splunk_nix_user }}"
   changed_when: false
 
-- name: Get Splunk major version number only
+- name: Get Splunk version number only
   set_fact:
-    splunk_v_num_only: "{{ current_version.stdout | regex_search ('\\d+\\.\\d+') }}"
+    splunk_version_release: "{{ current_version.stdout | regex_search ('\\d+\\.\\d+') }}"

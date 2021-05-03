@@ -8,7 +8,7 @@
 # https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremanagerwithserverconf
 - name: Setting clustering mode based on Splunk version number
   set_fact:
-    mode_value: "{% if splunk_v_num_only | int < 8.1 %}master{% else %}manager{% endif %}"
+    mode_value: "{% if splunk_version_release | int < 8.1 %}master{% else %}manager{% endif %}"
 
 - name: Configure clustering stanza for cluster manager node
   ini_file:
