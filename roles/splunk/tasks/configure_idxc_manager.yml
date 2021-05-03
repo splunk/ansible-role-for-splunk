@@ -10,10 +10,6 @@
   set_fact:
     mode_value: {% if splunk_v_num_only < 8.1 %}'master'{% else %}'manager'{% endif %}
 
-- name: view mode_value
-  debug:
-    msg: "mode value is {{ mode_value }}"
-
 - name: Configure clustering stanza for cluster manager node
   ini_file:
     path: "{{ splunk_home }}/etc/system/local/server.conf"
