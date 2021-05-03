@@ -2,7 +2,6 @@
 # Automatically determine desired splunk version string
 splunk_file: "{{ splunk_package_url | regex_search('(splunk(?:forwarder)?\\-\\d+[^/]*\\.tgz)') }}"
 splunk_v: "{{ splunk_package_url | regex_search('(\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?)') }}"
-splunk_v_num_only_url: "{{ splunk_package_url | regex_search('(\\d+\\.\\d+\\.\\d+)') }}"
 splunk_build: "{{ splunk_package_url | regex_search('\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?\\-([^-]+)','\\1') | first }}"
 # Create desired splunk version string (to compare with the output from the splunk version command for upgrades)
 splunk_version: "{{ splunk_product }} {{ splunk_v }} (build {{ splunk_build }})"
