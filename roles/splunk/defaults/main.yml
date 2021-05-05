@@ -1,41 +1,42 @@
 ---
 # defaults file for splunk role
 # Anything that is undefined here should be configured. I recommend setting the values in your group_vars under an all.yml file.
+# '~' -> Tilde character is a way to write null - https://yaml.org/spec/1.2/spec.html#id2805071
 systemd_boot: false # Do NOT change the value of this. It automatically gets changed in main.yml if the role finds an existing systemd file configured for splunk.
-slack_channel: undefined
-slack_token: undefined
+slack_channel: ~
+slack_token: ~
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
 splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.3&product=splunk&filename=splunk-8.1.3-63079c59e632-Linux-x86_64.tgz&wget=true
 splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.3&product=universalforwarder&filename=splunkforwarder-8.1.3-63079c59e632-Linux-x86_64.tgz&wget=true
-splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
+splunk_install_type: ~ # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
 splunk_nix_user: splunk
 splunk_nix_group: splunk
-splunk_uri_lm: undefined
-splunk_uri_cm: undefined
-splunk_uri_ds: undefined # e.g. mydeploymentserver.mydomain.com:8089 ; Note that you must also configure the clientName var under either group_vars or host_vars for deploymentclient.conf to be configured
-clientName: undefined
-phoneHomeIntervalInSecs: undefined
-splunk_ds_key: undefined # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
+splunk_uri_lm: ~
+splunk_uri_cm: ~
+splunk_uri_ds: ~ # e.g. mydeploymentserver.mydomain.com:8089 ; Note that you must also configure the clientName var under either group_vars or host_vars for deploymentclient.conf to be configured
+clientName: ~
+phoneHomeIntervalInSecs: ~
+splunk_ds_key: ~ # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
 splunk_admin_username: admin
-splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
+splunk_admin_password: ~ # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_configure_secret: false # If set to true, you need to update files/splunk.secret
 splunk_secret_file: splunk.secret # Used to specify your splunk.secret filename(s), files should be placed in the "files" folder of the role
 # Although there are tasks for the following Splunk configurations in this role, they are not included in any tasks by default. You can add them to your install_splunk.yml if you would like to have Ansible manage any of these files
 splunk_configure_authentication: false
-ad_bind_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
+ad_bind_password: ~ # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_authenticationconf: authentication.conf.j2
 splunk_use_initd: false  # If set to false, the role will use systemd instead
 splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
 splunkd_port: 8089 # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/ # Base directory under which repositories for app deplyoment should be cloned to
-git_server: undefined # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
-git_key: undefined # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
-git_project: undefined
+git_server: ~ # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
+git_key: ~ # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
+git_project: ~
 git_version: master # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
-splunk_app_deploy_path: undefined # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+splunk_app_deploy_path: ~ # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
 # IDXC Vars
 splunk_idxc_key: mypass4symmkey
 splunk_idxc_rf: 2
