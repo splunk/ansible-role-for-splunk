@@ -8,5 +8,5 @@
   become: true
   when:
     - splunk_authenticationconf is defined
-    - ad_bind_password != 'undefined'
+    - ad_bind_password != ~
   notify: restart splunk
