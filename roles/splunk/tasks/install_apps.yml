@@ -25,17 +25,17 @@
 
 - name: Check if correct vars are defined for SHC app management
   block:
-    - name: Trigger failure if target_shc_group_name var is undefined
+    - name: Trigger failure if target_shc_group_name var is null (~)
       fail:
         msg: "Please add a target_shc_group_name variable to the host_vars for your SH Deployer host(s) before proceeding."
       when: target_shc_group_name is not defined
 
-    - name: Trigger failure if splunk_admin_username var is undefined
+    - name: Trigger failure if splunk_admin_username var is null (~)
       fail:
         msg: "Please add a splunk_admin_username variable to the host_vars for your SHC hosts before proceeding."
       when: splunk_admin_username is not defined
 
-    - name: Trigger failure if splunk_admin_password var is undefined
+    - name: Trigger failure if splunk_admin_password var is null (~)
       fail:
         msg:
           - "Please add a splunk_admin_password variable to the host_vars or group_vars for your SHC hosts before proceeding."
