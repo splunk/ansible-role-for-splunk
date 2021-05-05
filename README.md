@@ -113,6 +113,7 @@ The following example playbooks have been included in this project for your refe
 - **splunk_install_or_upgrade.yml** - Install or upgrade Splunk (or Splunk UFs) on hosts using the check_splunk.yml task in the splunk role.
 - **splunk_shc_deploy.yml** - Installs Splunk and initializes search head clustering on a shdeployer and group of hosts that will serve as a new search head cluster.
 - **splunk_upgrade_full_stack.yml** - Example playbook that demonstrates how to upgrade an entire Splunk deployment with a single-site indexer cluster and a search head cluster using the splunk role. Note: This playbook does not upgrade forwarders, although you could easily add an extra play to do that.
+- **splunk_idxc_deploy.yml** - Sets up a basic indexer cluster - installs/upgrade Splunk on cluster manager and indexers you specified in your inventory file and then configure them for clustering.
 
 ## Extended Documentation
 This section contains additional reference documentation.
