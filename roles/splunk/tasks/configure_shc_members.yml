@@ -7,4 +7,4 @@
   changed_when: shc_init_result.rc == 0
   failed_when: shc_init_result.rc != 0
   notify: restart splunk
-  no_log: true 
+  no_log: true
