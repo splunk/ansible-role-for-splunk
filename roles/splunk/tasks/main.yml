@@ -97,8 +97,8 @@
   include_tasks: slack_messenger.yml
   tags: always
   when:
-    - slack_token != 'undefined'
-    - slack_channel != 'undefined'
+    - slack_token != ~
+    - slack_channel != ~
 
 # Always set the deployment_task var to your desired task in the playbook! e.g. check_splunk.yml (install|upgrade) or configure_apps.yml  (app/addon install|upgrade)
 - name: Include the specified task file
