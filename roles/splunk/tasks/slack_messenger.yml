@@ -11,5 +11,5 @@
   loop:
     - "****************\n*Starting new Ansible play...*\n```Ansible Role: {{ role_name }}\nAnsible Task: {{ deployment_task }}\nTarget Host: {{ ansible_fqdn }}\nStart Time: {{ ansible_date_time.iso8601 }}```"
   when:
-    - slack_token != ~
-    - slack_channel != ~
+    - slack_token is defined
+    - slack_channel is defined
