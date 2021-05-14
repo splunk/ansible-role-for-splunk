@@ -39,19 +39,19 @@
 - name: Include configure deployment client task
   include_tasks: configure_deploymentclient.yml
   when:
-    - clientName != ~
-    - splunk_uri_ds != ~
+    - clientName is defined
+    - splunk_uri_ds is defined
 
 - name: Include configure user-seed task
   include_tasks: configure_user-seed.yml
   when:
-    - splunk_admin_password != ~
+    - splunk_admin_password is defined
 
 - name: Include configure default authentication.conf for AD authentication and admin role mapping
   include_tasks: configure_authentication.yml
   when:
     - splunk_configure_authentication
-    - ad_bind_password != ~
+    - ad_bind_password is defined
 
 - name: Include custom management port task
   include_tasks: configure_custom_mgmt_port.yml
