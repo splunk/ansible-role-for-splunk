@@ -10,7 +10,7 @@
     mode: 0644
   become: true
   notify: restart splunk
-  when: splunk_uri_ds != ~
+  when: splunk_uri_ds is defined
 
 - name: Configure client name in deploymentclient.conf
   ini_file:
@@ -23,7 +23,7 @@
     mode: 0644
   become: true
   notify: restart splunk
-  when: clientName != ~
+  when: clientName is defined
 
 - name: Configure phoneHomeIntervalInSecs in deploymentclient.conf
   ini_file:
@@ -36,7 +36,7 @@
     mode: 0644
   become: true
   notify: restart splunk
-  when: phoneHomeIntervalInSecs != ~
+  when: phoneHomeIntervalInSecs is defined
 
 - name: Configure deployment server pass4SymmKey in server.conf
   ini_file:
@@ -49,4 +49,4 @@
     mode: 0644
   become: true
   notify: restart splunk
-  when: splunk_ds_key != ~
+  when: splunk_ds_key is defined
