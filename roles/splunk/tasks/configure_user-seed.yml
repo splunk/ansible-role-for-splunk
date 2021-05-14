@@ -18,4 +18,4 @@
       become: true
       when: not splunk_etc_passwd.stat.exists
   when:
-    - splunk_admin_password != ~
+    - splunk_admin_password is defined
