@@ -91,6 +91,6 @@
   when:
     - git_apps is defined
     - git_version is defined
-    - git_key != ~
-    - git_server != ~
-    - git_project != ~
+    - git_key is defined
+    - git_server is defined
+    - git_project is defined
