@@ -12,11 +12,10 @@ ansible-role-for-splunk is used by the Splunk@Splunk team to manage Splunk's cor
 ## Table of Contents
 
 1. [Purpose](#purpose)
-1. [Getting Started](#gettingstarted)
-1. [Extended Documentation](#gettingstarted)
-1. [Frequently Asked Questions](#faq)
+1. [Getting Started](#getting-started)
+1. [Extended Documentation](#extended-documentation)
+1. [Frequently Asked Questions](#frequently-asked-questions)
 1. [Support](#support)
-1. [Contributing](#contributing)
 1. [License](#license)
 
 ----
