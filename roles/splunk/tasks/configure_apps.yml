@@ -94,3 +94,46 @@
     - git_key != 'undefined'
     - git_server != 'undefined'
     - git_project != 'undefined'
+
+  # Prep the Ansible host to deploy apps then install them
+- block:
+
+    - name: Install .rsync-filter to avoid copying undesirable files and folders to the target host later
+      copy:
+        src: rsync-filter
+        dest: "{{ local_apps_path }}/.rsync-filter"
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Ensure rsync is installed on target host
+      package:
+        name: rsync
+        state: present
+        update_cache: true
+      become: true
+
+    - name: "Comment out requiretty in sudoers as it causes synchronize to fail on target host"
+      lineinfile:
+        dest: "/etc/sudoers"
+        state: present
+        regexp: "^#?{{ item }}"
+        line: "#{{ item }}"
+        create: true
+        owner: root
+        group: root
+        mode: 0440
+      loop:
+        - "Defaults    requiretty"
+      become: true
+
+    - name: Install apps
+      include_tasks: install_apps.yml
+      loop: "{{ local_apps }}"
+      vars:
+        app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
+        app_src: "{{ local_apps_path }}/{{ item.name }}"
+
+  # Conditional for block
+  when:
+    - local_apps is defined
+    - local_apps_path is defined

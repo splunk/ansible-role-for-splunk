@@ -31,6 +31,7 @@ splunk_use_initd: false  # If set to false, the role will use systemd instead
 splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
 splunkd_port: 8089 # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/ # Base directory under which repositories for app deplyoment should be cloned to
+local_apps_path: undefined
 git_server: undefined # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
 git_key: undefined # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
 git_project: undefined

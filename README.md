@@ -24,7 +24,7 @@ ansible-role-for-splunk is used by the Splunk@Splunk team to manage Splunk's cor
 ## Purpose
 
 #### What is ansible-role-for-splunk?
-ansible-role-for-splunk is a single Ansible role for deploying and administering production Splunk deployments. It supports all Splunk deployment roles (Universal Forwarder, Heavy Forwarder, Indexer, Search Head, Deployment Server, Cluster Master, SHC Deployer, DMC, License Master) as well as management of all apps and configurations (via git repositories).
+ansible-role-for-splunk is a single Ansible role for deploying and administering production Splunk deployments. It supports all Splunk deployment roles (Universal Forwarder, Heavy Forwarder, Indexer, Search Head, Deployment Server, Cluster Master, SHC Deployer, DMC, License Master) as well as management of all apps and configurations (via git repositories or local folder).
 
 This codebase is used by the Splunk@Splunk team internally to manage our deployment, so it has been thoroughly vetted since it was first developed in late 2018. For more information about Ansible best practices, checkout [our related .conf20 session](https://conf.splunk.com/learn/session-catalog.html?search=TRU1537C) for this project.
 
@@ -92,6 +92,14 @@ git_apps:
   - name: my_app
     version: master
 ```
+or you will need to configure the `local_apps` & `local_apps_path` variables:
+```
+local_apps:
+    - name: my_app
+    - name: my_second_app
+local_apps_path: ~/path_on/my_ansible_host/to_the_apps
+```
+
 You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. Note that you may also specify `git_server`, `git_key`, `git_project`, and `git_version` within `git_apps` down to the repository (`name`) level.
 You may also override the auto-configured `splunk_app_deploy_path` at the repository level as well. For example, to deploy apps to $SPLUNK_HOME/etc/apps on a deployment server rather than the default of $SPLUNK_HOME/etc/deployment-apps. If not set, configure_apps.yml will determine the app deployment path based on the host's group membership within the inventory.
 **Tip:** If you only use one git server, you may want to define the `git_server` and related values in an all.yml group_var file.
@@ -132,7 +140,7 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **adhoc_fix_server_certificate.yml** - Use to delete an expired server.pem and generate a new one (default certs). Useful if your server.pem certificate has expired and you are using Splunk's default certificate for splunkd. Note that default certificates present a security risk and that their use should be avoided, if possible.
 - **adhoc_kill_splunkd.yml** - Some releases of Splunk have a "feature" that leaves zombie splunkd processes after a 'splunk stop'. Use this task after a 'splunk stop' to make sure that it's really stopped. Useful for upgrades on some of the 7.x releases, and automatically called by the upgrade_splunk.yml task.
 - **check_splunk.yml** - Check if Splunk is installed. If Splunk is not installed, it will be installed on the host. If Splunk is already installed, the task will execute a "splunk version" command on the host, and then compare the version and build number of Splunk to the version and build number of the expected version of Splunk. Note that the expected version of Splunk does not need to be statically defined; The expected Splunk version and build are automatically extracted from the value of splunk_package_url_full or splunk_package_url_uf using Jinja regex filters. This task will work for both the Universal Forwarder and full Splunk Enterprise packages. You define which host uses what package by organizing it under the appropriate group ('full' or 'uf') in your Ansible inventory.
-- **configure_apps.yml** - This task should be called directly from a playbook in order to deploy apps or configurations (from git repositories) to Splunk hosts. Tip: Add a this task to a playbook after the check_splunk.yml play. Doing so will perform a "install (or upgrade) and deploy apps" run, all in one playbook.
+- **configure_apps.yml** - This task should be called directly from a playbook in order to deploy apps or configurations (from git repositories or local folder) to Splunk hosts. Tip: Add a this task to a playbook after the check_splunk.yml play. Doing so will perform a "install (or upgrade) and deploy apps" run, all in one playbook.
 - **configure_authentication.yml** - Uses the template identified by the `splunk_authenticationconf` variable to install an authentication.conf file to $SPLUNK_HOME/etc/system/local/authentication.conf. We are including this task here since Ansible is able to securely deploy an authentication.conf configuration by using ansible-vault to encrypt sensitive values such as the value of the `ad_bind_password` variable. Note: If you are using a common splunk.secret file, you can omit this task and instead use configure_apps.yml to deploy an authentication.conf file from a Git repository containing an authentication.conf app with pre-hashed credentials.
 - **configure_bash.yml** - Configures bashrc and bash_profile files for the splunk user. Please note that the templates included with this role will overwrite any existing files for the splunk user (if they exist). The templates will define a custom PS1 at the bash prompt, configure the $SPLUNK_HOME environment variable so that you can issue "splunk <command>" without specifying the full path to the Splunk binary, and will enable auto-completion of Splunk CLI commands in bash.
 - **configure_deploymentclient.yml** - Generates a new deploymentclient.conf file from the deploymentclient.conf.j2 template and installs it to $SPLUNK_HOME/etc/system/local/deploymentclient.conf. This task is included automatically during new installations when values have been configured for the `clientName` and `splunk_uri_ds` variables.
