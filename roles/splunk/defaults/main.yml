@@ -76,3 +76,4 @@ linux_packages:
   - nethogs
   - gdb
   - bind-utils
+multi_app_repo: false # set to true by install_multi_app_repo.yml when called

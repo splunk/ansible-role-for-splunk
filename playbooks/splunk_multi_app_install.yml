@@ -1,0 +1,11 @@
+# Example playbook to install/upgrade apps on a Splunk host from a git repository that storage multiple apps
+- hosts:
+    - all
+  roles:
+    - ../roles/splunk
+  serial: 50
+  vars:
+    - deployment_task:
+      - install_multi_app_repo.yml
+    - splunk_apps:
+      - app_name: my-repo-with-multiple-apps

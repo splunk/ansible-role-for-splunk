@@ -1,0 +1,29 @@
+---
+- name: Set correct handler for master-apps
+  set_fact:
+    splunk_handler: "apply indexer cluster bundle"
+  when: app_dest == 'etc/master-apps'
+
+- name: Set correct handler for deployment-apps
+  set_fact:
+    splunk_handler: "reload deployment server"
+  when: app_dest == 'etc/deployment-apps'
+
+- name: Set correct handler for shcluster/apps
+  set_fact:
+    splunk_handler: "apply shcluster-bundle"
+  when: app_dest == 'etc/shcluster/apps'
+
+- name: Set correct handler for shcluster/users
+  set_fact:
+    splunk_handler: "apply shcluster-bundle"
+  when: app_dest == 'etc/shcluster/users'
+
+- name: "Set default restart splunk handler for all other paths (e.g. etc/auth)"
+  set_fact:
+    splunk_handler: "restart splunk"
+  when:
+    - app_dest != 'etc/shcluster/apps'
+    - app_dest != 'etc/shcluster/users'
+    - app_dest != 'etc/deployment-apps'
+    - app_dest != 'etc/master-apps'

@@ -14,7 +14,8 @@
   roles:
     - ../roles/splunk
   vars:
-    - deployment_task: configure_shc_deployer.yml
+    - deployment_task: 
+      - configure_shc_deployer.yml
 
 - hosts:
     - shc

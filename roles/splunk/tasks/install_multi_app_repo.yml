@@ -1,0 +1,38 @@
+---
+- name: set multi_app_repo to true
+  set_fact:
+    multi_app_repo: true
+
+- name: sync the apps repo as per normal
+  include_tasks: configure_apps.yml
+
+- name: determine splunk_handler
+  include_tasks: determine_handler.yml
+
+- name: "Synchronize from {{ splunk_home }}/{{ app_dest }}/{{ git_app_sync.app_name }}/* to {{ splunk_home }}/{{ app_dest }}/ "
+  shell:
+    cmd: "rsync --checksum --recursive --prune-empty-dirs --itemize-changes --no-owner --no-group --no-times {{ splunk_home }}/{{ app_dest }}/{{ git_app_sync.app_name }}/* {{ splunk_home }}/{{ app_dest }}/"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  loop: "{{ git_apps }}"
+  loop_control:
+    loop_var: git_app_sync
+  notify: "{{ splunk_handler }}"
+
+- name: Ensure correct permissions are set
+  file:
+    path: "{{ splunk_home }}/{{ app_dest }}/"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    recurse: true
+  become: true
+
+- name: remove the temporary app folders
+  file:
+    state: absent
+    path: "{{ splunk_home }}/{{ app_dest }}/{{ git_app_remove.app_name }}"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  loop: "{{ git_apps }}"
+  loop_control:
+    loop_var: git_app_remove

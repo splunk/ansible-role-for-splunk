@@ -1,0 +1,24 @@
+---
+# Configure default splunk_app_deploy_path based on which group the host is a member of
+- name: Set default splunk_app_deploy_path for clustermaster hosts
+  set_fact:
+    splunk_app_deploy_path: etc/master-apps
+  when: "'clustermaster' in group_names"
+
+- name: Set default splunk_app_deploy_path for shdeployer hosts
+  set_fact:
+    splunk_app_deploy_path: etc/shcluster/apps
+  when: "'shdeployer' in group_names"
+
+- name: Set default splunk_app_deploy_path for deploymentserver hosts
+  set_fact:
+    splunk_app_deploy_path: etc/deployment-apps
+  when: "'deploymentserver' in group_names"
+
+- name: "Set default splunk_app_deploy_path all other hosts"
+  set_fact:
+    splunk_app_deploy_path: "etc/apps"
+  when:
+    - "'clustermaster' not in group_names"
+    - "'shdeployer' not in group_names"
+    - "'deploymentserver' not in group_names"
