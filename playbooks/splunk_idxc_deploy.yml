@@ -6,18 +6,21 @@
   roles:
     - ../roles/splunk
   vars:
-    - deployment_task: check_splunk.yml
+    - deployment_task: 
+      - check_splunk.yml
 
 - hosts:
     - clustermanager
   roles:
     - ../roles/splunk
   vars:
-    - deployment_task: configure_idxc_manager.yml
+    - deployment_task: 
+      - configure_idxc_manager.yml
 
 - hosts:
     - indexers
   roles:
     - ../roles/splunk
   vars:
-    - deployment_task: configure_idxc_member.yml
+    - deployment_task: 
+      - configure_idxc_member.yml

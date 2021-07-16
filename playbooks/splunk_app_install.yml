@@ -5,4 +5,5 @@
     - ../roles/splunk
   serial: 50
   vars:
-    - deployment_task: configure_apps.yml
+    - deployment_task: 
+      - configure_apps.yml

@@ -103,4 +103,7 @@
 # Always set the deployment_task var to your desired task in the playbook! e.g. check_splunk.yml (install|upgrade) or configure_apps.yml  (app/addon install|upgrade)
 - name: Include the specified task file
   tags: always
-  include_tasks: "{{ deployment_task }}"
+  include_tasks: "{{ deployment_task_item }}"
+  loop_control:
+    loop_var: deployment_task_item
+  loop: "{{ deployment_task }}"
