@@ -61,6 +61,9 @@
   include_tasks: configure_disable_mgmt_port.yml
   when: splunk_disable_mgmt_port
 
+- name: Include accept license task
+  include_tasks: splunk_ftr.yml
+
 - name: Include post-install tasks
   include_tasks: post_install.yml
 

@@ -28,6 +28,3 @@
   become: true
   notify:
     - start splunk
-
-- name: Include accept license task
-  include_tasks: splunk_ftr.yml

@@ -13,6 +13,9 @@
 - name: Include download and unarchive task
   include_tasks: download_and_unarchive.yml
 
+- name: Include accept license task
+  include_tasks: splunk_ftr.yml
+
 - name: Enable boot start
   include_tasks: configure_splunk_boot.yml
 
