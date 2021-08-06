@@ -1,0 +1,20 @@
+---
+- name: Check for duplicate serverclasses
+  assert:
+    that: >
+          serverclasses | map(attribute='serverclass') | list | count
+          ==
+          serverclasses | map(attribute='serverclass') | list | unique | count
+    fail_msg: "A duplicate serverclass has been detected! Please correct the vars and try again."
+
+- name: Generate serverclass.conf from vars
+  template:
+    src: serverclass.conf.j2
+    dest: "{{ splunk_home }}/etc/system/local/serverclass.conf"
+    backup: true
+    mode: 0644
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: true
+  notify: reload deployment server
+  when: serverclasses is defined

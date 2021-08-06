@@ -1,0 +1,33 @@
+# This file is managed by Ansible - DO NOT MODIFY MANUALLY OR VIA SPLUNK WEB
+{% for x in serverclasses %}
+[serverClass:{{ x.serverclass }}]
+{% if x.platform is defined %}
+machineTypesFilter = {{ x.platform }}
+{% endif %}
+{% if x.blacklist is defined %}
+{% set blacklistindex = namespace(value=0) %}
+{% for y in x.blacklist %}
+blacklist.{{ blacklistindex.value }} = {{ y }}
+{% set blacklistindex.value = blacklistindex.value + 1 %}
+{% endfor %}
+{% endif %}
+{% if x.whitelist is defined %}
+{% set whitelistindex = namespace(value=0) %}
+{% for y in x.whitelist %}
+whitelist.{{ whitelistindex.value }} = {{ y }}
+{% set whitelistindex.value = whitelistindex.value + 1 %}
+{% endfor %}
+{% endif %}
+
+{% if x.apps is defined %}
+{% for z in x.apps %}
+[serverClass:{{ x.serverclass }}:app:{{ z.name }}]
+{% if z.options is defined %}
+{% for key, value in z.options.items() %}
+{{ key }} = {{ value }}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+{% endfor %}
