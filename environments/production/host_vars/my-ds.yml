@@ -1,0 +1,39 @@
+---
+# Example host_vars for a deployment server that is leveraging the configure_serverclass.yml task to manage serverclass.conf
+serverclasses:
+# First server class example, basic definition:
+  - serverclass: ALL
+    whitelist:
+      - '*'
+    apps:
+      - name: my_outputs_addon
+        options:
+          restartSplunkd: 1
+# Second server class example, adding in the platform filter:
+  - serverclass: ALL_NIX
+    whitelist:
+      - '*'
+    platform: linux-x86_64
+    apps:
+      - name: Splunk_TA_nix
+        options:
+          restartSplunkd: 1
+# Third server class example, adding multiple apps and filters with additional options configured for each app:
+  - serverclass: ALL_WINDOWS_x64
+    whitelist:
+      - 'hosta'
+      - 'hostb'
+      - 'windows-dc-*'
+    blacklist:
+      - 'hostc'
+    platform: windows-x64
+    apps:
+      - name: Splunk_TA_windows
+        options:
+          restartSplunkd: 0
+          restartIfNeeded: 1
+      - name: custom_windows_inputs
+        options:
+          restartSplunkWeb: 0
+          restartSplunkd: 1
+          stateOnClient: enabled
