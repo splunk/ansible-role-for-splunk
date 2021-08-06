@@ -24,10 +24,6 @@ all:
           hosts:
             my-dmc-host:
 
-        deploymentserver:
-          hosts:
-            my-ds:
-
         shdeployer:
           hosts:
             my-shc-deployer:
