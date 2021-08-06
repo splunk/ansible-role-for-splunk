@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)&nbsp;
 [![GitHub release](https://img.shields.io/github/v/tag/splunk/ansible-role-for-splunk?sort=semver&label=Version)](https://github.com/splunk/ansible-role-for-splunk/releases)
 
-This repository contains Splunk's official Ansible role for performing Splunk administratio of remote hosts over SSH. This role can manage Splunk Enterprise and Universal Forwarders that are on Linux-based platforms (CentOS/Redhat/Ubuntu), as well as deploy configurations from Git repositories. Example playbooks and inventory files are also provided to help new Ansible users make the most out of this project.
+This repository contains Splunk's official Ansible role for performing Splunk administration of remote hosts over SSH. This role can manage Splunk Enterprise and Universal Forwarders that are on Linux-based platforms (CentOS/Redhat/Ubuntu), as well as deploy configurations from Git repositories. Example playbooks and inventory files are also provided to help new Ansible users make the most out of this project.
 
 ansible-role-for-splunk is used by the Splunk@Splunk team to manage Splunk's corporate deployment of Splunk.
 
@@ -12,11 +12,10 @@ ansible-role-for-splunk is used by the Splunk@Splunk team to manage Splunk's cor
 ## Table of Contents
 
 1. [Purpose](#purpose)
-1. [Getting Started](#gettingstarted)
-1. [Extended Documentation](#gettingstarted)
-1. [Frequently Asked Questions](#faq)
+1. [Getting Started](#getting-started)
+1. [Extended Documentation](#extended-documentation)
+1. [Frequently Asked Questions](#frequently-asked-questions)
 1. [Support](#support)
-1. [Contributing](#contributing)
 1. [License](#license)
 
 ----

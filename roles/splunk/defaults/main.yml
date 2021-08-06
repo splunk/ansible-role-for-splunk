@@ -7,8 +7,8 @@ slack_token: undefined
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
-splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.3&product=splunk&filename=splunk-8.1.3-63079c59e632-Linux-x86_64.tgz&wget=true
-splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.1.3&product=universalforwarder&filename=splunkforwarder-8.1.3-63079c59e632-Linux-x86_64.tgz&wget=true
+splunk_package_url_full: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.2.1&product=splunk&filename=splunk-8.2.1-ddff1c41e5cf-Linux-x86_64.tgz&wget=true
+splunk_package_url_uf: https://www.splunk.com/bin/splunk/DownloadActivityServlet?architecture=x86_64&platform=linux&version=8.2.1&product=universalforwarder&filename=splunkforwarder-8.2.1-ddff1c41e5cf-Linux-x86_64.tgz&wget=true
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
 splunk_nix_user: splunk
@@ -36,6 +36,12 @@ git_key: undefined # Path to SSH key for cloning repositories - Note that this m
 git_project: undefined
 git_version: master # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
 splunk_app_deploy_path: undefined # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+# IDXC Vars
+splunk_idxc_key: mypass4symmkey
+splunk_idxc_rf: 2
+splunk_idxc_sf: 2
+splunk_idxc_rep_port: 9887
+splunk_idxc_label: myidxc
 splunk_apply_cluster_bundle_retries: 3 # How many times to retry indexer cluster bundle apply if it fails
 splunk_apply_cluster_bundle_delay: 60 # Delay in seconds between retries to apply indexer cluster bundle
 splunk_apply_shcluster_bundle_retries: 3 # How many times to retry SHC bundle apply if it fails
@@ -48,6 +54,7 @@ splunk_shc_rep_port: 8100
 splunk_shc_target_group: shc
 splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
 splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
+start_splunk_handler_fired: false # Do not change; used to prevent unnecessary splunk restarts
 # Linux and scripting related vars
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
 add_diag_script: false # Set to true to install a script and cron job to automatically cleanup splunk diag files older than 30 days

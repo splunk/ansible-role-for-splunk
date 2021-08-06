@@ -1,8 +1,0 @@
----
-- name: Splunk First Time Run (FTR) to accept license
-  command: "{{ splunk_home }}/bin/splunk ftr --accept-licence --no-prompt --answer-yes"
-  register: splunk_ftr_result
-  changed_when: splunk_ftr_result.rc == 0
-  failed_when: splunk_ftr_result.rc != 0
-  become: true
-  become_user: "{{ splunk_nix_user }}"

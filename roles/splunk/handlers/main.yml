@@ -31,6 +31,7 @@
     name: "{{ splunk_service }}"
     state: started
   become: true
+  register: start_splunk_handler_fired
 
 - name: apply indexer cluster bundle
   command: "{{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }}"
@@ -68,6 +69,7 @@
     name: "{{ splunk_service }}"
     state: restarted
   become: true
+  when: not start_splunk_handler_fired
 
 - name: restart redhat auditd service
   command: service auditd condrestart

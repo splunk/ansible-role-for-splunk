@@ -1,0 +1,10 @@
+- name: Run splunk version command to check currently installed version
+  command: "{{ splunk_home }}/bin/splunk version --answer-yes --auto-ports --no-prompt --accept-license"
+  register: current_version
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  changed_when: false
+
+- name: Get Splunk version number only
+  set_fact:
+    splunk_version_release: "{{ current_version.stdout | regex_search ('\\d+\\.\\d+') }}"
