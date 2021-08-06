@@ -62,7 +62,7 @@
   when: splunk_disable_mgmt_port
 
 - name: Include accept license task
-  include_tasks: splunk_ftr.yml
+  include_tasks: splunk_license_accept.yml
 
 - name: Include post-install tasks
   include_tasks: post_install.yml
