@@ -16,9 +16,17 @@ all:
           hosts:
             my-lm-host:
 
+        deploymentserver:
+          hosts:
+            my-ds:
+
         dmc:
           hosts:
             my-dmc-host:
+
+        deploymentserver:
+          hosts:
+            my-ds:
 
         shdeployer:
           hosts:
