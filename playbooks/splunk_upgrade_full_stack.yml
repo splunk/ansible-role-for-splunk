@@ -1,7 +1,7 @@
 ---
 # Example playbook to properly upgrade a single-site indexer cluster and search head cluster using the splunk role from ansible-role-for-splunk
 - hosts:
-    - clustermaster
+    - clustermanager
   become: yes
   any_errors_fatal: true
   max_fail_percentage: 0
@@ -34,7 +34,7 @@
     deployment_task: check_splunk.yml
 
 - hosts:
-    - clustermaster
+    - clustermanager
   become: yes
   any_errors_fatal: true
   max_fail_percentage: 0
@@ -56,7 +56,7 @@
     deployment_task: check_splunk.yml
 
 - hosts:
-    - clustermaster
+    - clustermanager
   become: yes
   any_errors_fatal: true
   max_fail_percentage: 0

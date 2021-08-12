@@ -55,7 +55,7 @@ Ansible only needs to be installed on the host that you want to use to manage yo
 The layout of your inventory is critical for the tasks included in ansible-role-for-splunk to run correctly. The "role" of your host is determined by it being a member of one or more inventory groups that define its Splunk role. Ansible expects each host to be a member of one of these groups and uses that membership to determine the package that should be used, the installation path, the default deployment path for app deployments, and several other things. The following group names are currently supported:
 * full
 * uf
-* clustermaster
+* clustermanager
 * deploymentserver
 * indexer
 * licensemaster
