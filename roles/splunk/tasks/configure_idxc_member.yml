@@ -19,3 +19,6 @@
   failed_when: idxc_peer_init_result.rc != 0
   notify: restart splunk
   no_log: true
+  until: idxc_peer_init_result.rc == 0
+  retries: 6
+  delay: 5

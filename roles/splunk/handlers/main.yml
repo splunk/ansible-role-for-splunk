@@ -82,3 +82,9 @@
     state: restarted
   become: true
   when: ansible_os_family != 'RedHat'
+
+- name: wait for splunkd
+  wait_for:
+    port: "{{ splunkd_port }}"
+    state: started
+    delay: 5
