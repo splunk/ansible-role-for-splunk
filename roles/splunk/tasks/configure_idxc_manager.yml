@@ -27,3 +27,9 @@
     - { option: "search_factor", value: "{{ splunk_idxc_sf }}" }
     - { option: "pass4SymmKey", value: "{{ splunk_idxc_key }}" }
     - { option: "cluster_label", value: "{{ splunk_idxc_label }}" }
+
+- name: Wait for splunkd to come up
+  wait_for:
+    port: "{{ splunkd_port }}"
+    state: started
+    delay: 5
