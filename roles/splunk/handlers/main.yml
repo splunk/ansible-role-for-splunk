@@ -43,7 +43,7 @@
   retries: "{{ splunk_apply_cluster_bundle_retries }}"
   delay: "{{ splunk_apply_cluster_bundle_delay }}"
   no_log: true
-  when: "'clustermaster' in group_names"
+  when: "'clustermanager' in group_names"
 
 - name: reload deployment server
   command: "{{ splunk_home }}/bin/splunk reload deploy-server -auth {{ splunk_auth }}"

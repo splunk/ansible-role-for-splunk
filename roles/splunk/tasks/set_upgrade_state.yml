@@ -5,4 +5,4 @@
   become_user: "{{ splunk_nix_user }}"
   when:
     - peer_state is defined and splunk_auth is defined
-    - "'clustermaster' in group_names"
+    - "'clustermanager' in group_names"

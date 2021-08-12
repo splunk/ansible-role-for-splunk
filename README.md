@@ -55,7 +55,7 @@ Ansible only needs to be installed on the host that you want to use to manage yo
 The layout of your inventory is critical for the tasks included in ansible-role-for-splunk to run correctly. The "role" of your host is determined by it being a member of one or more inventory groups that define its Splunk role. Ansible expects each host to be a member of one of these groups and uses that membership to determine the package that should be used, the installation path, the default deployment path for app deployments, and several other things. The following group names are currently supported:
 * full
 * uf
-* clustermaster
+* clustermanager
 * deploymentserver
 * indexer
 * licensemaster
@@ -153,8 +153,8 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **install_utilities.yml** - Installs Linux packages that are useful for troubleshooting Splunk-related issues when `install_utilities: true` and `linux_packages` is defined with a list of packages to install.
 - **main.yml** - This is the main task that will always be called when executing this role. This task sets the appropriate variables for full vs uf packages, sends a Slack notification about the play if the slack_token and slack_channel are defined, checks the current boot-start configuration to determine if it's in the expected state, and then includes the task from the role to execute against, as defined by the value of the deployment_task variable. The deployment_task variable should be defined in your playbook(s). Refer to the included example playbooks to see this in action.
 - **post_install.yml** - Executes post-installation tasks. Performs a touch on the .ui_login file which disables the first-time login prompt to change your password, ensures that `splunk_home` is owned by the correct user and group, and optionally configures three scripts to: cleanup crash logs and old diags (by calling add_crashlog_script.yml and add_diag_script.yml, respectively), and a pstack generation shell script for troubleshooting purposes (by calling add_pstack_script.yml). This task will install various Linux troubleshooting utilities (by calling install_utilities.yml) when `install_utilities: true`.
-- **set_maintenance_mode.yml** - Enables or disables maintenance mode on a cluster master. Intended to be called by playbooks for indexer cluster upgrades/maintenance. Requires the `state` variable to be defined. Valid values: enabled, disabled
-- **set_upgrade_state.yml** - Executes a splunk upgrade-{{ peer_state }} cluster-peers command on the cluster master. This task can be used for upgrading indexer clusters with new minor and maintenance releases of Splunk (assuming you are at Splunk v7.1.0 or higher). Refer to https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Searchablerollingupgrade for more information.
+- **set_maintenance_mode.yml** - Enables or disables maintenance mode on a cluster manager. Intended to be called by playbooks for indexer cluster upgrades/maintenance. Requires the `state` variable to be defined. Valid values: enabled, disabled
+- **set_upgrade_state.yml** - Executes a splunk upgrade-{{ peer_state }} cluster-peers command on the cluster manager. This task can be used for upgrading indexer clusters with new minor and maintenance releases of Splunk (assuming you are at Splunk v7.1.0 or higher). Refer to https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Searchablerollingupgrade for more information.
 - **splunk_offline.yml** - Runs a splunk offline CLI command. Useful for bringing down indexers non-intrusively by allowing searches to complete before stopping splunk.
 - **splunk_restart.yml**  - Restarts splunk via the service module. Used when waiting for a handler to run at the end of the play would be inappropriate.
 - **splunk_start.yml** - Starts splunk via the service module. Used when waiting for a handler to run at the end of the play would be inappropriate.
