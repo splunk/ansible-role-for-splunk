@@ -4,8 +4,8 @@
   include_vars: "{{ ansible_os_family }}.yml"
 
 - name: Set ulimits for splunk
-  copy:
-    src: splunk_ulimits.conf
+  template:
+    src: splunk_ulimits.conf.j2
     dest: /etc/security/limits.d/splunk_ulimits.conf
     owner: root
     group: root
