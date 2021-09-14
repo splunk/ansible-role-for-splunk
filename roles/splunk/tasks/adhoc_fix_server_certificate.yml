@@ -7,6 +7,6 @@
   become_user: "{{ splunk_nix_user }}"
   loop:
     - "rm {{ splunk_home }}/etc/auth/server.pem"
-    - "{{ splunk_home }}/bin/splunk createssl server-cert -d /opt/splunk/etc/auth -n server.pem"
+    - "{{ splunk_home }}/bin/splunk createssl server-cert -d {{ splunk_home }}/etc/auth -n server.pem"
   notify:
     - restart splunk
