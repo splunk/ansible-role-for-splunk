@@ -18,6 +18,7 @@ splunk_uri_cm: undefined
 splunk_uri_ds: undefined # e.g. mydeploymentserver.mydomain.com:8089 ; Note that you must also configure the clientName var under either group_vars or host_vars for deploymentclient.conf to be configured
 clientName: undefined
 phoneHomeIntervalInSecs: undefined
+splunk_general_key: undefined # Configures a pass4SymmKey in server.conf under the general stanza
 splunk_ds_key: undefined # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
 splunk_admin_username: admin
 splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
