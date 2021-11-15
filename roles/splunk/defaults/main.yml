@@ -60,7 +60,7 @@ start_splunk_handler_fired: false # Do not change; used to prevent unnecessary s
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
 add_diag_script: false # Set to true to install a script and cron job to automatically cleanup splunk diag files older than 30 days
 add_pstack_script: false # Set to true to install a pstack generation script for troubleshooting purposes in $SPLUNK_HOLME/genpstacks.sh
-configure_dmesg_sysctl: false # allow non-root users to run dmesg
+configure_dmesg_sysctl: false # set to true to allow non-root users to run dmesg
 install_utilities: false # Set to true to install the list of packages defined in the linux_packages var after installing splunk
 linux_packages:
   - nload

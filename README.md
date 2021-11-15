@@ -141,7 +141,7 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **configure_idxc_sh.yml** - Configures a search head to join an existing indexer cluster using `splunk_uri_cm` and `splunk_idxc_key`.
 - **configure_license.yml** - Configure the license master URI in server.conf for full Splunk installations when `splunk_uri_lm` has been defined. Note: This could also be accomplished using configure_apps.yml with a git repository.
 - **configure_os.yml** - Increases ulimits for the splunk user and disables Transparent Huge Pages (THP) per Splunk implementation best practices.
-- **configure_sysctl.yml** - Allow splunk user to run `dmesg`, which is needed for some SPlunk_TA_nix scripts to run. Some Debian AMI's have `kernel.dmesg_restrict = 0` set by default.
+- **configure_sysctl.yml** - Allow splunk user to run `dmesg`, which is needed for some SPlunk_TA_nix scripts to run. Some Debian AMI's have `kernel.dmesg_restrict = 1` set by default. Set `configure_dmesg_sysctl: true` in `main.yml` to enable this.
 - **configure_serverclass.yml** - Generates a new serverclass.conf file from the serverclass.conf.j2 template and installs it to $SPLUNK_HOME/etc/system/local/serverclass.conf.
 - **configure_shc_captain.yml** - Perform a `bootstrap shcluster-captain` using the server list provided in `splunk_shc_uri_list`.
 - **configure_shc_deployer.yml** - Configures a Splunk host to act as a search head deployer by configuring the pass4SymmKey contained in `splunk_shc_key` and the shcluster_label contained in `splunk_shc_label`.
