@@ -1,0 +1,13 @@
+---
+- name: Configure search head to join indexer cluster
+  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode searchhead -master_uri {{ splunk_uri_cm }} -secret {{ splunk_idxc_key }} -auth {{ splunk_auth }}"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  register: idxc_sh_join_result
+  changed_when: idxc_sh_join_result.rc == 0
+  failed_when: idxc_sh_join_result.rc != 0
+  notify: restart splunk
+  no_log: true
+  until: idxc_sh_join_result.rc == 0
+  retries: 6
+  delay: 5
