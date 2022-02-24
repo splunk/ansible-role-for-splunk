@@ -8,5 +8,5 @@
     mode: 0644
   become: true
   loop:
-    - { bashtemplate: 'bashrc.j2', bashfilepath: '.bashrc' }
-    - { bashtemplate: 'bash_profile.j2', bashfilepath: '.bash_profile' }
+    - { bashtemplate: "{{ splunk_bashrc_template }}", bashfilepath: '.bashrc' }
+    - { bashtemplate: "{{ splunk_bash_profile_template }}", bashfilepath: '.bash_profile' }
