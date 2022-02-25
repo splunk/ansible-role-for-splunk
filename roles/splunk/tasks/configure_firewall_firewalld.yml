@@ -1,0 +1,9 @@
+---
+- name: Configure firewalld for Splunk
+  become: true
+  firewalld:
+    port: "{{ item }}/tcp"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: "{{ splunk_firewall_ports }}"
