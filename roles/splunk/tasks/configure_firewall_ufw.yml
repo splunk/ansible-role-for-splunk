@@ -1,0 +1,8 @@
+---
+- name: Configure ufw for Splunk
+  become: true
+  ufw:
+    port: "{{ item }}"
+    proto: tcp
+    rule: allow
+  loop: "{{ splunk_firewall_ports }}"

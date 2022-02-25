@@ -1,0 +1,6 @@
+---
+splunk_firewall_ports:
+  - 8088  # HEC port
+  - 9997  # Indexing port
+  - "{{ splunkd_port }}"
+  - "{{ splunk_idxc_rep_port }}"

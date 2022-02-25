@@ -1,0 +1,7 @@
+---
+splunk_firewall_ports:
+  - 8000  # HTTP/HTTPS
+  - 8065  # Appserver
+  - 8191  # App Key Value Store(kvstore/mongod)
+  - "{{ splunkd_port }}"
+  - "{{ splunk_shc_rep_port }}"
