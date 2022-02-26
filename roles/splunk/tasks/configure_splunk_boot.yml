@@ -73,7 +73,7 @@
     - start splunk
 
 - name: Enable splunk boot-start via systemd
-  command: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 1 --answer-yes --auto-ports --no-prompt --accept-license"
+  command: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 1 -create-polkit-rules {{ splunk_create_polkit }} --answer-yes --auto-ports --no-prompt --accept-license"
   become: true
   when:
     - not splunk_use_initd and not systemd_boot
