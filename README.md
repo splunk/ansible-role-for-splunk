@@ -136,6 +136,10 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **configure_bash.yml** - Configures bashrc and bash_profile files for the splunk user. Please note that the templates included with this role will overwrite any existing files for the splunk user (if they exist). The templates will define a custom PS1 at the bash prompt, configure the $SPLUNK_HOME environment variable so that you can issue "splunk <command>" without specifying the full path to the Splunk binary, and will enable auto-completion of Splunk CLI commands in bash.
 - **configure_deploymentclient.yml** - Generates a new deploymentclient.conf file from the deploymentclient.conf.j2 template and installs it to $SPLUNK_HOME/etc/system/local/deploymentclient.conf. This task is included automatically during new installations when values have been configured for the `clientName` and `splunk_uri_ds` variables.
 - **configure_facl.yml** - Configure file system access control lists (FACLs) to allow the splunk user to read /var/log files and add the splunk user's group to /etc/audit/auditd.conf to read /var/log/audit/ directory. This allows the splunk user to read privileged files from a non-privileged system account. Note: This task is performed automatically during new installations when splunk is installed as a non-root user.
+- **configure_firewall_firewalld.yml** - Configures firewalld to allow the ports specified in `splunk_firewall_ports`.  
+  NOTE: Requires `firewall_service` to be set to `firewalld`.
+- **configure_firewall_ufw.yml** - Configures ufw to allow the ports specified in `splunk_firewall_ports`.  
+  NOTE: Requires `firewall_service` to be set to `ufw`.
 - **configure_idxc_manager.yml** - Configures a Splunk host to act as a manager node using `splunk_idxc_rf`, `splunk_idxc_sf`, `splunk_idxc_key`, and `splunk_idxc_label`.
 - **configure_idxc_member.yml** - Configures a Splunk host as an indexer cluster member using `splunk_uri_cm`, `splunk_idxc_rep_port`, and `splunk_idxc_key`.
 - **configure_idxc_sh.yml** - Configures a search head to join an existing indexer cluster using `splunk_uri_cm` and `splunk_idxc_key`.
