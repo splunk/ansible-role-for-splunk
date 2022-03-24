@@ -23,8 +23,8 @@
 - name: Disable THP service
   service:
     name: disable-thp
-    enabled: false
-    state: stopped
+    enabled: yes
+    state: started
   become: true
   # no (real) services in docker containers
   # and no need to bother for molecule testing
