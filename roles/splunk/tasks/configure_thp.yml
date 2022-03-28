@@ -19,6 +19,22 @@
   when:
     - ansible_os_family == "RedHat"
     - ansible_distribution_major_version|int > 6
+    - use_tuned_thp is not defined
+
+- name: Configure THP using tuned profile
+  copy:
+    src: tuned_thp.conf
+    dest: /etc/tuned/splunk/tuned.conf
+    mode: 0644
+    owner: root
+    group: root
+  become: true
+  when: use_tuned_thp == true
+
+- name: Enable tuned profile
+  command: tuned-adm profile splunk
+  become: true
+  when: use_tuned_thp == true
 
 - name: Disable THP service
   service:
@@ -31,4 +47,5 @@
   when:
     - ansible_connection!="docker"
     - "'full' in group_names"
+    - use_tuned_thp is not defined
   ignore_errors: true
