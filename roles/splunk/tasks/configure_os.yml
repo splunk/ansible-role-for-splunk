@@ -19,4 +19,4 @@
 
 - name: Enable read for dmesg
   include_tasks: configure_dmesg.yml
-  when: configure_dmesg == true
+  when: configure_dmesg
