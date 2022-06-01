@@ -16,3 +16,7 @@
 - name: Disable THP
   include_tasks: configure_thp.yml
   when: "'full' in group_names"
+
+- name: Enable read for dmesg
+  include_tasks: configure_dmesg.yml
+  when: configure_dmesg == true
