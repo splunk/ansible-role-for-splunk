@@ -1,0 +1,17 @@
+# Allow non-root users to run dmesg. This is needed for the Splunk_TA_nix to run scripts.
+- name: Add sysctl for dmesg
+  sysctl:
+    name: kernel.dmesg_restrict
+    value: '0'
+    state: present
+    sysctl_file: /etc/sysctl.d/20-splunk.conf
+    reload: yes
+  register: sysctl_dmesg
+  become: true
+
+- name: Restart procps
+  service:
+    name: procps
+    state: restarted
+  when: sysctl_dmesg.changed
+  become: true
