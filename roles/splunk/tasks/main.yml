@@ -33,6 +33,11 @@
         splunk_install_type: uf
       changed_when: false
 
+    - name: Setting least priviledged mode
+      set_fact:
+        least_privileged: true
+      when: splunk_package_version is version(9.0, '>=')
+
     - name: Check if current boot-start configuration is systemd
       stat:
         path: /etc/systemd/system/SplunkForwarder.service
