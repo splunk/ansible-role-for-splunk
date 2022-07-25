@@ -76,7 +76,9 @@
   command: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -systemd-managed 1 --answer-yes --auto-ports --no-prompt --accept-license"
   become: true
   when:
-    - not splunk_use_initd and not systemd_boot
+    - systemd_boot
+    - systemd_boot_uf.stat.exists == false
+    - systemd_boot_full.stat.exists == false
   notify:
     - reload systemctl daemon
     - start splunk
