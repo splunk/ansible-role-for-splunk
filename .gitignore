@@ -1,0 +1,2 @@
+environments/test
+roles/splunk/files/*.lic
