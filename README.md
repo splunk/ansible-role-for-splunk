@@ -139,7 +139,7 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **configure_idxc_manager.yml** - Configures a Splunk host to act as a manager node using `splunk_idxc_rf`, `splunk_idxc_sf`, `splunk_idxc_key`, and `splunk_idxc_label`.
 - **configure_idxc_member.yml** - Configures a Splunk host as an indexer cluster member using `splunk_uri_cm`, `splunk_idxc_rep_port`, and `splunk_idxc_key`.
 - **configure_idxc_sh.yml** - Configures a search head to join an existing indexer cluster using `splunk_uri_cm` and `splunk_idxc_key`.
-- **configure_license.yml** - Configure the license master URI in server.conf for full Splunk installations when `splunk_uri_lm` has been defined. Note: This could also be accomplished using configure_apps.yml with a git repository.
+- **configure_license.yml** - Configure the license group to the `splunk_license_group` variable defined. Default is `Trial`. Available values are "Trial, Free, Enterprise, Forwarder, Manager or Peer. If set to `Peer`, the `splunk_uri_lm` must be defined. Note: This could also be accomplished using configure_apps.yml with a git repository.
 - **configure_os.yml** - Increases ulimits for the splunk user and disables Transparent Huge Pages (THP) per Splunk implementation best practices.
 - **configure_serverclass.yml** - Generates a new serverclass.conf file from the serverclass.conf.j2 template and installs it to $SPLUNK_HOME/etc/system/local/serverclass.conf.
 - **configure_shc_captain.yml** - Perform a `bootstrap shcluster-captain` using the server list provided in `splunk_shc_uri_list`.

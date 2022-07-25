@@ -14,6 +14,8 @@ splunk_install_path: /opt # Base directory on the operating system to which splu
 splunk_nix_user: splunk
 splunk_nix_group: splunk
 splunk_uri_lm: undefined
+splunk_license_file: [] # This can be a list of license files to copy to the host.
+splunk_license_group: Trial # The default matches with the group splunk ships with. You can also set the value via a group_vars or host_vars file.
 splunk_uri_cm: undefined
 splunk_uri_ds: undefined # e.g. mydeploymentserver.mydomain.com:8089 ; Note that you must also configure the clientName var under either group_vars or host_vars for deploymentclient.conf to be configured
 clientName: undefined
