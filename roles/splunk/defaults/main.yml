@@ -64,6 +64,7 @@ add_diag_script: false # Set to true to install a script and cron job to automat
 add_pstack_script: false # Set to true to install a pstack generation script for troubleshooting purposes in $SPLUNK_HOLME/genpstacks.sh
 configure_dmesg: false
 install_utilities: false # Set to true to install the list of packages defined in the linux_packages var after installing splunk
+use_tuned_thp: false
 linux_packages:
   - nload
   - iotop
