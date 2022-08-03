@@ -2,7 +2,7 @@
 # Ensure that the following vars are configured: ansible_user, ansible_ssh_private_key_file, splunk_uri_lm, and splunk_admin_password
 - hosts:
     - clustermanager
-    - indexers
+    - indexer
   roles:
     - ../roles/splunk
   vars:
@@ -16,7 +16,7 @@
     - deployment_task: configure_idxc_manager.yml
 
 - hosts:
-    - indexers
+    - indexer
   roles:
     - ../roles/splunk
   vars:
