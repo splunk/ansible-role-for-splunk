@@ -61,6 +61,7 @@ The layout of your inventory is critical for the tasks included in ansible-role-
 * licensemaster
 * search
 * shdeployer
+* dmc
 
 Note that in Ansible you may nest groups within groups, and groups within those groups, and so on. We depend on this heavily to differentiate a full Splunk installation vs a Universal Forwarder (UF) installation, and to map variables in group_vars to specific groups of hosts. You will see examples of this within the sample `inventory.yml` files that are included in the "environments" folder of this project.
 
@@ -109,6 +110,8 @@ We recommend that the `splunk_admin_username` (if not using "admin) and `splunk_
 #### Playbooks
 The following example playbooks have been included in this project for your reference:
 - **splunk_app_install.yml** - Install or upgrade apps on Splunk hosts using the configure_apps.yml task in the splunk role. Note that the apps you want to deploy should be defined in either host_vars or group_vars, along with a splunk_app_deploy_path. Refer to the documentation for app deployment for details.
+- **splunk_configure_dmc.yml** - Example playbook that configures the DMC host group as a DMC in clustered mode
+- **splunk_configure_licensemaster.yml** - Example playbook that configures the License Master host group as such
 - **splunk_install_or_upgrade.yml** - Install or upgrade Splunk (or Splunk UFs) on hosts using the check_splunk.yml task in the splunk role.
 - **splunk_shc_deploy.yml** - Installs Splunk and initializes search head clustering on a shdeployer and group of hosts that will serve as a new search head cluster.
 - **splunk_upgrade_full_stack.yml** - Example playbook that demonstrates how to upgrade an entire Splunk deployment with a single-site indexer cluster and a search head cluster using the splunk role. Note: This playbook does not upgrade forwarders, although you could easily add an extra play to do that.
@@ -135,11 +138,13 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **configure_authentication.yml** - Uses the template identified by the `splunk_authenticationconf` variable to install an authentication.conf file to $SPLUNK_HOME/etc/system/local/authentication.conf. We are including this task here since Ansible is able to securely deploy an authentication.conf configuration by using ansible-vault to encrypt sensitive values such as the value of the `ad_bind_password` variable. Note: If you are using a common splunk.secret file, you can omit this task and instead use configure_apps.yml to deploy an authentication.conf file from a Git repository containing an authentication.conf app with pre-hashed credentials.
 - **configure_bash.yml** - Configures bashrc and bash_profile files for the splunk user. Please note that the templates included with this role will overwrite any existing files for the splunk user (if they exist). The templates will define a custom PS1 at the bash prompt, configure the $SPLUNK_HOME environment variable so that you can issue "splunk <command>" without specifying the full path to the Splunk binary, and will enable auto-completion of Splunk CLI commands in bash.
 - **configure_deploymentclient.yml** - Generates a new deploymentclient.conf file from the deploymentclient.conf.j2 template and installs it to $SPLUNK_HOME/etc/system/local/deploymentclient.conf. This task is included automatically during new installations when values have been configured for the `clientName` and `splunk_uri_ds` variables.
+- **configure_dmc.yml** - Adds hosts to the host as search peers and configures the host MC in auto mode
 - **configure_facl.yml** - Configure file system access control lists (FACLs) to allow the splunk user to read /var/log files and add the splunk user's group to /etc/audit/auditd.conf to read /var/log/audit/ directory. This allows the splunk user to read privileged files from a non-privileged system account. Note: This task is performed automatically during new installations when splunk is installed as a non-root user.
 - **configure_idxc_manager.yml** - Configures a Splunk host to act as a manager node using `splunk_idxc_rf`, `splunk_idxc_sf`, `splunk_idxc_key`, and `splunk_idxc_label`.
 - **configure_idxc_member.yml** - Configures a Splunk host as an indexer cluster member using `splunk_uri_cm`, `splunk_idxc_rep_port`, and `splunk_idxc_key`.
 - **configure_idxc_sh.yml** - Configures a search head to join an existing indexer cluster using `splunk_uri_cm` and `splunk_idxc_key`.
 - **configure_license.yml** - Configure the license master URI in server.conf for full Splunk installations when `splunk_uri_lm` has been defined. Note: This could also be accomplished using configure_apps.yml with a git repository.
+- **configure_licensemaster.yml** -  Adds licenses to the license master host group which are placed in [`roles/splunk/files/licenses/`](roles/splunk/files/licenses/).
 - **configure_os.yml** - Increases ulimits for the splunk user and disables Transparent Huge Pages (THP) per Splunk implementation best practices.
 - **configure_serverclass.yml** - Generates a new serverclass.conf file from the serverclass.conf.j2 template and installs it to $SPLUNK_HOME/etc/system/local/serverclass.conf.
 - **configure_shc_captain.yml** - Perform a `bootstrap shcluster-captain` using the server list provided in `splunk_shc_uri_list`.

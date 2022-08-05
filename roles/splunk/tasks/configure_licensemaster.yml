@@ -1,0 +1,36 @@
+---
+- name: Place existing license
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "~/"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0755
+  with_fileglob:
+    - "../files/licenses/*"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
+- name: Add existing license
+  ansible.builtin.shell: |
+    {{ splunk_home }}/bin/splunk add licenses ~/{{ item | regex_replace('.+\/', '') }} -auth "{{ splunk_auth }}"
+  register: license_add
+  failed_when: "license_add.rc != 0"
+  with_fileglob:
+    - "../files/licenses/*"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
+- name: Restart outside of loop
+  ansible.builtin.debug:
+    msg: "Restarting Splunk"
+  notify: restart splunk
+
+- name: Cleanup license files
+  ansible.builtin.file:
+    path: "~/{{ item }}"
+    state: absent
+    with_fileglob:
+    - "../files/licenses/*"
+  become: true
+  become_user: "{{ splunk_nix_user }}"

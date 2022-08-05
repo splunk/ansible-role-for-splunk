@@ -1,0 +1,16 @@
+---
+# Check Splunk is installed
+- hosts:
+    - licensemaster
+  roles:
+    - ../../roles/splunk
+  vars:
+    - deployment_task: check_splunk.yml
+
+# Configure licenses on license master
+- hosts:
+    - licensemaster
+  roles:
+    - ../../roles/splunk
+  vars:
+    - deployment_task: configure_licensemaster.yml
