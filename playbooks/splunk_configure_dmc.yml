@@ -1,0 +1,24 @@
+---
+# Check Splunk is installed
+- hosts:
+    - dmc
+  roles:
+    - ../../roles/splunk
+  vars:
+    - deployment_task: check_splunk.yml
+
+# Connect to Cluster Manager
+- hosts:
+    - dmc
+  roles:
+    - ../../roles/splunk
+  vars:
+    - deployment_task: configure_idxc_sh.yml
+
+# Configure DMC Hosts to be monitored
+- hosts:
+    - dmc
+  roles:
+    - ../../roles/splunk
+  vars:
+    - deployment_task: configure_dmc.yml
