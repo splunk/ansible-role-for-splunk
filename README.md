@@ -110,8 +110,6 @@ We recommend that the `splunk_admin_username` (if not using "admin) and `splunk_
 #### Playbooks
 The following example playbooks have been included in this project for your reference:
 - **splunk_app_install.yml** - Install or upgrade apps on Splunk hosts using the configure_apps.yml task in the splunk role. Note that the apps you want to deploy should be defined in either host_vars or group_vars, along with a splunk_app_deploy_path. Refer to the documentation for app deployment for details.
-- **splunk_configure_dmc.yml** - Example playbook that configures the DMC host group as a DMC in clustered mode
-- **splunk_configure_licensemaster.yml** - Example playbook that configures the License Master host group as such
 - **splunk_install_or_upgrade.yml** - Install or upgrade Splunk (or Splunk UFs) on hosts using the check_splunk.yml task in the splunk role.
 - **splunk_shc_deploy.yml** - Installs Splunk and initializes search head clustering on a shdeployer and group of hosts that will serve as a new search head cluster.
 - **splunk_upgrade_full_stack.yml** - Example playbook that demonstrates how to upgrade an entire Splunk deployment with a single-site indexer cluster and a search head cluster using the splunk role. Note: This playbook does not upgrade forwarders, although you could easily add an extra play to do that.
@@ -144,7 +142,6 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **configure_idxc_member.yml** - Configures a Splunk host as an indexer cluster member using `splunk_uri_cm`, `splunk_idxc_rep_port`, and `splunk_idxc_key`.
 - **configure_idxc_sh.yml** - Configures a search head to join an existing indexer cluster using `splunk_uri_cm` and `splunk_idxc_key`.
 - **configure_license.yml** - Configure the license master URI in server.conf for full Splunk installations when `splunk_uri_lm` has been defined. Note: This could also be accomplished using configure_apps.yml with a git repository.
-- **configure_licensemaster.yml** -  Adds licenses to the license master host group which are placed in [`roles/splunk/files/licenses/`](roles/splunk/files/licenses/).
 - **configure_os.yml** - Increases ulimits for the splunk user and disables Transparent Huge Pages (THP) per Splunk implementation best practices.
 - **configure_serverclass.yml** - Generates a new serverclass.conf file from the serverclass.conf.j2 template and installs it to $SPLUNK_HOME/etc/system/local/serverclass.conf.
 - **configure_shc_captain.yml** - Perform a `bootstrap shcluster-captain` using the server list provided in `splunk_shc_uri_list`.
