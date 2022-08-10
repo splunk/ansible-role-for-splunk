@@ -1,4 +1,10 @@
 ---
+- name: Check splunk
+  include_task: check_splunk.yml
+
+- name: Configure DMC as a IDXC member
+  include_tasks: configure_idxc_sh.yml
+
 # Add all hosts to the DMC except indexer cluster hosts as per the docs
 - name: Configure systems as search peers to be monitored except indexers
   ansible.builtin.shell: |
