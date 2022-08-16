@@ -14,4 +14,5 @@
     - { option: "LimitDATA", value: "infinity" }
     - { option: "LimitCORE", value: "infinity" }
     - { option: "TasksMax", value: "infinity" }
+    - { option: "ExecStartPost", value: "/bin/bash -c \"chown -R splunk:splunk /sys/fs/cgroup/system.slice/%n\"" }  # Systemd CGROUP Fix  
   notify: reload systemctl daemon
