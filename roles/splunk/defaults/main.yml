@@ -1,19 +1,23 @@
 ---
 # defaults file for splunk role
 # Anything that is undefined here should be configured. I recommend setting the values in your group_vars under an all.yml file.
-systemd_boot: false # Do NOT change the value of this. It automatically gets changed in main.yml if the role finds an existing systemd file configured for splunk.
 slack_channel: undefined
 slack_token: undefined
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
-splunk_package_url_full: https://download.splunk.com/products/splunk/releases/8.2.5/linux/splunk-8.2.5-77015bc7a462-Linux-x86_64.tgz
-splunk_package_url_uf: https://download.splunk.com/products/universalforwarder/releases/8.2.5/linux/splunkforwarder-8.2.5-77015bc7a462-Linux-x86_64.tgz
+splunk_package_version: 9.0.0.1 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
+build_id: 9e907cedecb1 # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
+splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/{{ splunk_package_version }}/linux/splunk-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
+splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/{{ splunk_package_version }}/linux/splunkforwarder-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
+least_privileged: false # Do not change. This get automatically set in `tasks/main.yml` based on the version and install type.
 splunk_nix_user: splunk
 splunk_nix_group: splunk
 splunk_uri_lm: undefined
+splunk_license_file: [] # This can be a list of license files to copy to the host.
+splunk_license_group: Trial # The default matches with the group splunk ships with. You can also set the value via a group_vars or host_vars file.
 splunk_uri_cm: undefined
 splunk_uri_ds: undefined # e.g. mydeploymentserver.mydomain.com:8089 ; Note that you must also configure the clientName var under either group_vars or host_vars for deploymentclient.conf to be configured
 clientName: undefined
@@ -28,7 +32,9 @@ splunk_secret_file: splunk.secret # Used to specify your splunk.secret filename(
 splunk_configure_authentication: false
 ad_bind_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_authenticationconf: authentication.conf.j2
-splunk_use_initd: false  # If set to false, the role will use systemd instead
+splunk_create_polkit: 0  # If set to 1 `enable boot-start` will create a polkit rules file allowing the 'splunk_nix_user' to restart the splunk service without authentication.
+splunk_use_initd: false  # If set to true, the system will use init.t. Default false
+splunk_use_systemd: true # Defaults is systemd.
 splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
 splunkd_port: 8089 # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/ # Base directory under which repositories for app deplyoment should be cloned to
@@ -62,6 +68,7 @@ add_diag_script: false # Set to true to install a script and cron job to automat
 add_pstack_script: false # Set to true to install a pstack generation script for troubleshooting purposes in $SPLUNK_HOLME/genpstacks.sh
 configure_dmesg: false
 install_utilities: false # Set to true to install the list of packages defined in the linux_packages var after installing splunk
+use_tuned_thp: false
 linux_packages:
   - nload
   - iotop
