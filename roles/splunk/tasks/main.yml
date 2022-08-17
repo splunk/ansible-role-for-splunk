@@ -5,6 +5,19 @@
     start_splunk_handler_fired: false
   changed_when: false
 
+- name: Set boot-start method to systemd
+  set_fact:
+    desired_start_method: "systemd"
+  when:
+    - splunk_use_systemd
+    - not splunk_use_initd
+
+- name: Set boot-start method to initd
+  set_fact:
+    desired_start_method: "initd"
+  when:
+    - splunk_use_initd
+
 - block:
     - name: Configure vars for full package
       tags: always
@@ -15,12 +28,12 @@
         splunk_install_type: full
       changed_when: false
 
-    - name: Check if current boot-start configuration is systemd
-      stat:
-        path: /etc/systemd/system/Splunkd.service
-        follow: true
-      register: systemd_boot_full
-      become: true
+    - name: Configure var for splunk systemd service handler
+      tags: always
+      set_fact:
+        splunk_service: Splunkd
+      when:
+        -  desired_start_method == "systemd"
   when: "'full' in group_names"
 
 - block:
@@ -38,65 +51,76 @@
         least_privileged: true
       when: splunk_package_version is version(9.0, '>=')
 
-    - name: Check if current boot-start configuration is systemd
-      stat:
-        path: /etc/systemd/system/SplunkForwarder.service
-        follow: true
-      register: systemd_boot_uf
-      become: true
+    - name: Configure var for splunkforwarder systemd service handler
+      tags: always
+      set_fact:
+        splunk_service: SplunkForwarder
+      when:
+        - desired_start_method == "systemd"
   when: "'uf' in group_names"
 
-- name: Set systemd_boot var to true if systemd is being used for splunk
+- name: Configure var for splunk init.d service handler
   set_fact:
-    systemd_boot: true
-  when: (systemd_boot_uf.stat is defined and systemd_boot_uf.stat.exists) or (systemd_boot_full.stat is defined and systemd_boot_full.stat.exists)
+    splunk_service: splunk
+  when: desired_start_method == "initd"
 
-- name: Check if current boot-start method is init.d
-  stat:
-    path: /etc/init.d/splunk
-    follow: true
-  register: initd_boot
-  become: true
-
-- name: Check if Splunk is installed when no boot-start config has been found
+- name: Check if Splunk is installed
   stat:
     path: "{{ splunk_home }}/bin/splunk"
     follow: true
   register: splunkd_found
   become: true
 
+- name: Check active boot-start configuration
+  when: splunkd_found.stat.exists
+  block:
+    - name: Check if active boot-start configuration is systemd
+      stat:
+        path: "/etc/systemd/system/{{ splunk_service }}.service"
+        follow: true
+      register: systemd_boot_file
+      become: true
+
+    - name: Set current_start_method var to systemd if systemd is being used for splunk
+      set_fact:
+        current_start_method: "systemd"
+      when: systemd_boot_file.stat.exists
+
+    - name: Check if active boot-start method is init.d
+      stat:
+        path: /etc/init.d/splunk
+        follow: true
+      register: initd_boot_file
+      become: true
+
+    - name: Set current_start_method to initd if initd is being used for splunk
+      set_fact:
+        current_start_method: "initd"
+      when: initd_boot_file.stat.exists
+
+    - name: set current_start_method to disabled if boot-start is disabled
+      set_fact:
+        current_start_method: "disabled"
+      when: current_start_method is not defined
+
+- name: Set boot-start misconfigured var
+  set_fact:
+    configure_boot_start: true
+  when: >
+    not splunkd_found.stat.exists or
+    current_start_method != desired_start_method or
+    current_start_method == "disabled"
+
 - name: Fail the play if the currently configured boot-start method does match the expected state or boot-start is not enabled
   fail:
     msg:
       - "ERROR: Misconfiguration detected! Unable to proceed as handlers will fail in the play later."
-      - "Either splunk boot-start is not enabled on this host, or its current boot-start method does not matched the expected value of splunk_use_initd."
-      - "To correct this: Either run configure_splunk_boot.yml or update the value of splunk_use_initd in your group_vars."
+      - "Either splunk boot-start is not enabled on this host, or its current boot-start method does not matched the expected value of splunk_use_initd/splunk_use_systemd."
+      - "To correct this: Either run configure_splunk_boot.yml or update the value of splunk_use_initd/splunk_use_systemd in your group_vars."
   when:
     - splunkd_found.stat.exists
-    - (systemd_boot and splunk_use_initd) or (initd_boot.stat.exists and not splunk_use_initd) or (not systemd_boot and not initd_boot.stat.exists)
+    - configure_boot_start is defined
     - not deployment_task == "configure_splunk_boot.yml"
-
-- name: Configure var for splunk init.d service handler
-  tags: always
-  set_fact:
-    splunk_service: splunk
-  when: splunk_use_initd
-
-- name: Configure var for splunk systemd service handler
-  tags: always
-  set_fact:
-    splunk_service: Splunkd
-  when:
-    - not splunk_use_initd
-    - "'full' in group_names"
-
-- name: Configure var for splunkforwarder systemd service handler
-  tags: always
-  set_fact:
-    splunk_service: SplunkForwarder
-  when:
-    - not splunk_use_initd
-    - "'uf' in group_names"
 
 - name: Send Slack messages
   include_tasks: slack_messenger.yml
