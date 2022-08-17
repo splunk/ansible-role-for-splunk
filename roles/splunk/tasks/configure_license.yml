@@ -1,30 +1,81 @@
 ---
-- name: Set license master_uri in server.conf
-  ini_file:
-    path: "{{ splunk_home }}/etc/system/local/server.conf"
-    section: license
-    option: master_uri
-    value: "{{ splunk_uri_lm }}"
-    owner: "{{ splunk_nix_user }}"
-    group: "{{ splunk_nix_group }}"
-    mode: 0644
-  become: true
-  notify: restart splunk
-  when:
-    - "'full' in group_names"
-    - splunk_uri_lm != 'undefined'
+# Check splunk version to determine if we use `master_uri` or `manager_uri`.
+- name: Run splunk version command to check currently installed version
+  include_tasks: check_splunk_version.yml
 
-- name: Set pass4SymmKey in the general stanza of server.conf
-  ini_file:
-    path: "{{ splunk_home }}/etc/system/local/server.conf"
-    section: general
-    option: pass4SymmKey
-    value: "{{ splunk_general_key }}"
-    owner: "{{ splunk_nix_user }}"
-    group: "{{ splunk_nix_group }}"
-    mode: 0644
-  become: true
-  notify: restart splunk
+- name: Setting licensing mode based on Splunk version number
+  set_fact:
+    mode_option: "{% if splunk_version_release | float < 9.0 %}master{% else %}manager{% endif %}_uri"
+
+- name: Configure Local License
+  block:
+  - name: Create license/enterprise directory
+    file:
+      path: "{{ splunk_home }}/etc/licenses/enterprise"
+      state: directory
+      mode: "0700"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+    become: yes
+    when:
+      - splunk_license_group=="Enterprise"
+  - name: Copy license file
+    copy:
+      src: "{{ item }}"
+      dest: "{{ splunk_home }}/etc/licenses/enterprise/{{ item }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+      mode: "0600"
+    loop: "{{ splunk_license_file }}"
+    become: yes
+    when:
+      - splunk_license_group=="Enterprise"
+  - name: Remove master_uri when using local license
+    ini_file:
+      path: "{{ splunk_home }}/etc/system/local/server.conf"
+      section: license
+      option: "{{ mode_option }}"
+      value: "{{ splunk_uri_lm }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+      state: absent
+    become: yes
+  - name: Configure License Group
+    ini_file:
+      path: "{{ splunk_home }}/etc/system/local/server.conf"
+      section: license
+      option: active_group
+      value: "{{ splunk_license_group }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+    become: yes
+    notify: restart splunk
   when:
-    - "'full' in group_names"
-    - splunk_general_key != 'undefined'
+    - not splunk_license_group=="Peer"
+    - splunk_install_type=="full"
+
+- name: Configure License Peer
+  block:
+  - name: Set license master_uri
+    ini_file:
+      path: "{{ splunk_home }}/etc/system/local/server.conf"
+      section: license
+      option: "{{ mode_option }}"
+      value: "{{ splunk_uri_lm }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+    become: yes
+
+  - name: Set pass4SymmKey to match LM
+    ini_file:
+      path: "{{ splunk_home }}/etc/system/local/server.conf"
+      section: general
+      option: pass4SymmKey
+      value: "{{ pass4SymmKey }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+    become: yes
+    notify: restart splunk
+  when:
+    - splunk_license_group=="Peer"
+    - splunk_install_type=="full"

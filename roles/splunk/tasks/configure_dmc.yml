@@ -1,0 +1,27 @@
+---
+- name: Check splunk
+  include_task: check_splunk.yml
+
+- name: Configure DMC as a IDXC member
+  include_tasks: configure_idxc_sh.yml
+
+# Add all hosts to the DMC except indexer cluster hosts as per the docs
+- name: Configure systems as search peers to be monitored except indexers
+  ansible.builtin.shell: |
+    {{ splunk_home }}/bin/splunk add search-server https://{{ item }}:{{ splunkd_port }} -auth "{{ splunk_auth }}" -remoteUsername "{{ splunk_admin_username }}" -remotePassword "{{ splunk_admin_password }}"
+  loop: "{{ query('inventory_hostnames', 'all:!indexer') }}"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
+- name: Configure monitoring console in auto mode
+  community.general.ini_file:
+    path: "{{ splunk_home }}/etc/apps/splunk_monitoring_console/local/splunk_monitoring_console_assets.conf"
+    section: 'settings'
+    option: mc_auto_config
+    value: enabled
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  notify: restart splunk
