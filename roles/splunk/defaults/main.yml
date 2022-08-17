@@ -32,6 +32,7 @@ splunk_secret_file: splunk.secret # Used to specify your splunk.secret filename(
 splunk_configure_authentication: false
 ad_bind_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_authenticationconf: authentication.conf.j2
+splunk_create_polkit: 0  # If set to 1 `enable boot-start` will create a polkit rules file allowing the 'splunk_nix_user' to restart the splunk service without authentication.
 splunk_use_initd: false  # If set to true, the system will use init.t. Default false
 splunk_use_systemd: true # Defaults is systemd.
 splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
