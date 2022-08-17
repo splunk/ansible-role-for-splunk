@@ -23,7 +23,7 @@
 
     - name: "Checkpoint: Version" ##########################
       debug:
-        msg: "The value of splunk_version is: {{ splunk_version }} and the current_version is: {{ current_version.stdout }}"
+        msg: "The value of splunk_package_version is: {{ splunk_package_version }} and the splunk_version_release is: {{ splunk_version_release }}"
 
     - name: Execute this block only if the current version does not match the expected version
       block:
@@ -41,6 +41,6 @@
         - name: Upgrade Splunk if not at expected version
           include_tasks: upgrade_splunk.yml
       # Conditional for version mismatch block
-      when: current_version.stdout != splunk_version
+      when: splunk_version_release < splunk_package_version
   # Conditional for this block
   when: splunkd_path.stat.exists == true
