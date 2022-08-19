@@ -26,12 +26,13 @@
         splunk_package_url: "{{ splunk_package_url_full }}"
         splunk_product: "Splunk"
         splunk_install_type: full
+        systemd_unit: {{ systemd_unit_full }}
       changed_when: false
 
     - name: Configure var for splunk systemd service handler
       tags: always
       set_fact:
-        splunk_service: Splunkd
+        splunk_service: {{ systemd_unit }}
       when:
         -  desired_start_method == "systemd"
   when: "'full' in group_names"
@@ -44,6 +45,7 @@
         splunk_package_url: "{{ splunk_package_url_uf }}"
         splunk_product: "Splunk Universal Forwarder"
         splunk_install_type: uf
+        systemd_unit: {{ systemd_unit_uf }}
       changed_when: false
 
     - name: Setting least priviledged mode
@@ -54,7 +56,7 @@
     - name: Configure var for splunkforwarder systemd service handler
       tags: always
       set_fact:
-        splunk_service: SplunkForwarder
+        splunk_service: {{ systemd_unit }}
       when:
         - desired_start_method == "systemd"
   when: "'uf' in group_names"
