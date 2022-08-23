@@ -1,6 +1,15 @@
 # This file is managed by Ansible - DO NOT MODIFY MANUALLY OR VIA SPLUNK WEB
 {% for x in serverclasses %}
 [serverClass:{{ x.serverclass }}]
+{% if x.restartSplunkWeb is defined %}
+restartSplunkWeb = {{ x.restartSplunkWeb }}
+{% endif %}
+{% if x.restartSplunkd is defined %}
+restartSplunkd = {{ x.restartSplunkd }}
+{% endif %}
+{% if x.stateOnClient is defined %}
+stateOnClient = {{ x.stateOnClient }}
+{% endif %}
 {% if x.platform is defined %}
 machineTypesFilter = {{ x.platform }}
 {% endif %}
