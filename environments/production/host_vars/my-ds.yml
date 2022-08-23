@@ -37,3 +37,14 @@ serverclasses:
           restartSplunkWeb: 0
           restartSplunkd: 1
           stateOnClient: enabled
+
+# Fourth server class example, setting the restartSplunkd on the serverclass level:
+  - serverclass: ALL_WEB
+    restartSplunkd: 1
+    whitelist:
+      - 'webserver1'
+      - 'webserver2'
+    blacklist:
+      - 'webserver*dev'
+    apps:
+      - name: webserver_app
