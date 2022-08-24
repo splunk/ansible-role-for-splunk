@@ -78,7 +78,7 @@
       loop: "{{ git_apps }}"
       vars:
         app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
-        app_src: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}"
+        app_src: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}"
 
     - name: Cleanup the local directory that was used to manage repos on the target host
       file:

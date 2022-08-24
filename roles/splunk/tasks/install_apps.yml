@@ -90,7 +90,7 @@
 
 - name: Ensure correct permissions are set
   file:
-    path: "{{ splunk_home }}/{{ app_dest }}/{{ item.name }}"
+    path: "{{ splunk_home }}/{{ app_dest }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
     recurse: true
