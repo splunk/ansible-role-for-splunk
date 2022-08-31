@@ -41,6 +41,4 @@
         - restart non-redhat auditd service
       when: result_auditd_conf.stat.exists
 
-  when:
-    - least_privileged == false or "'full' in group_names"
-    - splunk_nix_user != 'root'
+  when: not least_privileged
