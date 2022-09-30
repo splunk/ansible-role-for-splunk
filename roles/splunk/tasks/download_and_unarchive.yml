@@ -28,3 +28,9 @@
   become: true
   notify:
     - start splunk
+
+- name: "Remove {{ splunk_package_path }}/{{ splunk_file }} package"
+  become: true
+  file:
+    path: "{{ splunk_package_path }}/{{ splunk_file }}"
+    state: absent
