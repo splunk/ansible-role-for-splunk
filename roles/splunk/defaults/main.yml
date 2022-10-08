@@ -10,6 +10,7 @@ splunk_package_version: 9.0.0.1 # The default version to install or update to. T
 build_id: 9e907cedecb1 # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
 splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/{{ splunk_package_version }}/linux/splunk-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
 splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/{{ splunk_package_version }}/linux/splunkforwarder-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
+splunk_download_local: true  # This defines how the download process works. If `true` it will download to localhost and copy around to hosts from there. If `false` each host will download the package individually.
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
 least_privileged: false # Do not change. This get automatically set in `tasks/main.yml` based on the version and install type.
