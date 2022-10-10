@@ -11,7 +11,7 @@
     deployment_task: check_splunk.yml
 
 - hosts:
-    - licensemaster
+    - licensemanager
     - shdeployer
     - deploymentserver
   become: yes
