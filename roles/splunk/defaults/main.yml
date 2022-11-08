@@ -6,8 +6,8 @@ slack_token: undefined
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
-splunk_package_version: 9.0.1 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
-build_id: 82c987350fde # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
+splunk_package_version: 9.0.2 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
+build_id: 17e00c557dc1 # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
 splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/{{ splunk_package_version }}/linux/splunk-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
 splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/{{ splunk_package_version }}/linux/splunkforwarder-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
