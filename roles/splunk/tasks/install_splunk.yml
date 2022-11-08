@@ -6,7 +6,7 @@
       group:
         name: "{{ splunk_nix_group }}"
         state: present
-        local: true
+        local: "{{ local_os_group }}"
       become: true
 
     - name: Add nix splunk user
@@ -17,7 +17,7 @@
         append: true
         state: present
         shell: /bin/bash
-        local: true
+        local: "{{ local_os_user }}"
       become: true
 
     - name: Allow splunk user to read /var/log
