@@ -5,6 +5,5 @@
     name: "{{ linux_packages }}"
     state: present
     update_cache: true
-  ignore_errors: true
   become: true
   when: install_utilities

@@ -72,19 +72,3 @@ add_pstack_script: false # Set to true to install a pstack generation script for
 configure_dmesg: false
 install_utilities: false # Set to true to install the list of packages defined in the linux_packages var after installing splunk
 use_tuned_thp: false
-linux_packages:
-  - nload
-  - iotop
-  - iftop
-  - sysstat
-  - telnet
-  - tcpdump
-  - htop
-  - atop
-  - lsof
-  - policycoreutils-python
-  - policycoreutils
-  - setroubleshoot
-  - nethogs
-  - gdb
-  - bind-utils
