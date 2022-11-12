@@ -1,8 +1,5 @@
 ---
 # Task to configure ulimits and THP for Splunk
-- name: Include OS family-specific variables
-  include_vars: "{{ ansible_os_family }}.yml"
-
 - name: Set ulimits for splunk
   template:
     src: splunk_ulimits.conf.j2
