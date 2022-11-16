@@ -12,7 +12,10 @@
 
 - name: Disable THP
   include_tasks: configure_thp.yml
-  when: "'full' in group_names"
+  when:
+    - ansible_service_mgr == "systemd"
+    - ansible_connection != "docker"
+    - "'full' in group_names"
 
 - name: Enable read for dmesg
   include_tasks: configure_dmesg.yml
