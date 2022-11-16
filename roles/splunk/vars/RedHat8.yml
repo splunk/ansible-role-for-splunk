@@ -11,7 +11,7 @@ linux_packages:
   - htop
   - atop
   - lsof
-  - policycoreutils-python
+  - policycoreutils-python-utils
   - policycoreutils
   - setroubleshoot
   - nethogs
