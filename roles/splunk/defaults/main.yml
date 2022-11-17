@@ -27,6 +27,7 @@ clientName: undefined
 phoneHomeIntervalInSecs: undefined
 splunk_general_key: undefined # Configures a pass4SymmKey in server.conf under the general stanza
 splunk_ds_key: undefined # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
+splunk_lm_key: undefined # Configures a pass4SymmKey in server.conf for authenticating against a license manager
 splunk_admin_username: admin
 splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_configure_secret: false # If set to true, you need to update files/splunk.secret

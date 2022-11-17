@@ -30,6 +30,31 @@
     become: yes
     when:
       - splunk_license_group=="Enterprise"
+  - name: Set pass4SymmKey on LM
+    ini_file:
+      path: "{{ splunk_home }}/etc/system/local/server.conf"
+      section: general
+      option: pass4SymmKey
+      value: "{{ splunk_lm_key }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+    become: true
+    notify: restart splunk
+    when:
+      - "'licensemanager' in group_names"
+      - splunk_lm_key != 'undefined'
+  - name: Remove master_uri when using local license
+    ini_file:
+      path: "{{ splunk_home }}/etc/system/local/server.conf"
+      section: license
+      option: "{{ item }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+      state: absent
+    with_items:
+      - manager_uri
+      - master_uri
+    become: true
   - name: Remove master_uri when using local license
     ini_file:
       path: "{{ splunk_home }}/etc/system/local/server.conf"
@@ -71,7 +96,7 @@
       path: "{{ splunk_home }}/etc/system/local/server.conf"
       section: general
       option: pass4SymmKey
-      value: "{{ pass4SymmKey }}"
+      value: "{{ splunk_lm_key }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
     become: yes
@@ -79,3 +104,4 @@
   when:
     - splunk_license_group=="Peer"
     - splunk_install_type=="full"
+    - splunk_lm_key != 'undefined'
