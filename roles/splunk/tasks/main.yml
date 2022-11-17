@@ -57,7 +57,9 @@
     - name: Setting least priviledged mode
       set_fact:
         least_privileged: true
-      when: splunk_package_version is version(9.0, '>=')
+      when: >
+        (splunk_package_version is version(9.0, '>=') and splunk_install_type == "uf") or
+        splunk_install_type == "full" and splunk_nix_user == "root"
 
     - name: Configure var for splunkforwarder systemd service handler
       tags: always
