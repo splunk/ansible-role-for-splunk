@@ -16,6 +16,7 @@
   when: splunk_use_initd and ansible_os_family == "RedHat" and ansible_distribution_major_version|int > 6
 
 - name: reload systemctl daemon
+  when: ansible_service_mgr == "systemd"
   systemd:
     daemon_reload: true
   become: true
