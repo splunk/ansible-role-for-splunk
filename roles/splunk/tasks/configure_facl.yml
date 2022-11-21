@@ -1,6 +1,11 @@
 ---
 - name: Configure file access control list (facl) settings for splunk user
   block:
+    - name: Install acl package
+      package:
+        name: "acl"
+        state: present
+      become: True
     - name: Set default facl to allow splunk user to read /var/log
       acl:
         path: /var/log
