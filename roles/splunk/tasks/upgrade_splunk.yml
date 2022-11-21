@@ -13,6 +13,13 @@
 - name: Include download and unarchive task
   include_tasks: download_and_unarchive.yml
 
+- name: Disbale KVStore on UF when upgrading from 8.x to 9.0
+  when:
+    - splunk_version_release is version(9, '<')
+    - splunk_package_version is version(9, '>=')
+    - splunk_install_type == "uf"
+  include_tasks: disable_kvstore.yml
+
 - name: Include accept license task
   include_tasks: splunk_license_accept.yml
 
