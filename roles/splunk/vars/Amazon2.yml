@@ -1,0 +1,12 @@
+global_bashrc: /etc/bashrc
+chk_config_cmd: chkconfig --add disable-thp
+linux_packages:
+  - sysstat
+  - telnet
+  - tcpdump
+  - htop
+  - lsof
+  - policycoreutils-python
+  - policycoreutils
+  - gdb
+  - bind-utils

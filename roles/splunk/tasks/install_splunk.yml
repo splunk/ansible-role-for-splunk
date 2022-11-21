@@ -12,9 +12,8 @@
     - name: Add nix splunk user
       user:
         name: "{{ splunk_nix_user }}"
-        groups: "{{ splunk_nix_group }}"
+        group: "{{ splunk_nix_group }}"
         home: "{{ splunk_home }}"
-        append: true
         state: present
         shell: /bin/bash
         local: "{{ local_os_user }}"
