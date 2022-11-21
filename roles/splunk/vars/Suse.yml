@@ -1,0 +1,17 @@
+---
+global_bashrc: /etc/bash.bashrc
+linux_packages:
+  - nload
+  - iotop
+  - iftop
+  - sysstat
+  - telnet
+  - tcpdump
+  - htop
+  - atop
+  - lsof
+  - policycoreutils-python
+  - policycoreutils
+  - nethogs
+  - gdb
+  - bind-utils
