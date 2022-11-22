@@ -23,6 +23,10 @@
 - name: Include accept license task
   include_tasks: splunk_license_accept.yml
 
+- name: set splunk_uprgaded variable
+  set_fact:
+    splunk_upgraded: True
+
 - name: Enable boot start
   include_tasks: configure_splunk_boot.yml
 
