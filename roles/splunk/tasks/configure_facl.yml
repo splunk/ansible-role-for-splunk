@@ -20,13 +20,12 @@
         - true
         - false
 
-    - name: Add logrotate script to enforce splunk user facls
-      template:
-        src: splunk_facl.j2
-        dest: /etc/logrotate.d/splunk_facl
-        owner: root
-        group: root
-      become: true
+    - name: Add setfacl to logrotate script
+      lineinfile:
+        path: /etc/logrotate.d/syslog
+        insertbefore: '  endscript'
+        line: '        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log'
+      become: True
 
     - name: Check if auditd.conf is present
       stat:
