@@ -3,12 +3,14 @@
   ansible.builtin.package:
     name: "{{ firewall_service }}"
     state: present
+  become: true
 
 - name: Ensure {{ firewall_service }} is Started and Enabled
   ansible.builtin.systemd:
     name: "{{ firewall_service }}"
     state: started
     enabled: true
+  become: true
 
 - name: Configure firewalld for Splunk
   ansible.builtin.template:

@@ -1,10 +1,5 @@
 ---
 splunk_firewall_ports:
-  - protocol: tcp
-    number: 8000
-
-  - protocol: tcp
-    number: "{{ splunkd_port }}"
-
-  - protocol: tcp
-    number: "{{ splunk_shc_rep_port }}"
+  - "{{ splunkweb_port }}"
+  - "{{ splunkapi_port }}"
+  - "{{ splunkshcrep_port }}"

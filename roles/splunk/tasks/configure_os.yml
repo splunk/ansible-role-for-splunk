@@ -26,3 +26,4 @@
   when:
     - firewall_service != 'undefined'
     - configure_firewall != false
+    - "'full' in group_names"

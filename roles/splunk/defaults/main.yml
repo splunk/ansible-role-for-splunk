@@ -31,12 +31,6 @@ splunk_admin_username: admin
 splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_configure_secret: false # If set to true, you need to update files/splunk.secret
 splunk_secret_file: splunk.secret # Used to specify your splunk.secret filename(s), files should be placed in the "files" folder of the role
-configure_firewall: false # Whether or not to configure the firewall service on your machine, if set to true, opens firewall ports using UFW (default) or Firewalld depending on OS
-splunk_firewall_ports: # List of ports to allow through local firewall in dict form
-  - protocol: tcp
-    number: "{{ splunkd_port }}"
-  - protocol: tcp
-    number: 8000
 # Although there are tasks for the following Splunk configurations in this role, they are not included in any tasks by default. You can add them to your install_splunk.yml if you would like to have Ansible manage any of these files
 splunk_configure_authentication: false
 ad_bind_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
@@ -81,3 +75,15 @@ add_pstack_script: false # Set to true to install a pstack generation script for
 configure_dmesg: false
 install_utilities: false # Set to true to install the list of packages defined in the linux_packages var after installing splunk
 use_tuned_thp: false
+# Firewall configs
+configure_firewall: false # Whether or not to configure the firewall service on your machine, if set to true, opens firewall ports using UFW (default) or Firewalld depending on OS
+# Firewall port presets - reference these in group_vars to assign them to splunk
+splunkweb_port: {protocol: "tcp", number: 8000}
+splunkhec_port: {protocol: "tcp", number: 8088}
+splunktcpin_port: {protocol: "tcp", number: 9997}
+splunkapi_port: {protocol: "tcp", number: "{{ splunkd_port }}"}
+splunkidxcrep_port: {protocol: "tcp", number: "{{ splunk_idxc_rep_port }}"}
+splunkshcrep_port: {protocol: "tcp", number: "{{ splunk_shc_rep_port }}"}
+splunk_firewall_ports: # List of ports to allow through local firewall in dict form
+  - "{{ splunkweb_port }}"
+  - "{{ splunkapi_port }}"
