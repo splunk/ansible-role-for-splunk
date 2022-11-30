@@ -6,3 +6,4 @@ splunk_build: "{{ splunk_package_url | regex_search('\\d+\\.\\d+\\.\\d+(?:\\.\\d
 # Create desired splunk version string (to compare with the output from the splunk version command for upgrades)
 splunk_version: "{{ splunk_product }} {{ splunk_v }} (build {{ splunk_build }})"
 splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
+firewall_service: ufw

@@ -1,0 +1,15 @@
+---
+splunk_firewall_ports:
+  # HEC
+  - protocol: tcp
+    number: 8088
+
+  # Splunk TCPIN
+  - protocol: tcp
+    number: 9997
+
+  - protocol: tcp
+    number: 8000
+
+  - protocol: tcp
+    number: "{{ splunkd_port }}"

@@ -1,0 +1,21 @@
+---
+- name: Ensure firewalld is installed
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+
+- name: Ensure Firewalld is Started and Enabled
+  ansible.builtin.systemd:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Configure firewalld for Splunk
+  ansible.builtin.template:
+    src: firewalld_service.xml.j2
+    dest: /etc/firewalld/services/splunk.xml
+    backup: true
+    mode: 0644
+    owner: root
+    group: root
+  become: true
