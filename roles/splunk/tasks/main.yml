@@ -7,10 +7,11 @@
     - "{{ ansible_os_family }}{{ ansible_distribution_major_version }}.yml"
     - "{{ ansible_os_family }}.yml"
 
-- name: Reset value of start_splunk_handler_fired
+- name: Reset value of start_splunk_handler_fired and configure_boot_start
   tags: always
   set_fact:
     start_splunk_handler_fired: false
+    configure_boot_start: False
   changed_when: false
 
 - name: Set boot-start method to systemd
@@ -131,7 +132,7 @@
       - "To correct this: Either run configure_splunk_boot.yml or update the value of splunk_use_initd/splunk_use_systemd in your group_vars."
   when:
     - splunkd_found.stat.exists
-    - configure_boot_start is defined
+    - configure_boot_start == True
     - not deployment_task == "configure_splunk_boot.yml"
 
 - name: Send Slack messages
