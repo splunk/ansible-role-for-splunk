@@ -87,6 +87,9 @@
       delegate_to: localhost
       changed_when: false
 
+      - name: Apply cluster bundle
+      include_tasks: splunk_bundle_apply.yml
+
   # Conditional for block
   when:
     - git_apps is defined

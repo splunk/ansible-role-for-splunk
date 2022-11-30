@@ -1,0 +1,15 @@
+---
+- name: apply indexer cluster bundle
+  ansible.builtin.command: |
+    {{ splunk_home }}/bin/splunk apply cluster-bundle --answer-yes --skip-validation -auth {{ splunk_auth }} {{ extra_args }}
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  register: apply_cluster_bundle_result
+  changed_when: apply_cluster_bundle_result.rc == 0
+  failed_when: apply_cluster_bundle_result.rc != 0
+  retries: "{{ splunk_apply_cluster_bundle_retries }}"
+  delay: "{{ splunk_apply_cluster_bundle_delay }}"
+  no_log: true
+  when: "'clustermanager' in group_names"
+  vars:
+    extra_args: "{{ extra_args | default('') }}"

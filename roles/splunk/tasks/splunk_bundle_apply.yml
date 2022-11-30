@@ -1,0 +1,79 @@
+---
+# This is an attempt to centralize bundle deployment so that
+# all segments of the cluster can use one bundle deployment yaml -
+# most of this is taken from install_apps.yml, but we want to
+# repurpose it so we don't have to run the bundle application more
+# than once when installing apps
+
+- name: Set correct handler for master-apps
+  ansible.builtin.set_fact:
+    handler: "apply_indexer_cluster_bundle"
+  when: "'clustermanager' in group_names"
+
+- name: Set correct handler for deployment-apps
+  ansible.builtin.set_fact:
+    handler: "reload_deployment_server"
+  when: "'deploymentserver' in group_names"
+
+- name: Set correct handler for shcluster/apps
+  ansible.builtin.set_fact:
+    handler: "apply_shcluster_bundle"
+  when: "'shdeployer' in group_names"
+
+- name: "Set default restart splunk handler for all other paths (e.g. etc/auth)"
+  ansible.builtin.set_fact:
+    handler: "restart"
+  when:
+    - "'clustermanager' not in group_names"
+    - "'shdeployer' not in group_names"
+    - "'deploymentserver' not in group_names"
+
+- name: Check if correct vars are defined for SHC app management
+  block:
+    - name: Trigger failure if target_shc_group_name var is undefined
+      ansible.builtin.fail:
+        msg: "Please add a target_shc_group_name variable to the host_vars for your SH Deployer host(s) before proceeding."
+      when: target_shc_group_name is not defined
+
+    - name: Trigger failure if splunk_admin_username var is undefined
+      ansible.builtin.fail:
+        msg: "Please add a splunk_admin_username variable to the host_vars for your SHC hosts before proceeding."
+      when: splunk_admin_username is not defined
+
+    - name: Trigger failure if splunk_admin_password var is undefined
+      ansible.builtin.fail:
+        msg:
+          - "Please add a splunk_admin_password variable to the host_vars or group_vars for your SHC hosts before proceeding."
+          - "Tip: To encrypt the var value, you can use: ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'splunk_admin_password' then, use the --ask-vault-pass argument when running the play."
+      when: splunk_admin_password is not defined
+
+    - name: Get SHC status from first SH under the "target_shc_group_name" inventory group specified in the shdeployer host_vars
+      ansible.builtin.uri:
+        url: "https://{{ groups[target_shc_group_name] | first }}:{{ splunkd_port }}/services/shcluster/status"
+        method: GET
+        user: "{{ splunk_admin_username }}"
+        password: "{{ splunk_admin_password }}"
+        validate_certs: false
+        return_content: true
+        status_code: 200
+        body:
+          output_mode=json
+      no_log: true
+      changed_when: false
+      register: shc_status_response
+
+    - name: Set vars for deployment based on SHC status
+      ansible.builtin.set_fact:
+        service_ready_state: "{{ shc_status_response.json.entry[0].content.captain.service_ready_flag }}"
+        deploy_target: "{{ shc_status_response.json.entry[0].content.captain.mgmt_uri }}"
+
+    - name: Trigger failure if SHC is NOT ready
+      ansible.builtin.fail:
+        msg: "The SHC has service ready state of FALSE. Please investigate and re-run Ansible play after resolving."
+      when:
+        - not service_ready_state
+
+  when: handler == "apply_shcluster_bundle"
+
+- name: Run bundle apply based on name of file
+  include_tasks: "{{ '_'.join(('splunk', handler, '.yml')) }}"
