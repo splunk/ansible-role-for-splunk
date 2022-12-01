@@ -71,7 +71,7 @@
       path: "{{ splunk_home }}/etc/system/local/server.conf"
       section: general
       option: pass4SymmKey
-      value: "{{ pass4SymmKey }}"
+      value: "{{ splunk_general_key }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
     become: yes
