@@ -77,6 +77,7 @@ install_utilities: false # Set to true to install the list of packages defined i
 use_tuned_thp: false
 # Firewall configs
 configure_firewall: false # Whether or not to configure the firewall service on your machine, if set to true, opens firewall ports using UFW (default) or Firewalld depending on OS
+splunk_firewall_service: splunk # The name of the Splunk firewall service to install for firewalld
 # Firewall port presets - reference these in group_vars to assign them to splunk
 splunkweb_port: {protocol: "tcp", number: 8000}
 splunkhec_port: {protocol: "tcp", number: 8088}

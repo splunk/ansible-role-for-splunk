@@ -93,7 +93,3 @@
 - name: reload firewalld
   command: firewall-cmd --reload
   become: true
-
-- name: reload ufw
-  command: ufw reload
-  become: true
