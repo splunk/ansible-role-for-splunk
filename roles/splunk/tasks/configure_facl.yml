@@ -25,7 +25,8 @@
         path: /etc/logrotate.d/syslog
         insertbefore: '  endscript'
         line: '        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log'
-      become: True
+        create: true
+      become: true
 
     - name: Check if auditd.conf is present
       stat:
