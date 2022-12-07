@@ -73,7 +73,9 @@
   when: not start_splunk_handler_fired
 
 - name: restart redhat auditd service
-  command: service auditd condrestart
+  shell: |
+    service auditd stop
+    service auditd start
   become: true
   when: ansible_os_family == 'RedHat'
 
