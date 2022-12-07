@@ -79,12 +79,12 @@ use_tuned_thp: false
 configure_firewall: false # Whether or not to configure the firewall service on your machine, if set to true, opens firewall ports using UFW (default) or Firewalld depending on OS
 splunk_firewall_service: splunk # The name of the Splunk firewall service to install for firewalld
 # Firewall port presets - reference these in group_vars to assign them to splunk
-splunkweb_port: {protocol: "tcp", number: 8000}
-splunkhec_port: {protocol: "tcp", number: 8088}
-splunktcpin_port: {protocol: "tcp", number: 9997}
-splunkapi_port: {protocol: "tcp", number: "{{ splunkd_port }}"}
-splunkidxcrep_port: {protocol: "tcp", number: "{{ splunk_idxc_rep_port }}"}
-splunkshcrep_port: {protocol: "tcp", number: "{{ splunk_shc_rep_port }}"}
+splunkweb_port: {desc: "Splunk Web", protocol: "tcp", number: 8000}
+splunkhec_port: {desc: "Splunk HEC", protocol: "tcp", number: 8088}
+splunktcpin_port: {desc: "Splunk TCPIN", protocol: "tcp", number: 9997}
+splunkapi_port: {desc: "Splunk API", protocol: "tcp", number: "{{ splunkd_port }}"}
+splunkidxcrep_port: {desc: "Splunk Indexer Clustering Replication", protocol: "tcp", number: "{{ splunk_idxc_rep_port }}"}
+splunkshcrep_port: {desc: "Splunk Search Head Clustering Replication", protocol: "tcp", number: "{{ splunk_shc_rep_port }}"}
 splunk_firewall_ports: # List of ports to allow through local firewall in dict form
   - "{{ splunkweb_port }}"
   - "{{ splunkapi_port }}"

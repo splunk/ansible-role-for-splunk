@@ -3,6 +3,7 @@
     <short>splunk</short>
     <description>Ports to be configured for splunk</description>
     {% for port in splunk_firewall_ports %}
+        <!-- {{ port.desc | default('') }} -->
         <port protocol="{{ port.protocol }}" port="{{ port.number }}"/>
     {% endfor %}
 </service>

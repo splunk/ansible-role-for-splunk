@@ -33,7 +33,7 @@
     - name: Activate splunk firewalld service
       ansible.posix.firewalld:
         service: "{{ splunk_firewall_service }}"
-        permanent: yes
+        permanent: true
         state: enabled
         immediate: true
       notify: reload firewalld
@@ -56,6 +56,7 @@
         proto: "{{ item.protocol }}"
         rule: allow
         state: reloaded
+        comment: "{{ item.desc | default('') }}"
       become: true
       loop: "{{ splunk_firewall_ports }}"
   when: firewall_service == "ufw"
