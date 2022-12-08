@@ -20,3 +20,10 @@
 - name: Enable read for dmesg
   include_tasks: configure_dmesg.yml
   when: configure_dmesg
+
+- name: Configure firewall service
+  include_tasks: "configure_firewall.yml"
+  when:
+    - firewall_service != 'undefined'
+    - configure_firewall != false
+    - "'full' in group_names"

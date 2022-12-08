@@ -89,3 +89,7 @@
     port: "{{ splunkd_port }}"
     state: started
     delay: 5
+
+- name: reload firewalld
+  command: firewall-cmd --reload
+  become: true
