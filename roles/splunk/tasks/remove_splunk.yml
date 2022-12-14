@@ -11,4 +11,139 @@
     state: absent
   become: true
 
-# Todo: Remove user, group, THP/ulimit files, check for cron jobs/scripts and remove those if present
+- name: Block for non-root splunk user removal
+  block:
+    - name: Add nix splunk user
+      ansible.builtin.user:
+        name: "{{ splunk_nix_user }}"
+        groups: "{{ splunk_nix_group }}"
+        state: absent
+        local: "{{ local_os_user }}"
+      become: true
+
+    - name: Remove nix splunk group
+      ansible.builtin.group:
+        name: "{{ splunk_nix_group }}"
+        state: absent
+        local: "{{ local_os_group }}"
+      become: true
+  when: splunk_nix_user != 'root'
+
+- name: Remove Disable-THP/Ulimit files
+  block:
+    - name: Stop Disable-THP service
+      ansible.builtin.service:
+        name: disable-thp
+        enabled: false
+        state: stopped
+      become: true
+      when:
+        - ansible_connection!="docker"
+        - "'full' in group_names"
+      ignore_errors: true
+
+    - name: Remove disable-thp service to systemd (CentOS/RHEL 7+)
+      ansible.builtin.file:
+        path: /etc/systemd/system/disable-thp.service
+        state: absent
+      become: true
+      notify:
+        - reload systemctl daemon
+      when:
+        - ansible_os_family == "RedHat"
+        - ansible_distribution_major_version|int > 6
+
+    - name: Remove ulimits
+      ansible.builtin.file:
+        path: /etc/security/limits.d/splunk_ulimits.conf
+        state: absent
+      become: true
+      when: splunk_use_initd
+
+- name: Remove Dmesg configs
+  block:
+    - name: Add sysctl for dmesg
+      ansible.posix.sysctl:
+        name: kernel.dmesg_restrict
+        value: '0'
+        state: absent
+        sysctl_file: /etc/sysctl.d/20-splunk.conf
+        reload: true
+      register: sysctl_dmesg
+      become: true
+
+    - name: Restart procps
+      ansible.builtin.service:
+        name: procps
+        state: restarted
+      when: sysctl_dmesg.changed
+      become: true
+  when: configure_dmesg
+
+- name: Remove firewall artifacts
+  block:
+    - name: Remove firewalld artifacts
+      block:
+        - name: Remove splunk firewalld service
+          ansible.builtin.file:
+            path: /etc/firewalld/services/{{ splunk_firewall_service }}.xml
+            state: absent
+          become: true
+
+        - name: Remove firewalld service
+          ansible.posix.firewalld:
+            service: "{{ splunk_firewall_service }}"
+            permanent: true
+            state: enabled
+            immediate: true
+          notify: reload firewalld
+          become: true
+      when: firewall_service == "firewalld"
+
+    - name: Remove UFW ports
+      community.general.ufw:
+        port: "{{ item.number }}"
+        proto: "{{ item.protocol }}"
+        rule: allow
+        state: reloaded
+        comment: "{{ item.desc | default('') }}"
+        delete: true
+      become: true
+      loop: "{{ splunk_firewall_ports }}"
+      when: firewall_service == "ufw"
+  when:
+    - firewall_service != 'undefined'
+    - configure_firewall != false
+    - "'full' in group_names"
+
+- name: Remove FACLs
+  block:
+    - name: Add setfacl to logrotate script
+      ansible.builtin.lineinfile:
+        path: /etc/logrotate.d/syslog
+        insertbefore: '  endscript'
+        line: '        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log'
+        state: absent
+      become: true
+
+    - name: Check if auditd.conf is present
+      ansible.builtin.stat:
+        path: /etc/audit/auditd.conf
+      register: result_auditd_conf
+      become: true
+
+    - name: Allow splunk to read /var/log/audit.log
+      community.general.ini_file:
+        path: /etc/audit/auditd.conf
+        section: null
+        option: log_group
+        value: "{{ splunk_nix_group }}"
+        state: absent
+      become: true
+      notify:
+        - restart redhat auditd service
+        - restart non-redhat auditd service
+      when: result_auditd_conf.stat.exists
+  when: not least_privileged
+
+# Todo: check for cron jobs/scripts and remove those if present
