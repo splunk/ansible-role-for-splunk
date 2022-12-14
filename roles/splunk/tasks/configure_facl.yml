@@ -22,8 +22,8 @@
 
     - name: Add setfacl to logrotate script
       lineinfile:
-        path: /etc/logrotate.d/syslog
-        insertbefore: '  endscript'
+        path: "{{ logrotate_file }}"
+        insertbefore: 'endscript'
         line: '        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log'
       become: True
 
