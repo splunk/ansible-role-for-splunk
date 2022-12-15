@@ -13,7 +13,7 @@
 
 - name: Block for non-root splunk user removal
   block:
-    - name: Add nix splunk user
+    - name: Remove nix splunk user
       ansible.builtin.user:
         name: "{{ splunk_nix_user }}"
         groups: "{{ splunk_nix_group }}"
@@ -62,7 +62,7 @@
 
 - name: Remove Dmesg configs
   block:
-    - name: Add sysctl for dmesg
+    - name: Remove sysctl for dmesg
       ansible.posix.sysctl:
         name: kernel.dmesg_restrict
         value: '0'
@@ -118,7 +118,7 @@
 
 - name: Remove FACLs
   block:
-    - name: Add setfacl to logrotate script
+    - name: Remove setfacl to logrotate script
       ansible.builtin.lineinfile:
         path: /etc/logrotate.d/syslog
         insertbefore: '  endscript'
@@ -132,7 +132,7 @@
       register: result_auditd_conf
       become: true
 
-    - name: Allow splunk to read /var/log/audit.log
+    - name: Remove line from /var/log/audit.log
       community.general.ini_file:
         path: /etc/audit/auditd.conf
         section: null
