@@ -60,25 +60,7 @@
       become: true
       when: splunk_use_initd
 
-- name: Remove Dmesg configs
-  block:
-    - name: Remove sysctl for dmesg
-      ansible.posix.sysctl:
-        name: kernel.dmesg_restrict
-        value: '0'
-        state: absent
-        sysctl_file: /etc/sysctl.d/20-splunk.conf
-        reload: true
-      register: sysctl_dmesg
-      become: true
-
-    - name: Restart procps
-      ansible.builtin.service:
-        name: procps
-        state: restarted
-      when: sysctl_dmesg.changed
-      become: true
-  when: configure_dmesg
+# Not removing DMesg ini config due to defaults on some systems breaking
 
 - name: Remove firewall artifacts
   block:
