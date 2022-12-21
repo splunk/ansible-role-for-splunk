@@ -15,3 +15,4 @@ linux_packages:
   - gdb
   - dnsutils
 firewall_service: ufw
+logrotate_file: /etc/logrotate.d/rsyslog
