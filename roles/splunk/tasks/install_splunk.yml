@@ -1,5 +1,8 @@
 ---
 #  This task should be used for fresh installations of Splunk, refer to upgrade_splunk.yml for upgrades
+- name: Install Required Packages
+  include_tasks: prereqs.yml
+
 - name: Block for non-root splunk user setup
   block:
     - name: Add nix splunk group

@@ -1,0 +1,6 @@
+---
+- name: install acl package
+  ansible.builtin.package:
+    name: acl
+    state: present
+  become: True
