@@ -102,8 +102,7 @@
   block:
     - name: Remove setfacl to logrotate script
       ansible.builtin.lineinfile:
-        path: /etc/logrotate.d/syslog
-        insertbefore: '  endscript'
+        path: "{{ logrotate_file }}"
         line: '        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log'
         state: absent
       become: true
