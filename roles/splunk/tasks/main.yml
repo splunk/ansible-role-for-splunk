@@ -47,7 +47,7 @@
         splunk_service: "{{ systemd_unit }}"
       when:
         -  desired_start_method == "systemd"
-  when: "'full' in group_names"
+  when: ('full' in group_names or splunk_install_type == "full")
 
 - block:
     - name: Configure vars for uf package
@@ -73,7 +73,7 @@
         splunk_service: "{{ systemd_unit }}"
       when:
         - desired_start_method == "systemd"
-  when: "'uf' in group_names"
+  when: ('uf' in group_names or splunk_install_type == "uf")
 
 - name: Configure var for splunk init.d service handler
   set_fact:
