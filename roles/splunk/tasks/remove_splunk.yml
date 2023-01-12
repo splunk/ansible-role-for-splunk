@@ -118,8 +118,8 @@
         path: /etc/audit/auditd.conf
         section: null
         option: log_group
-        value: "{{ splunk_nix_group }}"
-        state: absent
+        value: root
+        state: present
       become: true
       notify:
         - restart redhat auditd service
