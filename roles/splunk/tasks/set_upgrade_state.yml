@@ -3,6 +3,7 @@
   command: "{{ splunk_home }}/bin/splunk upgrade-{{ peer_state }} cluster-peers -auth {{ splunk_auth }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
+  no_log: true
   when:
     - peer_state is defined and splunk_auth is defined
     - "'clustermanager' in group_names"
