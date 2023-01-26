@@ -87,8 +87,57 @@
   become: true
   become_user: "{{ splunk_nix_user }}"
   notify: "{{ handler }}"
+  when: git_download_local
 
-- name: Ensure correct permissions are set
+- block:
+    - name: "Ensure {{ git_separate_git_dir }}/{{ app_dest }} exists"  # noqa 208
+      become: true
+      file:
+        path: "{{ git_separate_git_dir }}/{{ app_dest }}"
+        state: directory
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+
+    - name: "Clone repo {{ item.name }} to {{ splunk_home }}/{{ app_dest }}/{{ item.name }}"
+      become: true
+      become_user: "{{ splunk_nix_user }}"
+      git:
+        accept_hostkey: true
+        repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
+        version: "{{ item.git_version | default(git_version) }}"
+        dest: "{{ splunk_home }}/{{ app_dest }}/{{ item.name }}"
+        separate_git_dir: "{{ git_separate_git_dir }}/{{ app_dest }}/{{ item.name }}.git"
+        key_file: "{{ git_key }}"
+        # force: true
+      notify: "{{ handler }}"
+
+  rescue:
+    - name: Clean up repo dirs on error
+      become: true
+      file:
+        path: "{{ git_cleanup_dirs }}"
+        state: absent
+      with_items:
+        - "{{ splunk_home }}/{{ app_dest }}/{{ item.name }}"
+        - "{{ git_separate_git_dir }}/{{ app_dest }}/{{ item.name }}.git"
+      loop_control:
+        loop_var: git_cleanup_dirs
+
+    - name: "Clone repo {{ item.name }} to {{ splunk_home }}/{{ app_dest }}/{{ item.name }}"
+      become: true
+      become_user: "{{ splunk_nix_user }}"
+      git:
+        accept_hostkey: true
+        repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
+        version: "{{ item.git_version | default(git_version) }}"
+        dest: "{{ splunk_home }}/{{ app_dest }}/{{ item.name }}"
+        separate_git_dir: "{{ git_separate_git_dir }}/{{ app_dest }}/{{ item.name }}.git"
+        key_file: "{{ git_key }}"
+      notify: "{{ handler }}"
+
+  when: not git_download_local
+
+- name: "Ensure correct permissions are set {{ splunk_home }}/{{ app_dest }}"
   file:
     path: "{{ splunk_home }}/{{ app_dest }}"
     owner: "{{ splunk_nix_user }}"
