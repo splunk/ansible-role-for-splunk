@@ -1,6 +1,6 @@
 ---
 global_bashrc: /etc/bash.bashrc
-linux_packages:
+linux_packages_default:
   - nload
   - iotop
   - iftop
@@ -14,5 +14,6 @@ linux_packages:
   - nethogs
   - gdb
   - dnsutils
+linux_packages: "{{ linux_packages_custom | default(linux_packages_default) }}"
 firewall_service: ufw
 logrotate_file: /etc/logrotate.d/rsyslog

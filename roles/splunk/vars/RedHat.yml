@@ -1,7 +1,7 @@
 ---
 global_bashrc: /etc/bashrc
 chk_config_cmd: chkconfig --add disable-thp
-linux_packages:
+linux_packages_default:
   - nload
   - iotop
   - iftop
@@ -17,5 +17,6 @@ linux_packages:
   - nethogs
   - gdb
   - bind-utils
+linux_packages: "{{ linux_packages_custom | default(linux_packages_default) }}"
 firewall_service: firewalld
 logrotate_file: /etc/logrotate.d/syslog
