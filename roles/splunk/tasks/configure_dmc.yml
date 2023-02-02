@@ -12,6 +12,7 @@
   loop: "{{ query('inventory_hostnames', 'all:!indexer') }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
+  no_log: true
 
 - name: Configure monitoring console in auto mode
   community.general.ini_file:
