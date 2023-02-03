@@ -6,8 +6,8 @@ slack_token: undefined
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
-splunk_package_version: 9.0.2 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
-build_id: 17e00c557dc1 # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
+splunk_package_version: 9.0.3 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
+build_id: dd0128b1f8cd # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
 splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/{{ splunk_package_version }}/linux/splunk-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
 splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/{{ splunk_package_version }}/linux/splunkforwarder-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
 splunk_download_local: true  # This defines how the download process works. If `true` it will download to localhost and copy around to hosts from there. If `false` each host will download the package individually.
