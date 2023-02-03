@@ -31,17 +31,6 @@
 
 - name: Remove Disable-THP/Ulimit files
   block:
-    - name: Stop Disable-THP service
-      ansible.builtin.service:
-        name: disable-thp
-        enabled: false
-        state: stopped
-      become: true
-      when:
-        - ansible_connection!="docker"
-        - "'full' in group_names"
-      ignore_errors: true
-
     - name: Remove disable-thp service to systemd (CentOS/RHEL 7+)
       ansible.builtin.file:
         path: /etc/systemd/system/disable-thp.service
@@ -50,8 +39,9 @@
       notify:
         - reload systemctl daemon
       when:
-        - ansible_os_family == "RedHat"
-        - ansible_distribution_major_version|int > 6
+        - not use_tuned_thp
+        - ansible_connection != "docker"
+        - "'full' in group_names"
 
     - name: Remove ulimits
       ansible.builtin.file:
