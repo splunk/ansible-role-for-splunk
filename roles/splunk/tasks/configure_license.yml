@@ -5,7 +5,7 @@
 
 - name: Setting licensing mode based on Splunk version number
   set_fact:
-    mode_option: "{{ splunk_version_release is version_compare('9.0', '<') | ternary('master_uri', 'manager_uri') }}"
+    mode_option: "{{ splunk_version_release is version('9.0', '<') | ternary('master_uri', 'manager_uri') }}"
 
 - name: Configure Local License
   block:
