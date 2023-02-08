@@ -5,7 +5,7 @@
 
 - name: Setting licensing mode based on Splunk version number
   set_fact:
-    mode_option: "{% if splunk_version_release | float < 9.0 %}master{% else %}manager{% endif %}_uri"
+    mode_option: "{{ splunk_version_release is version('9.0', '<') | ternary('master_uri', 'manager_uri') }}"
 
 - name: Configure Local License
   block:
@@ -30,7 +30,7 @@
     become: yes
     when:
       - splunk_license_group=="Enterprise"
-  - name: Remove master_uri when using local license
+  - name: "Remove {{ mode_option }} when using local license"
     ini_file:
       path: "{{ splunk_home }}/etc/system/local/server.conf"
       section: license
@@ -56,7 +56,7 @@
 
 - name: Configure License Peer
   block:
-  - name: Set license master_uri
+  - name: "Set license {{ mode_option }}"
     ini_file:
       path: "{{ splunk_home }}/etc/system/local/server.conf"
       section: license
