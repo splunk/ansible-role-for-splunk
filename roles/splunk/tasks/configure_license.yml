@@ -21,8 +21,8 @@
       - splunk_license_group=="Enterprise"
   - name: Copy license file
     copy:
-      src: "{{ item }}"
-      dest: "{{ splunk_home }}/etc/licenses/enterprise/{{ item }}"
+      src: "{{ item.src | default(item) }}"
+      dest: "{{ splunk_home }}/etc/licenses/enterprise/{{ item.dest | default(item) }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
       mode: "0600"
