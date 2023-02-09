@@ -28,6 +28,7 @@
       mode: "0600"
     loop: "{{ splunk_license_file }}"
     become: yes
+    notify: restart splunk
     when:
       - splunk_license_group=="Enterprise"
   - name: "Remove {{ mode_option }} when using local license"
