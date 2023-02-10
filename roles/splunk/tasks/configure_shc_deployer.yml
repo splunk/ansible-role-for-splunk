@@ -10,6 +10,7 @@
     group: "{{ splunk_nix_group }}"
   become: true
   notify: restart splunk
+  no_log: true
   loop:
     - { option: "pass4SymmKey", value: "{{ splunk_shc_key }}" }
     - { option: "shcluster_label", value: "{{ splunk_shc_label }}" }
