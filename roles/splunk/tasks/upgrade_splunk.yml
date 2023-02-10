@@ -9,6 +9,7 @@
 
 - name: Include task to kill any stale splunkd processes
   include_tasks: adhoc_kill_splunkd.yml
+  when: splunk_force_kill
 
 - name: Include download and unarchive task
   include_tasks: download_and_unarchive.yml
