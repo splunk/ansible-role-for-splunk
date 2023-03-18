@@ -1,0 +1,152 @@
+---
+- name: Set fact for kvstore Upgrade
+  ansible.builtin.set_fact:
+    splunk_upgrade_server: false
+
+- name: Check the current kvstore storage backend
+  ansible.builtin.command: |
+    {{ splunk_home }}/bin/splunk show kvstore-status --verbose | grep storageEngine | sed -r 's/\s+storageEngine : //g'
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  register: splunk_kvstore_backend_out
+  changed_when: splunk_kvstore_backend_out.rc == 0
+  failed_when: splunk_kvstore_backend_out.rc != 0
+
+- name: Check the current kvstore server version
+  ansible.builtin.command: |
+    {{ splunk_home }}/bin/splunk show kvstore-status --verbose | grep serverVersion | sed -r 's/\s+serverVersion : //g'
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  register: splunk_current_server_version_out
+  changed_when: splunk_current_server_version_out.rc == 0
+  failed_when: splunk_current_server_version_out.rc != 0
+
+- name: Debug print kvstore backend engine
+  ansible.builtin.debug:
+    var: splunk_kvstore_backend_out.stdout
+    verbosity: 2
+
+- name: Debug print kvstore backend engine
+  ansible.builtin.debug:
+    var: splunk_current_server_version_out.stdout
+    verbosity: 2
+
+- name: Upgrade KVstore if needed
+  block:
+    - name: Backup KVStore
+      include_tasks: adhoc_backup_kvstore.yml
+      vars:
+        - archive_name: "-archiveName preAnsibleVersionUpgradeBackup"
+
+    - name: Perform single-install upgrade steps
+      block:
+        - name: Perform < 9.0 migration steps
+          block:
+            - name: Define storage migration as true in server.conf
+              community.general.ini_file:
+                path: "{{ splunk_home }}/etc/system/local/server.conf"
+                section: kvstore
+                option: storageEngineMigration
+                value: "true"
+              become: true
+              become_user: "{{ splunk_nix_user }}"
+
+            - name: Start storage engine migration on single instance
+              ansible.builtin.command: |
+                {{ splunk_home }}/bin/splunk migrate kvstore-storage-engine --target-engine wiredTiger --enable-compression
+              register: splunk_migration_single_early_out
+              changed_when: splunk_migration_single_early_out.rc == 0
+              failed_when: splunk_migration_single_early_out.rc != 0
+              become: true
+              become_user: "{{ splunk_nix_user }}"
+          when: splunk_package_version is version(9.0, '<')
+
+        - name: Perform >= 9.0 upgrade if necessary
+          ansible.builtin.command: |
+            {{ splunk_home }}/bin/splunk migrate migrate-kvstore
+          register: splunk_migration_single_early_out
+          changed_when: splunk_migration_single_early_out.rc == 0
+          failed_when: splunk_migration_single_early_out.rc != 0
+          become: true
+          become_user: "{{ splunk_nix_user }}"
+          when:
+            - splunk_package_version is version(9.0, '>=')
+            - splunk_current_server_version_out.stdout is version(4.2 '<')
+      when: splunk_shc_target_group not in group_names
+
+    - name: Perform SHC KVStore upgrade
+      block:
+        - name: Perform SHC pre-migration Steps
+          ansible.builtin.command: |
+            {{ splunk_home }}/bin/splunk start-shcluster-migration kvstore -storageEngine wiredTiger -isDryRun true
+          register: splunk_shc_pre_steps_out
+          changed_when: splunk_shc_pre_steps_out.rc == 0
+          failed_when: splunk_shc_pre_steps_out.rc != 0 
+          become: true
+          become_user: "{{ splunk_nix_user }}"
+
+        - name: Start Backend migration
+          ansible.builtin.command: |
+            {{ splunk_home }}/bin/splunk start-shcluster-migration kvstore -storageEngine wiredTiger -clusterPerc 50
+          register: splunk_shc_kvstore_backend_migration_out
+          changed_when: splunk_shc_kvstore_backend_migration_out.rc == 0
+          failed_when: splunk_shc_kvstore_backend_migration_out.rc != 0
+          become: true
+          become_user: "{{ splunk_nix_user }}"
+
+        - name: Make sure migration is successful
+          ansible.builtin.command: |
+            {{ splunk_home }}/bin/splunk show shcluster-kvmigration-status | sed -r 's/\s+migrationStatus : //g'
+          register: splunk_kvstore_migration_status_out
+          changed_when: splunk_kvstore_migration_status_out.rc == 0
+          failed_when: splunk_kvstore_migration_status_out.rc != 0
+          become: true
+          become_user: "{{ splunk_nix_user }}"
+          until: "{{ splunk_kvstore_migration_status_out.stdout }} == 'notStarted'"
+
+        - name: Perform SHC pre-upgrade steps
+          ansible.builtin.command: |
+            {{ splunk_home }}/bin/splunk start-shcluster-upgrade kvstore -version 4.2 -isDryRun true
+          register: splunk_kvstore_version_check_out
+          changed_when: splunk_kvstore_version_check_out.rc == 0
+          failed_when: splunk_kvstore_version_check_out.rc != 0
+          become: true
+          become_user: "{{ splunk_nix_user }}"
+
+        - name: Start Version upgrade
+          ansible.builtin.command: |
+            {{ splunk_home }}/bin/splunk start-shcluster-upgrade kvstore -version 4.2
+          register: splunk_kvstore_version_upgrade_out
+          changed_when: splunk_kvstore_version_upgrade_out.rc == 0
+          failed_when: splunk_kvstore_version_upgrade_out.rc != 0
+          become: true
+          become_user: "{{ splunk_nix_user }}"
+
+        - name: Make sure upgrade is successful
+          ansible.builtin.command: |
+            {{ splunk_home }}/bin/splunk show kvstore-status --verbose | sed -r 's/\s+serverVersion : //g'
+          register: splunk_kvstore_version_status_out
+          changed_when: splunk_kvstore_version_status_out.rc == 0
+          failed_when: splunk_kvstore_version_status_out.rc != 0
+          become: true
+          become_user: "{{ splunk_nix_user }}"
+          until: "{{ splunk_kvstore_version_status_out.stdout is version(4.2, '>=') }}"
+      when: splunk_shc_target_group in group_names
+
+    - name: Clean up older binaries from older versions
+      ansible.builtin.file:
+        path: "{{ splunk_home }}/bin/{{ item }}"
+        state: absent
+      loop:
+        - mongod-3.6
+        - mongod-4.0
+        - mongodump-3.6
+        - mongorestore-3.6
+      become: true
+      become_user: "{{ splunk_nix_user }}"
+  when: 
+    - splunk_enable_kvstore
+    - splunk_kvstore_storage == "wiredTiger"
+    - "'full' in group_names"
+    - splunk_kvstore_backend_out.stdout != "wiredTiger"
+    - splunk_current_server_version_out.stdout is version(4.2 '<')

@@ -30,3 +30,7 @@
 - name: Install additional utilities and troubleshooting tools
   include_tasks: install_utilities.yml
   when: install_utilities
+
+- name: Disable KVStore if necessary
+  include_tasks: kvstore_disable.yml
+  when: not splunk_enable_kvstore

@@ -69,6 +69,10 @@ splunk_shc_target_group: shc
 splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
 splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
 start_splunk_handler_fired: false # Do not change; used to prevent unnecessary splunk restarts
+splunk_enable_kvstore: true
+splunk_kvstore_storage: undefined # Can be defined here or at the group_vars level - accepted values: "wiredTiger" or "undefined", which leaves as default
+splunk_kvstore_version: undefined # Can be defined here or at the group_vars level - accepted values: 4.2 or "undefined", which leaves as default1
+splunk_oplog_size: 1000 # Default for Splunk Enterprise - should be changed at the group_vars level only at the behest of Splunk support with special care taken
 # Linux and scripting related vars
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
 add_diag_script: false # Set to true to install a script and cron job to automatically cleanup splunk diag files older than 30 days
