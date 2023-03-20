@@ -49,4 +49,5 @@
     mode: 0644
   become: true
   notify: restart splunk
+  no_log: true
   when: splunk_ds_key != 'undefined'

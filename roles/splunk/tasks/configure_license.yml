@@ -76,6 +76,7 @@
       group: "{{ splunk_nix_group }}"
     become: yes
     notify: restart splunk
+    no_log: true
   when:
     - splunk_license_group=="Peer"
     - splunk_install_type=="full"
