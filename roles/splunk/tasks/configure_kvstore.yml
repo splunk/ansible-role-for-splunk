@@ -1,6 +1,6 @@
 ---
 - name: Disable KVStore if specified
-  include_tasks: kvstore_disable.yml
+  include_tasks: disable_kvstore.yml
   when: not splunk_enable_kvstore
 
 - name: Configure initial KVStore storage engine in server.conf
