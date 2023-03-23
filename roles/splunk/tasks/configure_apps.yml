@@ -94,3 +94,18 @@
     - git_key != 'undefined'
     - git_server != 'undefined'
     - git_project != 'undefined'
+    - git_download_local
+
+- block:
+    - name: Install apps
+      include_tasks: install_apps.yml
+      loop: "{{ git_apps }}"
+      vars:
+        app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
+  when:
+    - git_apps is defined
+    - git_version is defined
+    - git_key != 'undefined'
+    - git_server != 'undefined'
+    - git_project != 'undefined'
+    - not git_download_local
