@@ -3,7 +3,7 @@
   include_tasks: splunk_stop.yml
 
 - name: Clean KVStore
-  ansible.builtin.command: "{{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} clean kvstore --local --answer-yes"
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk clean kvstore --local --answer-yes"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: clean_result
@@ -11,4 +11,3 @@
   failed_when: clean_result.rc != 0
   notify:
     - start splunk
-  no_log: true

@@ -4,3 +4,7 @@
     name: "{{ splunk_service }}"
     state: stopped
   become: true
+
+- name: Reset splunk_authenticated variable
+  ansible.builtin.set_fact:
+    splunk_authenticated: false

@@ -29,6 +29,7 @@ splunk_general_key: undefined # Configures a pass4SymmKey in server.conf under t
 splunk_ds_key: undefined # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
 splunk_admin_username: admin
 splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
+splunk_authenticated: false # DO NOT CHANGE. This fact is set to true in the `splunk_login.yml` task, and reset to false if `splunk_restart.yml`, `splunk_stop.yml` or `splunk_start.yml` are manually called in another task.
 splunk_configure_secret: false # If set to true, you need to update files/splunk.secret
 splunk_secret_file: splunk.secret # Used to specify your splunk.secret filename(s), files should be placed in the "files" folder of the role
 # Although there are tasks for the following Splunk configurations in this role, they are not included in any tasks by default. You can add them to your install_splunk.yml if you would like to have Ansible manage any of these files

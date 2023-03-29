@@ -1,11 +1,15 @@
 ---
+- name: Check if authenticated
+  include_tasks: splunk_login.yml
+  when: not splunk_authenticated
+
 - name: Set fact for kvstore Upgrade
   ansible.builtin.set_fact:
     splunk_upgrade_server: false
 
 - name: Check the current kvstore storage backend
   ansible.builtin.command: |
-    {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} show kvstore-status --verbose | grep storageEngine | sed -r 's/\s+storageEngine : //g'
+    {{ splunk_home }}/bin/splunk show kvstore-status | grep storageEngine | sed -r 's/\s+storageEngine : //g'
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: splunk_kvstore_backend_out
@@ -14,7 +18,7 @@
 
 - name: Check the current kvstore server version
   ansible.builtin.command: |
-    {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} show kvstore-status --verbose | grep serverVersion | sed -r 's/\s+serverVersion : //g'
+    {{ splunk_home }}/bin/splunk show kvstore-status | grep serverVersion | sed -r 's/\s+serverVersion : //g'
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: splunk_current_server_version_out
@@ -78,7 +82,7 @@
       block:
         - name: Perform SHC pre-migration Steps
           ansible.builtin.command: |
-            {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} start-shcluster-migration kvstore -storageEngine wiredTiger -isDryRun true
+            {{ splunk_home }}/bin/splunk start-shcluster-migration kvstore -storageEngine wiredTiger -isDryRun true
           register: splunk_shc_pre_steps_out
           changed_when: splunk_shc_pre_steps_out.rc == 0
           failed_when: splunk_shc_pre_steps_out.rc != 0 
@@ -87,7 +91,7 @@
 
         - name: Start Backend migration
           ansible.builtin.command: |
-            {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} start-shcluster-migration kvstore -storageEngine wiredTiger -clusterPerc 50
+            {{ splunk_home }}/bin/splunk start-shcluster-migration kvstore -storageEngine wiredTiger -clusterPerc 50
           register: splunk_shc_kvstore_backend_migration_out
           changed_when: splunk_shc_kvstore_backend_migration_out.rc == 0
           failed_when: splunk_shc_kvstore_backend_migration_out.rc != 0
@@ -96,7 +100,7 @@
 
         - name: Make sure migration is successful
           ansible.builtin.command: |
-            {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} show shcluster-kvmigration-status | sed -r 's/\s+migrationStatus : //g'
+            {{ splunk_home }}/bin/splunk show shcluster-kvmigration-status | sed -r 's/\s+migrationStatus : //g'
           register: splunk_kvstore_migration_status_out
           changed_when: splunk_kvstore_migration_status_out.rc == 0
           failed_when: splunk_kvstore_migration_status_out.rc != 0
@@ -106,7 +110,7 @@
 
         - name: Perform SHC pre-upgrade steps
           ansible.builtin.command: |
-            {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} start-shcluster-upgrade kvstore -version 4.2 -isDryRun true
+            {{ splunk_home }}/bin/splunk start-shcluster-upgrade kvstore -version 4.2 -isDryRun true
           register: splunk_kvstore_version_check_out
           changed_when: splunk_kvstore_version_check_out.rc == 0
           failed_when: splunk_kvstore_version_check_out.rc != 0
@@ -115,7 +119,7 @@
 
         - name: Start Version upgrade
           ansible.builtin.command: |
-            {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} start-shcluster-upgrade kvstore -version 4.2
+            {{ splunk_home }}/bin/splunk start-shcluster-upgrade kvstore -version 4.2
           register: splunk_kvstore_version_upgrade_out
           changed_when: splunk_kvstore_version_upgrade_out.rc == 0
           failed_when: splunk_kvstore_version_upgrade_out.rc != 0
@@ -124,7 +128,7 @@
 
         - name: Make sure upgrade is successful
           ansible.builtin.command: |
-            {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} show kvstore-status --verbose | sed -r 's/\s+serverVersion : //g'
+            {{ splunk_home }}/bin/splunk show kvstore-status --verbose | sed -r 's/\s+serverVersion : //g'
           register: splunk_kvstore_version_status_out
           changed_when: splunk_kvstore_version_status_out.rc == 0
           failed_when: splunk_kvstore_version_status_out.rc != 0

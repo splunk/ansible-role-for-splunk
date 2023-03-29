@@ -1,22 +1,24 @@
 ---
 # We have to do this first so that we store the captain before removing from the cluster
+- name: Check if authenticated
+  include_tasks: splunk_login.yml
+  when: not splunk_authenticated
+
 - name: Get SHCluster captain
   include_tasks: get_shcluster_captain.yml
 
 - name: Remove SHCluster member
-  ansible.builtin.command: "{{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} remove shcluster-member"
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk remove shcluster-member"
   register: splunk_remove_shcluster_member
   changed_when: splunk_remove_shcluster_member.rc == 0
   failed_when: splunk_remove_shcluster_member.rc != 0
-  no_log: true
 
 - name: Clean KVStore
   include_tasks: adhoc_clean_kvstore.yml
 
 - name: Add SHCluster member from current member
   ansible.builtin.command: |
-    {{ splunk_home }}/bin/splunk -auth {{ splunk_auth }} add shcluster-member -current_member_uri {{ splunk_shc_captain }}
+    {{ splunk_home }}/bin/splunk add shcluster-member -current_member_uri {{ splunk_shc_captain }}
   register: splunk_remove_shcluster_member
   changed_when: splunk_remove_shcluster_member.rc == 0
   failed_when: splunk_remove_shcluster_member.rc != 0
-  no_log: true
