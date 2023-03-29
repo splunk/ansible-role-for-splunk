@@ -4,6 +4,8 @@
   register: splunk_authenticated
   failed_when: splunk_authenticated.rc != 0
   changed_when: false
+  become: true
+  become_user: "{{ splunk_nix_user }}"
   no_log: true
 
 - name: Set Authenticated variable
