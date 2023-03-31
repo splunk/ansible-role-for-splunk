@@ -1,11 +1,7 @@
 ---
 - name: Check if authenticated
   include_tasks: splunk_login.yml
-  when: not splunk_authenticated
-
-- name: Set fact for kvstore Upgrade
-  ansible.builtin.set_fact:
-    splunk_upgrade_server: false
+  when: not splunk_authenticatedl
 
 - name: Check the current kvstore storage backend
   ansible.builtin.command: |
@@ -13,7 +9,7 @@
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: splunk_kvstore_backend_out
-  changed_when: splunk_kvstore_backend_out.rc == 0
+  changed_when: false
   failed_when: splunk_kvstore_backend_out.rc != 0
 
 - name: Check the current kvstore server version
@@ -22,7 +18,7 @@
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: splunk_current_server_version_out
-  changed_when: splunk_current_server_version_out.rc == 0
+  changed_when: false
   failed_when: splunk_current_server_version_out.rc != 0
 
 - name: Debug print kvstore backend engine
@@ -112,7 +108,7 @@
           ansible.builtin.command: |
             {{ splunk_home }}/bin/splunk start-shcluster-upgrade kvstore -version 4.2 -isDryRun true
           register: splunk_kvstore_version_check_out
-          changed_when: splunk_kvstore_version_check_out.rc == 0
+          changed_when: false
           failed_when: splunk_kvstore_version_check_out.rc != 0
           become: true
           become_user: "{{ splunk_nix_user }}"
