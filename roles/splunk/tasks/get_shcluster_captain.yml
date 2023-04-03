@@ -7,8 +7,10 @@
 - name: Get current SHCluster captain
   ansible.builtin.command: |
     {{ splunk_home }}/bin/splunk show shcluster-status | grep -A6 Captain | grep mgmt_uri | sed -r 's/\s+mgmt_uri : //g'
+  become: true
+  become_user: "{{ splunk_nix_user }}"
   register: splunk_get_shcaptain
-  changed_when: splunk_get_shcaptain.rc == 0
+  changed_when: false
   failed_when: splunk_get_shcaptain.rc != 0
 
 - name: Register SHCluster captain fact
