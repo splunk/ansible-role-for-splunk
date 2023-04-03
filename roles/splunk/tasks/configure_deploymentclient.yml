@@ -59,3 +59,4 @@
   when: 
     - splunk_ds_key != 'undefined'
     - encrypted_secret_value.stdout == "" or (splunk_ds_key != decrypted_secret_value.stdout | default(''))
+  no_log: true

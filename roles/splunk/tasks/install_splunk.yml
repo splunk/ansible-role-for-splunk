@@ -1,23 +1,25 @@
 ---
 #  This task should be used for fresh installations of Splunk, refer to upgrade_splunk.yml for upgrades
+- name: Install Required Packages
+  include_tasks: prereqs.yml
+
 - name: Block for non-root splunk user setup
   block:
     - name: Add nix splunk group
       group:
         name: "{{ splunk_nix_group }}"
         state: present
-        local: true
+        local: "{{ local_os_group }}"
       become: true
 
     - name: Add nix splunk user
       user:
         name: "{{ splunk_nix_user }}"
-        groups: "{{ splunk_nix_group }}"
+        group: "{{ splunk_nix_group }}"
         home: "{{ splunk_home }}"
-        append: true
         state: present
         shell: /bin/bash
-        local: true
+        local: "{{ local_os_user }}"
       become: true
 
     - name: Allow splunk user to read /var/log
@@ -66,8 +68,8 @@
 - name: Include accept license task
   include_tasks: splunk_license_accept.yml
 
-- name: Include post-install tasks
-  include_tasks: post_install.yml
-
 - name: Enable boot start
   include_tasks: configure_splunk_boot.yml
+
+- name: Include post-install tasks
+  include_tasks: post_install.yml

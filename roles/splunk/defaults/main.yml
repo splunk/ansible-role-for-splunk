@@ -6,15 +6,18 @@ slack_token: undefined
 splunk_home: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_url: auto_determined # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
-splunk_package_version: 9.0.0.1 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
-build_id: 9e907cedecb1 # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
+splunk_package_version: 9.0.4 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
+build_id: de405f4a7979 # The default build to install or update to. This can be set in `group_vars` or `host_vars`.
 splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/{{ splunk_package_version }}/linux/splunk-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
 splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/{{ splunk_package_version }}/linux/splunkforwarder-{{ splunk_package_version }}-{{ build_id }}-Linux-x86_64.tgz"
+splunk_download_local: true  # This defines how the download process works. If `true` it will download to localhost and copy around to hosts from there. If `false` each host will download the package individually.
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
 least_privileged: false # Do not change. This get automatically set in `tasks/main.yml` based on the version and install type.
 splunk_nix_user: splunk
 splunk_nix_group: splunk
+local_os_user: false # Whenther or not to force creation of a user using the `luseradd` or not.
+local_os_group: false # Whether or not to force creation of a group using the `lgroupadd` or not.
 splunk_uri_lm: undefined
 splunk_license_file: [] # This can be a list of license files to copy to the host.
 splunk_license_group: Trial # The default matches with the group splunk ships with. You can also set the value via a group_vars or host_vars file.
@@ -35,6 +38,7 @@ splunk_authenticationconf: authentication.conf.j2
 splunk_create_polkit: 0  # If set to 1 `enable boot-start` will create a polkit rules file allowing the 'splunk_nix_user' to restart the splunk service without authentication.
 splunk_use_initd: false  # If set to true, the system will use init.d. Default false
 splunk_use_systemd: true # DO NOT EDIT. To use init.d, set `splunk_use_initd` to true.
+splunk_force_kill: False
 systemd_unit_full: Splunkd # You can change this in `host_vars` or `group_vars` to customize the service name.
 systemd_unit_uf: SplunkForwarder # You can change this in `host_vars` or `group_vars` to customize the service name.
 splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
@@ -72,19 +76,16 @@ add_pstack_script: false # Set to true to install a pstack generation script for
 configure_dmesg: false
 install_utilities: false # Set to true to install the list of packages defined in the linux_packages var after installing splunk
 use_tuned_thp: false
-linux_packages:
-  - nload
-  - iotop
-  - iftop
-  - sysstat
-  - telnet
-  - tcpdump
-  - htop
-  - atop
-  - lsof
-  - policycoreutils-python
-  - policycoreutils
-  - setroubleshoot
-  - nethogs
-  - gdb
-  - bind-utils
+# Firewall configs
+configure_firewall: false # Whether or not to configure the firewall service on your machine, if set to true, opens firewall ports using UFW (default) or Firewalld depending on OS
+splunk_firewall_service: splunk # The name of the Splunk firewall service to install for firewalld
+# Firewall port presets - reference these in group_vars to assign them to splunk
+splunkweb_port: {desc: "Splunk Web", protocol: "tcp", number: 8000}
+splunkhec_port: {desc: "Splunk HEC", protocol: "tcp", number: 8088}
+splunktcpin_port: {desc: "Splunk TCPIN", protocol: "tcp", number: 9997}
+splunkapi_port: {desc: "Splunk API", protocol: "tcp", number: "{{ splunkd_port }}"}
+splunkidxcrep_port: {desc: "Splunk Indexer Clustering Replication", protocol: "tcp", number: "{{ splunk_idxc_rep_port }}"}
+splunkshcrep_port: {desc: "Splunk Search Head Clustering Replication", protocol: "tcp", number: "{{ splunk_shc_rep_port }}"}
+splunk_firewall_ports: # List of ports to allow through local firewall in dict form
+  - "{{ splunkweb_port }}"
+  - "{{ splunkapi_port }}"

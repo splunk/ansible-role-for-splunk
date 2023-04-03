@@ -1,6 +1,5 @@
 ---
-global_bashrc: /etc/bashrc
-chk_config_cmd: chkconfig --add disable-thp
+global_bashrc: /etc/bash.bashrc
 linux_packages:
   - nload
   - iotop
@@ -13,9 +12,6 @@ linux_packages:
   - lsof
   - policycoreutils-python
   - policycoreutils
-  - setroubleshoot
   - nethogs
   - gdb
   - bind-utils
-firewall_service: firewalld
-logrotate_file: /etc/logrotate.d/syslog

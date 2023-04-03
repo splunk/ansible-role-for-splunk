@@ -1,0 +1,6 @@
+---
+splunk_firewall_ports:
+  - "{{ splunkweb_port }}"
+  - "{{ splunkapi_port }}"
+  - "{{ splunktcpin_port }}"
+  - "{{ splunkhec_port }}"

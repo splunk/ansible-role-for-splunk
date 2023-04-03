@@ -1,8 +1,5 @@
 ---
 # Task to configure ulimits and THP for Splunk
-- name: Include OS family-specific variables
-  include_vars: "{{ ansible_os_family }}.yml"
-
 - name: Set ulimits for splunk
   template:
     src: splunk_ulimits.conf.j2
@@ -15,8 +12,18 @@
 
 - name: Disable THP
   include_tasks: configure_thp.yml
-  when: "'full' in group_names"
+  when:
+    - ansible_service_mgr == "systemd"
+    - ansible_connection != "docker"
+    - "'full' in group_names"
 
 - name: Enable read for dmesg
   include_tasks: configure_dmesg.yml
   when: configure_dmesg
+
+- name: Configure firewall service
+  include_tasks: "configure_firewall.yml"
+  when:
+    - firewall_service != 'undefined'
+    - configure_firewall != false
+    - "'full' in group_names"

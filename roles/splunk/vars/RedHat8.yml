@@ -11,11 +11,10 @@ linux_packages:
   - htop
   - atop
   - lsof
-  - policycoreutils-python
+  - policycoreutils-python-utils
   - policycoreutils
   - setroubleshoot
   - nethogs
   - gdb
   - bind-utils
 firewall_service: firewalld
-logrotate_file: /etc/logrotate.d/syslog

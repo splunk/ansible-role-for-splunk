@@ -23,6 +23,7 @@
   notify: 
     - restart splunk
     - wait for splunkd
+  no_log: true
   loop:
     - { option: "mode", value: "{{ mode_value}}" }
     - { option: "replication_factor", value: "{{ splunk_idxc_rf }}" }
