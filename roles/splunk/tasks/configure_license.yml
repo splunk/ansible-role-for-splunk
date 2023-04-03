@@ -21,13 +21,14 @@
       - splunk_license_group=="Enterprise"
   - name: Copy license file
     copy:
-      src: "{{ item }}"
-      dest: "{{ splunk_home }}/etc/licenses/enterprise/{{ item }}"
+      src: "{{ item.src | default(item) }}"
+      dest: "{{ splunk_home }}/etc/licenses/enterprise/{{ item.dest | default(item) }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
       mode: "0600"
     loop: "{{ splunk_license_file }}"
     become: yes
+    notify: restart splunk
     when:
       - splunk_license_group=="Enterprise"
   - name: "Remove {{ mode_option }} when using local license"
@@ -50,6 +51,18 @@
       group: "{{ splunk_nix_group }}"
     become: yes
     notify: restart splunk
+  - name: Set pass4SymmKey on LM
+    ini_file:
+      path: "{{ splunk_home }}/etc/system/local/server.conf"
+      section: general
+      option: pass4SymmKey
+      value: "{{ splunk_general_key }}"
+      owner: "{{ splunk_nix_user }}"
+      group: "{{ splunk_nix_group }}"
+    become: yes
+    notify: restart splunk
+    when:
+      - splunk_license_group=="Enterprise"
   when:
     - not splunk_license_group=="Peer"
     - splunk_install_type=="full"
