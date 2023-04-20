@@ -1,0 +1,11 @@
+---
+- name: Reload deployment server
+  ansible.builtin.command: |
+    {{ splunk_home }}/bin/splunk reload deploy-server -auth {{ splunk_auth }} -timeout {{ timeout_value }} {{ extra_args }}
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  no_log: true
+  when: "'deploymentserver' in group_names"
+  vars:
+    extra_args: "{{ extra_args | default('') }}"
+    timeout_value: "{{ timeout_value | default('600') }}"
