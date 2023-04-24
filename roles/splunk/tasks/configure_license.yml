@@ -16,7 +16,7 @@
       mode: "0700"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
-    become: yes
+    become: true
     when:
       - splunk_license_group=="Enterprise"
   - name: Copy license file
@@ -27,19 +27,21 @@
       group: "{{ splunk_nix_group }}"
       mode: "0600"
     loop: "{{ splunk_license_file }}"
-    become: yes
+    become: true
     when:
       - splunk_license_group=="Enterprise"
-  - name: "Remove {{ mode_option }} when using local license"
+  - name: "Remove license manager uri when using local license"
     ini_file:
       path: "{{ splunk_home }}/etc/system/local/server.conf"
       section: license
-      option: "{{ mode_option }}"
-      value: "{{ splunk_uri_lm }}"
+      option: "{{ item }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
       state: absent
-    become: yes
+    with_items: 
+      - manager_uri
+      - master_uri
+    become: true
   - name: Configure License Group
     ini_file:
       path: "{{ splunk_home }}/etc/system/local/server.conf"
@@ -48,7 +50,7 @@
       value: "{{ splunk_license_group }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
-    become: yes
+    become: true
     notify: restart splunk
   when:
     - not splunk_license_group=="Peer"
@@ -64,7 +66,14 @@
       value: "{{ splunk_uri_lm }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
-    become: yes
+    become: true
+
+  - name: Extract encrypted value
+    include_tasks: check_decrypted_secret.yml
+    vars:
+      req_secret_conf: server
+      req_secret_section: general
+      req_secret_option: pass4SymmKey
 
   - name: Set pass4SymmKey to match LM
     ini_file:
@@ -74,8 +83,11 @@
       value: "{{ splunk_general_key }}"
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
-    become: yes
+    become: true
     notify: restart splunk
+    when:
+      - splunk_general_key != "undefined"
+      - encrypted_secret_value.stdout == "" or (splunk_general_key != decrypted_secret_value.stdout | default(''))
     no_log: true
   when:
     - splunk_license_group=="Peer"
