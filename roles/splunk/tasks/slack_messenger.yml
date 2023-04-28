@@ -9,7 +9,7 @@
   ignore_errors: true
   run_once: true
   loop:
-    - "****************\n*Starting new Ansible play...*\n```Ansible Role: {{ role_name }}\nAnsible Task: {{ deployment_task }}\nTarget Host: {{ ansible_fqdn }}\nStart Time: {{ ansible_date_time.iso8601 }}```"
+    - "****************\n*Starting new Ansible play...*\n```Ansible Role: {{ role_name }}\nAnsible Task: {{ deployment_task }}\nTarget Host: {{ ansible_facts.hostname }}\nStart Time: {{ ansible_date_time.iso8601 }}```"
   when:
     - slack_token != 'undefined'
     - slack_channel != 'undefined'
