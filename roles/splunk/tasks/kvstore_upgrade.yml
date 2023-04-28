@@ -149,4 +149,4 @@
     - splunk_kvstore_storage == "wiredTiger"
     - splunk_kvstore_version is version(4.2, '>=')
     - "'full' in group_names"
-    - splunk_kvstore_backend_out.stdout != "wiredTiger" or splunk_current_server_version_out.stdout is version(4.2, '<')
+    - splunk_kvstore_backend_out.stdout != "wiredTiger" or splunk_current_server_version_out.stdout | default(3.6) is version(4.2, '<')
