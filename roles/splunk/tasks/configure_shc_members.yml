@@ -1,6 +1,6 @@
 ---
 - name: Initialize shc config
-  command: "{{ splunk_home }}/bin/splunk init shcluster-config -auth {{ splunk_auth }} -mgmt_uri https://{{ ansible_fqdn }}:{{ splunkd_port }} -replication_port {{ splunk_shc_rep_port }} -replication_factor {{ splunk_shc_rf }} -conf_deploy_fetch_url https://{{ splunk_shc_deployer }}:{{ splunkd_port }} -secret {{ splunk_shc_key }} -shcluster_label {{ splunk_shc_label }}"
+  command: "{{ splunk_home }}/bin/splunk init shcluster-config -auth {{ splunk_auth }} -mgmt_uri https://{{ splunk_mgmt_uri }}:{{ splunkd_port }} -replication_port {{ splunk_shc_rep_port }} -replication_factor {{ splunk_shc_rf }} -conf_deploy_fetch_url https://{{ splunk_shc_deployer }}:{{ splunkd_port }} -secret {{ splunk_shc_key }} -shcluster_label {{ splunk_shc_label }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: shc_init_result

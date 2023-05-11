@@ -42,6 +42,7 @@ splunk_force_kill: False
 systemd_unit_full: Splunkd # You can change this in `host_vars` or `group_vars` to customize the service name.
 systemd_unit_uf: SplunkForwarder # You can change this in `host_vars` or `group_vars` to customize the service name.
 splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
+splunk_mgmt_uri: "{{ ansible_fqdn }}" # If the `ansible_fqdn` is not resolvable by other hosts, you can set it to something like `ansible_facts.default_ipv4.address` in `host_vars` or `group_vars` to use the IP address instead.
 splunkd_port: 8089 # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/ # Base directory under which repositories for app deplyoment should be cloned to
 git_server: undefined # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
@@ -67,7 +68,7 @@ splunk_shc_rf: 3
 splunk_shc_rep_port: 8100
 splunk_shc_target_group: shc
 splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
-splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
+splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].splunk_mgmt_uri }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
 start_splunk_handler_fired: false # Do not change; used to prevent unnecessary splunk restarts
 # Linux and scripting related vars
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
