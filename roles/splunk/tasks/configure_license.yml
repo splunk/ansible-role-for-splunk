@@ -28,6 +28,7 @@
       mode: "0600"
     loop: "{{ splunk_license_file }}"
     become: true
+    notify: restart splunk
     when:
       - splunk_license_group=="Enterprise"
   - name: "Remove license manager uri when using local license"
@@ -42,6 +43,7 @@
       - manager_uri
       - master_uri
     become: true
+    notify: restart splunk
   - name: Configure License Group
     ini_file:
       path: "{{ splunk_home }}/etc/system/local/server.conf"
@@ -67,6 +69,7 @@
       owner: "{{ splunk_nix_user }}"
       group: "{{ splunk_nix_group }}"
     become: true
+    notify: restart splunk
 
   - name: Extract encrypted value
     include_tasks: check_decrypted_secret.yml
