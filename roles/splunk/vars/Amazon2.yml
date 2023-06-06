@@ -1,6 +1,6 @@
 global_bashrc: /etc/bashrc
 chk_config_cmd: chkconfig --add disable-thp
-linux_packages:
+linux_packages_default:
   - sysstat
   - telnet
   - tcpdump
@@ -10,3 +10,4 @@ linux_packages:
   - policycoreutils
   - gdb
   - bind-utils
+linux_packages: "{{ linux_packages_custom | default(linux_packages_default) }}"
