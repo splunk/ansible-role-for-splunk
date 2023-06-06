@@ -38,7 +38,8 @@
     path: "{{ splunk_log_local_cfg }}"
     regexp: 'category.{{ splunk_component }}=[^,\s]+'
     line: 'category.{{ splunk_component }}={{ splunk_component_log_level }}'
-    insertafter: '\[splunkd\]'
+    insertafter: '^\[splunkd\]'
+    firstmatch: true
   become: true
   become_user: "{{ splunk_nix_user }}"
   notify: restart splunk
