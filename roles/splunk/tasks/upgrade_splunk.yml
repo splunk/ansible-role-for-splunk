@@ -24,7 +24,7 @@
 - name: Include accept license task
   include_tasks: splunk_license_accept.yml
 
-- name: set splunk_uprgaded variable
+- name: set splunk_upgraded variable
   set_fact:
     splunk_upgraded: True
 
