@@ -13,11 +13,19 @@ splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/
 splunk_download_local: true  # This defines how the download process works. If `true` it will download to localhost and copy around to hosts from there. If `false` each host will download the package individually.
 splunk_install_type: undefined # There are two ways to configure this. The easiest way is to nest hosts under either a "full" group or a "uf" group in your inventory and main.yml will handle it for you. Or, you can also set the value via a group_vars or host_vars file.
 splunk_install_path: /opt # Base directory on the operating system to which splunk should be installed
+splunk_file_type: tgz # Default is a tgz installer
+splunk_package_gpg: SplunkPGPKey.pub
 least_privileged: false # Do not change. This get automatically set in `tasks/main.yml` based on the version and install type.
-splunk_nix_user: splunk
-splunk_nix_group: splunk
 local_os_user: false # Whenther or not to force creation of a user using the `luseradd` or not.
 local_os_group: false # Whether or not to force creation of a group using the `lgroupadd` or not.
+splunk_nix_user: splunk
+splunk_nix_group: splunk
+splunk_server_sslVersions: tls1.2
+splunk_web_sslVersions: tls1.2
+splunk_webserver_port: 8000
+splunk_licenses: []
+splunk_ansible_configs_dir: _ansible_configs
+splunk_tmp_file_dir: /tmp
 splunk_uri_lm: undefined
 splunk_license_file: [] # This can be a list of license files to copy to the host.
 splunk_license_group: Trial # The default matches with the group splunk ships with. You can also set the value via a group_vars or host_vars file.
@@ -27,6 +35,7 @@ clientName: undefined
 phoneHomeIntervalInSecs: undefined
 splunk_general_key: undefined # Configures a pass4SymmKey in server.conf under the general stanza
 splunk_ds_key: undefined # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
+splunk_ds_requireAuth: false
 splunk_admin_username: admin
 splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
 splunk_configure_secret: false # If set to true, you need to update files/splunk.secret
@@ -42,21 +51,28 @@ splunk_force_kill: False
 systemd_unit_full: Splunkd # You can change this in `host_vars` or `group_vars` to customize the service name.
 systemd_unit_uf: SplunkForwarder # You can change this in `host_vars` or `group_vars` to customize the service name.
 splunk_disable_mgmt_port: false # If set to true, will disable splunkd management port during installation
-splunk_mgmt_uri: "{{ ansible_fqdn }}" # If the `ansible_fqdn` is not resolvable by other hosts, you can set it to something like `ansible_facts.default_ipv4.address` in `host_vars` or `group_vars` to use the IP address instead.
+splunk_disable_kvstore: false # If set to true, will disable the kvstore
 splunkd_port: 8089 # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/ # Base directory under which repositories for app deplyoment should be cloned to
 git_server: undefined # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
-git_key: undefined # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
+git_key: ~ # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
 git_project: undefined
 git_version: master # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
+splunk_app_deploy_path: etc/apps # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
 app_relative_path: # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
-splunk_app_deploy_path: undefined # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+splunk_app_deploy_path: # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
 # IDXC Vars
-splunk_idxc_key: mypass4symmkey
+splunk_idxc_key: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
+splunk_idxc_multisite: false
 splunk_idxc_rf: 2
 splunk_idxc_sf: 2
+splunk_idxc_available_sites: "site1"
+splunk_idxc_site_mappings: "" # Default are no mappings
+splunk_idxc_site_rf: "origin:1,total:2"
+splunk_idxc_site_sf: "origin:1,total:2"
 splunk_idxc_rep_port: 9887
 splunk_idxc_label: myidxc
+splunk_idxc_site_affinity: "site0" # Default to site0 for Searchheads and Forwarders, and need to be set to != site0 on manager
 splunk_apply_cluster_bundle_retries: 3 # How many times to retry indexer cluster bundle apply if it fails
 splunk_apply_cluster_bundle_delay: 60 # Delay in seconds between retries to apply indexer cluster bundle
 splunk_apply_shcluster_bundle_retries: 3 # How many times to retry SHC bundle apply if it fails
@@ -67,8 +83,8 @@ splunk_shc_label: myshc
 splunk_shc_rf: 3
 splunk_shc_rep_port: 8100
 splunk_shc_target_group: shc
-splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
-splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].splunk_mgmt_uri }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
+splunk_shc_deployer: "{{ groups['splunk_shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
+splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
 start_splunk_handler_fired: false # Do not change; used to prevent unnecessary splunk restarts
 # Linux and scripting related vars
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
