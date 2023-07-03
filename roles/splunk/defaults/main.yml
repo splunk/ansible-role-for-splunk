@@ -52,11 +52,17 @@ git_version: master # Configure default version to clone, overridable inside the
 app_relative_path: # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
 splunk_app_deploy_path: undefined # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
 # IDXC Vars
-splunk_idxc_key: mypass4symmkey
+splunk_idxc_key: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
+splunk_idxc_multisite: false
 splunk_idxc_rf: 2
 splunk_idxc_sf: 2
+splunk_idxc_available_sites: "site1"
+splunk_idxc_site_mappings: "" # Default are no mappings
+splunk_idxc_site_rf: "origin:1,total:2"
+splunk_idxc_site_sf: "origin:1,total:2"
 splunk_idxc_rep_port: 9887
 splunk_idxc_label: myidxc
+splunk_idxc_site_affinity: "site0" # Default to site0 for Searchheads and Forwarders, and need to be set to != site0 on manager
 splunk_apply_cluster_bundle_retries: 3 # How many times to retry indexer cluster bundle apply if it fails
 splunk_apply_cluster_bundle_delay: 60 # Delay in seconds between retries to apply indexer cluster bundle
 splunk_apply_shcluster_bundle_retries: 3 # How many times to retry SHC bundle apply if it fails
