@@ -16,6 +16,7 @@ splunk_install_path: /opt # Base directory on the operating system to which splu
 least_privileged: false # Do not change. This get automatically set in `tasks/main.yml` based on the version and install type.
 splunk_nix_user: splunk
 splunk_nix_group: splunk
+splunk_nix_system_user: false # Whenther or not to create splunk nix user/group as a system user/group
 local_os_user: false # Whenther or not to force creation of a user using the `luseradd` or not.
 local_os_group: false # Whether or not to force creation of a group using the `lgroupadd` or not.
 splunk_uri_lm: undefined
