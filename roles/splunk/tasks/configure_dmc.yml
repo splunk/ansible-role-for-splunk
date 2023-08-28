@@ -13,6 +13,8 @@
   become: true
   become_user: "{{ splunk_nix_user }}"
   no_log: true
+  changed_when: peer_add.rc == 0 
+  failed_when: peer_add.rc != 0 and peer_add.rc != 24
 
 - name: Create local dir if it doesn't exist
   ansible.builtin.file:
