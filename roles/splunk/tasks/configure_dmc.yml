@@ -14,6 +14,16 @@
   become_user: "{{ splunk_nix_user }}"
   no_log: true
 
+- name: Create local dir if it doesn't exist
+  ansible.builtin.file:
+    path: "{{ splunk_home }}/etc/apps/splunk_monitoring_console/local"
+    state: directory
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0744
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
 - name: Configure monitoring console in auto mode
   community.general.ini_file:
     path: "{{ splunk_home }}/etc/apps/splunk_monitoring_console/local/splunk_monitoring_console_assets.conf"
