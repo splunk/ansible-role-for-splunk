@@ -1,0 +1,2 @@
+-a never,exit -F path={{ splunk_home }}/bin/splunkd -F uid={{ ansible_facts.getent_passwd[splunk_user][1] }}
+-a never,exit -F path={{ splunk_home }}/var/run/splunk -F uid={{ ansible_facts.getent_passwd[splunk_user][1] }}

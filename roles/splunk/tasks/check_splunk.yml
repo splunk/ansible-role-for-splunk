@@ -15,6 +15,11 @@
 - name: Configure license
   include_tasks: configure_license.yml
 
+  # Configure auditd for both fresh and old installs
+- name: Configure Auditd
+  include_tasks: configure_auditd.yml
+  when: splunk_auditd_configure
+
 - name: Execute this block only if splunk is already installed
   block:
 
