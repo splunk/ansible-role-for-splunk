@@ -10,3 +10,5 @@ linux_packages:
   - policycoreutils
   - gdb
   - bind-utils
+firewall_service: firewalld
+logrotate_file: /etc/logrotate.d/syslog
