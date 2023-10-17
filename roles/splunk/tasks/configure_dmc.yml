@@ -1,6 +1,6 @@
 ---
 - name: Check splunk
-  include_task: check_splunk.yml
+  include_tasks: check_splunk.yml
 
 - name: Configure DMC as a IDXC member
   include_tasks: configure_idxc_sh.yml
