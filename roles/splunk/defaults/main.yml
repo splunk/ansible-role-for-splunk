@@ -51,6 +51,9 @@ git_project: undefined
 git_version: master # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
 app_relative_path: # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
 splunk_app_deploy_path: undefined # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+# DMC Vars
+splunk_dmc_not_indexer_host_expression: 'all:!indexers'
+splunk_dmc_not_indexers_list: "{{ query('inventory_hostnames', splunk_dmc_not_indexer_host_expression) }}" # List of all inventory items that are not the indexers. If your configuration uses a nonstandard name for hostnames you can replace this with a different list.
 # IDXC Vars
 splunk_idxc_key: mypass4symmkey
 splunk_idxc_rf: 2

@@ -9,7 +9,7 @@
 - name: Configure systems as search peers to be monitored except indexers
   ansible.builtin.shell: |
     {{ splunk_home }}/bin/splunk add search-server https://{{ item }}:{{ splunkd_port }} -auth "{{ splunk_auth }}" -remoteUsername "{{ splunk_admin_username }}" -remotePassword "{{ splunk_admin_password }}"
-  loop: "{{ query('inventory_hostnames', 'all:!indexer') }}"
+  loop: "{{ splunk_dmc_not_indexers_list }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   no_log: true
