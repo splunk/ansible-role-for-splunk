@@ -4,9 +4,6 @@
     database: passwd
     key: "{{ splunk_nix_user }}"
 
-# - debug:
-#     msg: "{{ splunk_nix_user }} user id = {{ ansible_facts.getent_passwd[splunk_nix_user][1] }}"
-
 - name: auditd - set 20-splunk.rules
   become: true
   template:
@@ -17,7 +14,7 @@
     group: root
   register: splunk_rule
 
-- name: Get auditd enabled level  # noqa 301 306
+- name: Get auditd enabled level
   become: true
   shell: auditctl -s | grep enabled | cut -d" " -f2
   changed_when: false
@@ -25,7 +22,7 @@
   register: auditctl_enabled
 
 # restart auditd if not immutable
-- name: restart auditd if not immutable  # noqa no-handler
+- name: restart auditd if not immutable
   become: true
   service:
     name: auditd
