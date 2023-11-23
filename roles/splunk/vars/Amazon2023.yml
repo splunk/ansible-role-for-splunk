@@ -1,0 +1,17 @@
+global_bashrc: /etc/bashrc
+chk_config_cmd: chkconfig --add disable-thp
+linux_package_prereqs:
+  - logrotate
+  - rsyslog
+  - cronie
+  - polkit
+linux_packages:
+  - sysstat
+  - telnet
+  - tcpdump
+  - htop
+  - lsof
+  - gdb
+  - bind-utils
+firewall_service: firewalld
+logrotate_file: /etc/logrotate.d/rsyslog

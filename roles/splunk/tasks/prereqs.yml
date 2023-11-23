@@ -4,3 +4,10 @@
     name: acl
     state: present
   become: True
+
+- name: install distro specific required packages
+  ansible.builtin.package:
+    name: "{{ linux_package_prereqs }}"
+    state: present
+  when: linux_package_prereqs is defined
+  become: true
