@@ -51,6 +51,7 @@ git_project: undefined
 git_version: master # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
 app_relative_path: # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
 splunk_app_deploy_path: undefined # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+splunk_auditd_configure: false  # Whether or not to install auditd filtering rules for splunk launched executables
 # IDXC Vars
 splunk_idxc_key: mypass4symmkey
 splunk_idxc_rf: 2
