@@ -1,0 +1,42 @@
+---
+- name: "get {{ splunk_nix_user }} user uid"
+  getent:
+    database: passwd
+    key: "{{ splunk_nix_user }}"
+
+- name: auditd - set 20-splunk.rules
+  become: true
+  template:
+    src: 20-splunk.rules.j2
+    dest: /etc/audit/rules.d/20-splunk.rules
+    mode: 0600
+    owner: root
+    group: root
+  register: splunk_rule
+
+- name: Get auditd enabled level
+  become: true
+  shell: auditctl -s | grep enabled | cut -d" " -f2
+  changed_when: false
+  check_mode: false
+  register: auditctl_enabled
+
+# restart auditd if not immutable
+- name: restart auditd if not immutable
+  become: true
+  service:
+    name: auditd
+    state: restarted
+    use: service
+  when:
+    - splunk_rule is changed
+    - auditctl_enabled.stdout != '2'
+  tags: molecule-notest
+
+# if immutable output "auditd immutable - OS REBOOT REQUIRED"
+- name: auditd immutable  # noqa no-handler
+  debug:
+    msg: "auditd immutable - OS REBOOT REQUIRED"
+  when:
+    - splunk_rule is changed
+    - auditctl_enabled.stdout == '2'
