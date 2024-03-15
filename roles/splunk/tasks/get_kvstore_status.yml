@@ -1,0 +1,20 @@
+---
+# This file gets our KVStore status from our current member as JSON
+- name: Get KVStore status
+  ansible.builtin.shell: |
+    set -o pipefail
+    {{ splunk_home }}/bin/splunk show kvstore-status \
+      | grep -A13 "This member:" \
+      | tail -n +2 | sed -Er 's/^\s+//g' \
+      | awk -F ' * : *' '{ printf "\"%s\":\"%s\",", $1, $2 }' \
+      | sed 's/,$/}/' | sed 's/^/{/'
+  register: get_splunk_kvstore_status_out
+  failed_when: get_splunk_kvstore_status_out.rc != 0
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
+- name: Convert KVStore status to JSON
+  ansible.builtin.set_fact:
+    splunk_kvstore_status_json: "{{ get_splunk_kvstore_status_out.stdout_lines[0] | from_json }}"
+
+# output: {"date":"Tue Jul 21 16:42:24 2016","dateSec":"1466541744.143000","disabled":"0","guid":"6244DF36-D883-4D59-AHD3-1354FCB4BL91","oplogEndTimestamp":"Tue Jul 21 16:41:12 2016","oplogEndTimestampSec":"1466541672.000000","oplogStartTimestamp":"Tue Jul 21 16:34:55 2016","oplogStartTimestampSec":"1466541295.000000","port":"8191","replicaSet":"splunkrs","replicationStatus":"KV store captain","standalone":"0","status":"ready"}

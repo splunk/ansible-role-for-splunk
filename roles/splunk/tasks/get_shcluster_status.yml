@@ -1,0 +1,20 @@
+---
+# This file gets our shcluster status from our current member as JSON
+- name: Get shcluster status
+  ansible.builtin.shell: |
+    set -o pipefail
+    {{ splunk_home }}/bin/splunk show shcluster-status \
+      | grep -A5 "  {{ inventory_hostname }}" \
+      | tail -n +2 | sed -Er 's/^\s+//g' \
+      | awk -F ' * : *' '{ printf "\"%s\":\"%s\",", $1, $2 }' \
+      | sed 's/,$/}/' | sed 's/^/{/'
+  register: get_splunk_shcluster_status_out
+  failed_when: get_splunk_shcluster_status_out.rc != 0
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
+- name: Convert shcluster status to JSON
+  ansible.builtin.set_fact:
+    splunk_shcluster_status_json: "{{ get_splunk_shcluster_status_out.stdout_lines[0] | from_json }}"
+
+# output: {"label":"splunk-search.example.com","last_conf_replication":"Fri Mar 14 11:12:17 2024","mgmt_uri":"https://splunk-search.example.com:8089","mgmt_uri_alias":"https://10.1.1.5:8089","status":"Up"}
