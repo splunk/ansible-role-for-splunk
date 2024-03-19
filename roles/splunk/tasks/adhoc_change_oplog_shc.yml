@@ -12,6 +12,24 @@
     msg: "SHC not found in group_names - detected group names are \"{{ group_names }}\". This play will only run on an SHC"
   when: splunk_shc_target_group not in group_names
 
+- name: Get current oplog size
+  ansible.builtin.shell: |
+    {{ splunk_home }}/bin/splunk btool server list kvstore | grep oplogSize | sed 's/[^0-9]*//g'
+  register: current_oplog_size_out
+  failed_when: current_oplog_size_out.rc != 0
+  run_once: true
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
+- name: Debug current OpLog Size in MB
+  ansible.builtin.debug:
+    var: current_oplog_size_out.stdout
+    verbosity: 1
+
+- name: Make sure the oplog size var differs from our current value, if they're the same, exit play
+  ansible.builtin.meta: end_play
+  when: current_oplog_size_out == splunk_oplog_size
+
 # sets fact splunk_shc_captain
 - name: Find SHC Captain
   include_tasks: get_shcluster_captain.yml
