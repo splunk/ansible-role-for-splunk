@@ -1,0 +1,18 @@
+---
+- name: Check if authenticated
+  include_tasks: splunk_login.yml
+  when: not splunk_authenticated
+
+# Gets KVStore captain hostname - like splunk_captain.domain.com
+- name: Get current KVStore captain
+  ansible.builtin.command: |
+    {{ splunk_home }}/bin/splunk show kvstore-status | grep -B10 "KV store captain" | grep "hostAndPort" | sed -r 's/\s+hostAndPort : //g' | sed -r 's/:[0-9]+//g'
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  register: splunk_get_kvcaptain
+  changed_when: false
+  failed_when: splunk_get_kvcaptain.rc != 0
+
+- name: Register KVStore captain fact
+  ansible.builtin.set_fact:
+    splunk_kv_captain: "{{ splunk_get_kvcaptain.stdout }}"
