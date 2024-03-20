@@ -3,7 +3,7 @@
 - name: Get KVStore status
   ansible.builtin.shell: |
     set -o pipefail
-    {{ splunk_home }}/bin/splunk show kvstore-status \
+    {{ splunk_home }}/bin/splunk show kvstore-status -auth {{ splunk_auth }} \
       | grep -A13 "This member:" \
       | tail -n +2 | sed -Er 's/^\s+//g' \
       | awk -F ' * : *' '{ printf "\"%s\":\"%s\",", $1, $2 }' \

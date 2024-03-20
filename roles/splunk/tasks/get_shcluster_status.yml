@@ -3,7 +3,7 @@
 - name: Get shcluster status
   ansible.builtin.shell: |
     set -o pipefail
-    {{ splunk_home }}/bin/splunk show shcluster-status \
+    {{ splunk_home }}/bin/splunk show shcluster-status -auth {{ splunk_auth }} \
       | grep -A5 "  {{ inventory_hostname }}" \
       | tail -n +2 | sed -Er 's/^\s+//g' \
       | awk -F ' * : *' '{ printf "\"%s\":\"%s\",", $1, $2 }' \
