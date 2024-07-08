@@ -1,0 +1,13 @@
+---
+- name: Login to splunk
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk login -auth {{ splunk_auth }}"
+  register: splunk_authenticated
+  failed_when: splunk_authenticated.rc != 0
+  changed_when: false
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  no_log: true
+
+- name: Set Authenticated variable
+  ansible.builtin.set_fact:
+    splunk_authenticated: true
