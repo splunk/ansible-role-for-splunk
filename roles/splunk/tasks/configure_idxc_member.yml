@@ -8,16 +8,19 @@
 # https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/ConfigurepeerswithCLI
 - name: Setting clustering mode based on Splunk version number
   set_fact:
-    mode_value: "{% if splunk_version_release | float < 8.1 %}slave{% else %}peer{% endif %}"
+    mode_value: "{{ splunk_version_release is version('8.1', '<') | ternary('slave', 'peer') }}"
+    manager_uri_call: "{{ splunk_version_release is version('8.1', '<') | ternary('master_uri', 'manager_uri') }}"
 
 - name: Configure idxc member
-  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode {{ mode_value }} -auth {{ splunk_auth }} -master_uri {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
+  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode {{ mode_value }} {% if splunk_idxc_multisite %}-site {{ splunk_idxc_site_affinity }}{% endif %} -auth {{ splunk_auth }} -{{ manager_uri_call }} {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: idxc_peer_init_result
   changed_when: idxc_peer_init_result.rc == 0
   failed_when: idxc_peer_init_result.rc != 0
-  notify: restart splunk
+  notify:
+    - restart splunk
+    - wait for splunkd
   no_log: true
   until: idxc_peer_init_result.rc == 0
   retries: 6

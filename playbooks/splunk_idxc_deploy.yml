@@ -21,3 +21,10 @@
     - ../roles/splunk
   vars:
     - deployment_task: configure_idxc_member.yml
+
+- hosts:
+    - search
+  roles:
+    - ../roles/splunk
+  vars:
+    - deployment_task: configure_idxc_sh.yml
