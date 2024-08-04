@@ -1,9 +1,9 @@
 ---
 # This task MUST be called by configure_apps.yml to work correctly. Do NOT call this task directly via the deployment_task var!
-- name: Set correct handler for master-apps
+- name: Set correct handler for manager-apps
   set_fact:
     handler: "apply indexer cluster bundle"
-  when: app_dest == 'etc/master-apps'
+  when: app_dest == 'etc/master-apps' or app_dest == 'etc/manager-apps'
 
 - name: Set correct handler for deployment-apps
   set_fact:
@@ -22,6 +22,7 @@
     - app_dest != 'etc/shcluster/apps'
     - app_dest != 'etc/deployment-apps'
     - app_dest != 'etc/master-apps'
+    - app_dest != 'etc/manager-apps'
 
 - name: Check if correct vars are defined for SHC app management
   block:
