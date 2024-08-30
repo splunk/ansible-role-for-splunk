@@ -2,20 +2,8 @@
 - name: Run splunk version command to check currently installed version
   include_tasks: check_splunk_version.yml
 
-# Splunk version < 8.1 supports mode=master
-# https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/Configuremasterwithserverconf
-# Splunk version >= 8.1 supports mode=manager
-# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremanagerwithserverconf
-
-- name: Setting clustering mode to master base on Splunk version
-  set_fact:
-    mode_value: "master"
-  when: splunk_version_release is version('8.1', '<')
-
-- name: Setting clustering mode to manager base on Splunk version
-  set_fact:
-    mode_value: "{% if splunk_version_release | version('8.1', '<') %}master{% else %}manager{% endif %}"
-  when: splunk_version_release is version('8.1', '>=')
+- name: Set IDXC Values
+  include_tasks: set_idxc_facts.yml
 
 - name: Configure clustering stanza for cluster manager node
   ini_file:
@@ -32,7 +20,7 @@
     - wait for splunkd
   no_log: true
   loop:
-    - { option: "mode", value: "{{ mode_value}}" }
+    - { option: "mode", value: "{{ manager_mode_value }}" }
     - { option: "replication_factor", value: "{{ splunk_idxc_rf }}" }
     - { option: "search_factor", value: "{{ splunk_idxc_sf }}" }
     - { option: "pass4SymmKey", value: "{{ splunk_idxc_key }}" }

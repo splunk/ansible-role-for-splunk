@@ -2,18 +2,11 @@
 - name: Run splunk version command to check currently installed version
   include_tasks: check_splunk_version.yml
 
-- name: Setting clustering mode to slave and uri to master base on Splunk version
-  set_fact:
-    uri_value: "master_uri"
-  when: splunk_version_release is version('8.1', '<')
-
-- name: Setting clustering mode to peer and uri to manager base on Splunk version
-  set_fact:
-    uri_value: "manager_uri"
-  when: splunk_version_release is version('8.1', '>=')
-
+- name: Set IDXC Values
+  include_tasks: set_idxc_facts.yml
+  
 - name: Configure search head to join indexer cluster
-  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode searchhead -{{ uri_value }} {{ splunk_uri_cm }} -secret {{ splunk_idxc_key }} -auth {{ splunk_auth }}"
+  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode searchhead -{{ manager_uri_value }} {{ splunk_uri_cm }} -secret {{ splunk_idxc_key }} -auth {{ splunk_auth }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: idxc_sh_join_result

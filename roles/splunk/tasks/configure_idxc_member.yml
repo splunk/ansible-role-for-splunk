@@ -2,25 +2,11 @@
 - name: Run splunk version command to check currently installed version
   include_tasks: check_splunk_version.yml
 
-# Splunk version >= 8.1 supports mode=peer
-# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/ConfigurepeerswithCLI
-# Splunk version < 8.1 supports mode=slave
-# https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/ConfigurepeerswithCLI
-
-- name: Setting clustering mode to slave and uri to master base on Splunk version
-  set_fact:
-    mode_value: "slave"
-    uri_value: "master_uri"
-  when: splunk_version_release is version('8.1', '<')
-
-- name: Setting clustering mode to peer and uri to manager base on Splunk version
-  set_fact:
-    mode_value: "peer"
-    uri_value: "manager_uri"
-  when: splunk_version_release is version('8.1', '>=')
+- name: Set IDXC Values
+  include_tasks: set_idxc_facts.yml
 
 - name: Configure idxc member
-  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode {{ mode_value }} -auth {{ splunk_auth }} -{{ uri_value }} {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
+  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode {{ peer_mode_value }} -auth {{ splunk_auth }} -{{ manager_uri_value }} {{ splunk_uri_cm }} -replication_port {{ splunk_idxc_rep_port }} -secret {{ splunk_idxc_key }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: idxc_peer_init_result
