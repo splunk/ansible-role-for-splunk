@@ -14,7 +14,7 @@
 
 - name: Setting clustering mode to manager base on Splunk version
   set_fact:
-    mode_value: "manager"
+    mode_value: "{% if splunk_version_release | version('8.1', '<') %}master{% else %}manager{% endif %}"
   when: splunk_version_release is version('8.1', '>=')
 
 - name: Configure clustering stanza for cluster manager node
