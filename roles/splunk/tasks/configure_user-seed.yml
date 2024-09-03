@@ -16,6 +16,7 @@
         group: "{{ splunk_nix_group }}"
         mode: 0644
       become: true
+      no_log: true
       when: not splunk_etc_passwd.stat.exists
   when:
     - splunk_admin_password != 'undefined'
