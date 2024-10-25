@@ -1,6 +1,6 @@
 ---
 - name: Execute splunk offline --enforce-counts
-  command: "{{ splunk_home }}/bin/splunk offline --enforce-counts -auth {{ splunk_auth }}"
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk offline --enforce-counts -auth {{ splunk_auth }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   no_log: true

@@ -19,14 +19,14 @@
         src: firewalld_service.xml.j2
         dest: /etc/firewalld/services/{{ splunk_firewall_service }}.xml
         backup: true
-        mode: 0644
+        mode: "0644"
         owner: root
         group: root
       become: true
       register: firewalld
 
     - name: reload firewalld
-      command: firewall-cmd --reload
+      ansible.builtin.command: firewall-cmd --reload
       become: true
       when: firewalld.changed
 

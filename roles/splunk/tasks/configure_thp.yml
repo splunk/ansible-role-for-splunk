@@ -7,66 +7,66 @@
 
 - name: Disable THP
   block:
-  - name: Disable THP using a systemd unit file
-    block:
-    - name: Copy systemd disable-thp unit file
-      copy:
-        src: disable-thp.service
-        dest: /etc/systemd/system/disable-thp.service
-        mode: 0644
-        owner: root
-        group: root
-      become: true
-      notify:
-        - reload systemctl daemon
-    - name: Enable disable-thp unit file
-      service:
-        name: disable-thp
-        enabled: yes
-        state: started
-      become: true
-    when:
-      - not use_tuned_thp
+    - name: Disable THP using a systemd unit file
+      block:
+        - name: Copy systemd disable-thp unit file
+          ansible.builtin.copy:
+            src: disable-thp.service
+            dest: /etc/systemd/system/disable-thp.service
+            mode: "0644"
+            owner: root
+            group: root
+          become: true
+          notify:
+            - reload systemctl daemon
+        - name: Enable disable-thp unit file
+          ansible.builtin.service:
+            name: disable-thp
+            enabled: true
+            state: started
+          become: true
+      when:
+        - not use_tuned_thp
 
-  - name: Configure THP using tuned profile
-    block:
-    - name: Install tuned package
-      package:
-        name: "tuned"
-        state: present
-        update_cache: true
-      become: true
-    - name: Check active tuned profile
-      command: tuned-adm active
-      register: tuned_profile
-      become: true
-      check_mode: no
-      changed_when: false
-    - name: Set active tuned profile variable
-      set_fact:
-        tuned_active_profile: "{{ tuned_profile.stdout | regex_search('\\S+$') }}"
-    - name: Create /etc/tuned/splunk directory
-      file:
-        path: /etc/tuned/splunk
-        state: directory
-        mode: "0755"
-        owner: root
-        group: root
-      become: true
-    - name: Copy splunk profile tuned.conf
-      copy:
-        src: tuned_thp.conf
-        dest: /etc/tuned/splunk/tuned.conf
-        mode: 0644
-        owner: root
-        group: root
-      become: true
-    - name: Enable tuned profile
-      command: tuned-adm profile splunk
-      become: true
-      when: tuned_active_profile != "splunk"
-    when:
-      - use_tuned_thp
+    - name: Configure THP using tuned profile
+      block:
+        - name: Install tuned package
+          ansible.builtin.package:
+            name: "tuned"
+            state: present
+            update_cache: true
+          become: true
+        - name: Check active tuned profile
+          ansible.builtin.command: tuned-adm active
+          register: tuned_profile
+          become: true
+          check_mode: false
+          changed_when: false
+        - name: Set active tuned profile variable
+          ansible.builtin.set_fact:
+            tuned_active_profile: "{{ tuned_profile.stdout | regex_search('\\S+$') }}"
+        - name: Create /etc/tuned/splunk directory
+          ansible.builtin.file:
+            path: /etc/tuned/splunk
+            state: directory
+            mode: "0755"
+            owner: root
+            group: root
+          become: true
+        - name: Copy splunk profile tuned.conf
+          ansible.builtin.copy:
+            src: tuned_thp.conf
+            dest: /etc/tuned/splunk/tuned.conf
+            mode: "0644"
+            owner: root
+            group: root
+          become: true
+        - name: Enable tuned profile
+          ansible.builtin.command: tuned-adm profile splunk
+          become: true
+          when: tuned_active_profile != "splunk"
+      when:
+        - use_tuned_thp
   # no (real) services in docker containers
   # and no need to bother for molecule testing
   # NOTE ansible_connection!="docker" is not included in the when expression
