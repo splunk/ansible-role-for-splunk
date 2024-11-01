@@ -1,13 +1,38 @@
 ---
+- name: Run splunk version command to check currently installed version
+  include_tasks: check_splunk_version.yml
+
+- name: Setting clustering mode based on Splunk version number
+  set_fact:
+    manager_uri_call: "{{ splunk_version_release is version('8.1', '<') | ternary('master_uri', 'manager_uri') }}"
+    manager_command_call: "{{ splunk_version_release is version('8.1', '<') | ternary('cluster-master', 'cluster-manager') }}"
+
+# TODO: Maybe switch to config file, this is the cleaner solution and would work with multiple indexer clusters
 - name: Configure search head to join indexer cluster
-  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode searchhead -master_uri {{ splunk_uri_cm }} -secret {{ splunk_idxc_key }} -auth {{ splunk_auth }}"
+  command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode searchhead -{{ manager_uri_call }} {{ splunk_uri_cm }} -secret {{ splunk_idxc_key }} -auth {{ splunk_auth }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: idxc_sh_join_result
   changed_when: idxc_sh_join_result.rc == 0
   failed_when: idxc_sh_join_result.rc != 0
-  notify: restart splunk
+  notify:
+    - restart splunk
+    - wait for splunkd
   no_log: true
   until: idxc_sh_join_result.rc == 0
+  retries: 6
+  delay: 5
+
+# Error Code 22, means no change in current configuration
+- name: Configure search head site affinity
+  command: "{{ splunk_home }}/bin/splunk edit {{ manager_command_call }} {{ splunk_uri_cm }} -site {{ splunk_idxc_site_affinity }} -auth {{ splunk_auth }}"
+  when: splunk_idxc_multisite
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  register: idxc_sh_join_result
+  changed_when: idxc_sh_join_result.rc == 0
+  failed_when: idxc_sh_join_result.rc != 0 and idxc_sh_join_result.rc != 22
+  no_log: true
+  until: idxc_sh_join_result.rc == 0 or idxc_sh_join_result.rc == 22
   retries: 6
   delay: 5
