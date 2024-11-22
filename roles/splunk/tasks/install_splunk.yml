@@ -8,6 +8,7 @@
     - name: Add nix splunk group
       group:
         name: "{{ splunk_nix_group }}"
+        system: "{{ splunk_nix_system_user }}"
         state: present
         local: "{{ local_os_group }}"
       become: true
@@ -17,6 +18,7 @@
         name: "{{ splunk_nix_user }}"
         group: "{{ splunk_nix_group }}"
         home: "{{ splunk_home }}"
+        system: "{{ splunk_nix_system_user }}"
         state: present
         shell: /bin/bash
         local: "{{ local_os_user }}"
