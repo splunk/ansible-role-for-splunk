@@ -1,97 +1,97 @@
 ---
 # Check splunk version to determine if we use `master_uri` or `manager_uri`.
 - name: Run splunk version command to check currently installed version
-  include_tasks: check_splunk_version.yml
+  ansible.builtin.include_tasks: check_splunk_version.yml
 
 - name: Setting licensing mode based on Splunk version number
-  set_fact:
+  ansible.builtin.set_fact:
     mode_option: "{{ splunk_version_release is version('9.0', '<') | ternary('master_uri', 'manager_uri') }}"
 
 - name: Configure Local License
   block:
-  - name: Create license/enterprise directory
-    file:
-      path: "{{ splunk_home }}/etc/licenses/enterprise"
-      state: directory
-      mode: "0700"
-      owner: "{{ splunk_nix_user }}"
-      group: "{{ splunk_nix_group }}"
-    become: true
-    when:
-      - splunk_license_group=="Enterprise"
-  - name: Copy license file
-    copy:
-      src: "{{ item }}"
-      dest: "{{ splunk_home }}/etc/licenses/enterprise/{{ item }}"
-      owner: "{{ splunk_nix_user }}"
-      group: "{{ splunk_nix_group }}"
-      mode: "0600"
-    loop: "{{ splunk_license_file }}"
-    become: true
-    notify: restart splunk
-    when:
-      - splunk_license_group=="Enterprise"
-  - name: "Remove license manager uri when using local license"
-    ini_file:
-      path: "{{ splunk_home }}/etc/system/local/server.conf"
-      section: license
-      option: "{{ item }}"
-      owner: "{{ splunk_nix_user }}"
-      group: "{{ splunk_nix_group }}"
-      state: absent
-    with_items: 
-      - manager_uri
-      - master_uri
-    become: true
-    notify: restart splunk
-  - name: Configure License Group
-    ini_file:
-      path: "{{ splunk_home }}/etc/system/local/server.conf"
-      section: license
-      option: active_group
-      value: "{{ splunk_license_group }}"
-      owner: "{{ splunk_nix_user }}"
-      group: "{{ splunk_nix_group }}"
-    become: true
-    notify: restart splunk
+    - name: Create license/enterprise directory
+      ansible.builtin.file:
+        path: "{{ splunk_home }}/etc/licenses/enterprise"
+        state: directory
+        mode: "0700"
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+      become: true
+      when:
+        - splunk_license_group=="Enterprise"
+    - name: Copy license file
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ splunk_home }}/etc/licenses/enterprise/{{ item }}"
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+        mode: "0600"
+      loop: "{{ splunk_license_file }}"
+      become: true
+      notify: restart splunk
+      when:
+        - splunk_license_group=="Enterprise"
+    - name: "Remove license manager uri when using local license"
+      community.general.ini_file:
+        path: "{{ splunk_home }}/etc/system/local/server.conf"
+        section: license
+        option: "{{ item }}"
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+        state: absent
+      with_items:
+        - manager_uri
+        - master_uri
+      become: true
+      notify: restart splunk
+    - name: Configure License Group
+      community.general.ini_file:
+        path: "{{ splunk_home }}/etc/system/local/server.conf"
+        section: license
+        option: active_group
+        value: "{{ splunk_license_group }}"
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+      become: true
+      notify: restart splunk
   when:
     - not splunk_license_group=="Peer"
     - splunk_install_type=="full"
 
 - name: Configure License Peer
   block:
-  - name: "Set license {{ mode_option }}"
-    ini_file:
-      path: "{{ splunk_home }}/etc/system/local/server.conf"
-      section: license
-      option: "{{ mode_option }}"
-      value: "{{ splunk_uri_lm }}"
-      owner: "{{ splunk_nix_user }}"
-      group: "{{ splunk_nix_group }}"
-    become: true
-    notify: restart splunk
+    - name: "Set license {{ mode_option }}"
+      community.general.ini_file:
+        path: "{{ splunk_home }}/etc/system/local/server.conf"
+        section: license
+        option: "{{ mode_option }}"
+        value: "{{ splunk_uri_lm }}"
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+      become: true
+      notify: restart splunk
 
-  - name: Extract encrypted value
-    include_tasks: check_decrypted_secret.yml
-    vars:
-      req_secret_conf: server
-      req_secret_section: general
-      req_secret_option: pass4SymmKey
+    - name: Extract encrypted value
+      ansible.builtin.include_tasks: check_decrypted_secret.yml
+      vars:
+        req_secret_conf: server
+        req_secret_section: general
+        req_secret_option: pass4SymmKey
 
-  - name: Set pass4SymmKey to match LM
-    ini_file:
-      path: "{{ splunk_home }}/etc/system/local/server.conf"
-      section: general
-      option: pass4SymmKey
-      value: "{{ splunk_general_key }}"
-      owner: "{{ splunk_nix_user }}"
-      group: "{{ splunk_nix_group }}"
-    become: true
-    notify: restart splunk
-    when:
-      - splunk_general_key != "undefined"
-      - encrypted_secret_value.stdout == "" or (splunk_general_key != decrypted_secret_value.stdout | default(''))
-    no_log: true
+    - name: Set pass4SymmKey to match LM
+      community.general.ini_file:
+        path: "{{ splunk_home }}/etc/system/local/server.conf"
+        section: general
+        option: pass4SymmKey
+        value: "{{ splunk_general_key }}"
+        owner: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+      become: true
+      notify: restart splunk
+      when:
+        - splunk_general_key != "undefined"
+        - encrypted_secret_value.stdout == "" or (splunk_general_key != decrypted_secret_value.stdout | default(''))
+      no_log: true
   when:
     - splunk_license_group=="Peer"
     - splunk_install_type=="full"

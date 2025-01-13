@@ -1,11 +1,11 @@
 ---
 - name: Update the systemd file for Splunk
-  ini_file:
+  community.general.ini_file:
     path: "/etc/systemd/system/{{ splunk_service }}.service"
     section: Service
     option: "{{ item.option }}"
     value: "{{ item.value }}"
-    mode: 0644
+    mode: "0644"
   become: true
   loop:
     - { option: "LimitNOFILE", value: "1024000" }

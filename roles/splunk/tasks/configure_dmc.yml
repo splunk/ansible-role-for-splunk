@@ -1,9 +1,9 @@
 ---
 - name: Check splunk
-  include_task: check_splunk.yml
+  ansible.builtin.include_task: check_splunk.yml
 
 - name: Configure DMC as a IDXC member
-  include_tasks: configure_idxc_sh.yml
+  ansible.builtin.include_tasks: configure_idxc_sh.yml
 
 # Add all hosts to the DMC except indexer cluster hosts as per the docs
 - name: Configure systems as search peers to be monitored except indexers
@@ -22,7 +22,7 @@
     value: enabled
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-    mode: 0644
+    mode: "0644"
   become: true
   become_user: "{{ splunk_nix_user }}"
   notify: restart splunk

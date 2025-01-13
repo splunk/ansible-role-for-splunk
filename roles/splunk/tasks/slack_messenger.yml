@@ -1,7 +1,7 @@
 ---
 # This task feeds messags to Slack about what Ansible is doing
 - name: "Send Slack message to {{ slack_channel }} indicating Ansible play information"
-  slack:
+  community.general.slack:
     msg: "{{ item }}"
     token: "{{ slack_token }}"
     channel: "{{ slack_channel }}"

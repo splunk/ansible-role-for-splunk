@@ -1,0 +1,20 @@
+---
+skip_list:
+  - command-shell
+  - ignore-errors
+  - jinja[invalid]
+  - key-order
+  - literal-compare
+  - name
+  - no-changed-when
+  - no-handler
+  - risky-file-permissions
+  - role-name
+  - schema
+  - var-naming[no-role-prefix]
+  - var-naming[pattern]
+  - yaml[quoted-strings]
+  - yaml[line-length]
+
+enable_list:
+  - fqcn # opt-in

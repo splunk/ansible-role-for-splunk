@@ -1,4 +1,4 @@
 ---
 - name: Kill any stale splunkd processes
-  shell: for i in $(ps -ef | grep splunkd -i | grep -v grep | awk '{print $2}'); do kill -9 $i; done
+  ansible.builtin.shell: for i in $(ps -ef | grep splunkd -i | grep -v grep | awk '{print $2}'); do kill -9 $i; done
   become: true

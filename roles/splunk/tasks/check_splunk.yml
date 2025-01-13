@@ -1,6 +1,6 @@
 ---
 - name: Check if Splunk is installed
-  stat:
+  ansible.builtin.stat:
     path: "{{ splunk_home }}/bin/splunk"
     follow: true
   register: splunkd_path
@@ -8,43 +8,43 @@
 
   # If installed, check version, if version is good, don't install but continue
 - name: Install Splunk if not installed
-  include_tasks: install_splunk.yml
+  ansible.builtin.include_tasks: install_splunk.yml
   when: splunkd_path.stat.exists == false
 
   # Configure the license for both fresh and old installs
 - name: Configure license
-  include_tasks: configure_license.yml
+  ansible.builtin.include_tasks: configure_license.yml
 
   # Configure auditd for both fresh and old installs
 - name: Configure Auditd
-  include_tasks: configure_auditd.yml
+  ansible.builtin.include_tasks: configure_auditd.yml
   when: splunk_auditd_configure
 
 - name: Execute this block only if splunk is already installed
   block:
 
     - name: Run splunk version command to check currently installed version
-      include_tasks: check_splunk_version.yml
+      ansible.builtin.include_tasks: check_splunk_version.yml
 
-    - name: "Checkpoint: Version" ##########################
-      debug:
+    - name: "Checkpoint: Version"  ##########################
+      ansible.builtin.debug:
         msg: "The value of splunk_package_version is: {{ splunk_package_version }} and the splunk_version_release is: {{ splunk_version_release }}"
 
     - name: Execute this block only if the current version does not match the expected version
       block:
         - name: "Checkpoint: Package"
-          debug:
+          ansible.builtin.debug:
             msg: "We will download the latest release from {{ splunk_package_url }}"
 
         - name: Check if Splunk needs to be stopped if we are not at the expected version
-          include_tasks: check_splunk_status.yml
+          ansible.builtin.include_tasks: check_splunk_status.yml
 
         - name: Stop Splunk if not at expected version and splunk is currently running
-          include_tasks: splunk_stop.yml
+          ansible.builtin.include_tasks: splunk_stop.yml
           when: splunk_status.rc == 0
 
         - name: Upgrade Splunk if not at expected version
-          include_tasks: upgrade_splunk.yml
+          ansible.builtin.include_tasks: upgrade_splunk.yml
       # Conditional for version mismatch block
       when: splunk_version_release < splunk_package_version
   # Conditional for this block

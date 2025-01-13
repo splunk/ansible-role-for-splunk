@@ -45,9 +45,9 @@ all:
             some-other-hf:
 
         standalone:
-            hosts:
-              my-standalone-splunk-server:
-              my-other-standalone-splunk-server:
+          hosts:
+            my-standalone-splunk-server:
+            my-other-standalone-splunk-server:
 
     uf:
       children:
@@ -56,7 +56,7 @@ all:
           hosts:
             my-vm-ware-host-[001:100]:
           vars:
-            clientName: vmware # Or create a "vmware.yml" file under group_vars and assign clientName there, either works
+            clientName: vmware  # Or create a "vmware.yml" file under group_vars and assign clientName there, either works
 
         web:
           hosts:

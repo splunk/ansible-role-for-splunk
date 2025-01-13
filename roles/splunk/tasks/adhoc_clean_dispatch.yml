@@ -1,10 +1,10 @@
 ---
 - name: Stop Splunk
-  include_tasks: splunk_stop.yml
+  ansible.builtin.include_tasks: splunk_stop.yml
 
 - name: Clean dispatch directory of all files
-  command: "rm -rf {{ splunk_home }}/var/run/splunk/dispatch/*"
+  ansible.builtin.command: "rm -rf {{ splunk_home }}/var/run/splunk/dispatch/*"
   become: true
 
 - name: Start Splunk
-  include_tasks: splunk_start.yml
+  ansible.builtin.include_tasks: splunk_start.yml

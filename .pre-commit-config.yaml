@@ -1,0 +1,17 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        exclude: ^README.md
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+  - repo: https://github.com/ansible/ansible-lint.git
+    rev: v24.9.2
+    hooks:
+      - id: ansible-lint
+        entry: ansible-lint --offline roles/ playbooks/ environments/

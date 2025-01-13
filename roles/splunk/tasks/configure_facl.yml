@@ -2,12 +2,12 @@
 - name: Configure file access control list (facl) settings for splunk user
   block:
     - name: Install acl package
-      package:
+      ansible.builtin.package:
         name: "acl"
         state: present
       become: True
     - name: Set default facl to allow splunk user to read /var/log
-      acl:
+      ansible.posix.acl:
         path: /var/log
         entity: "{{ splunk_nix_user }}"
         etype: user
@@ -21,20 +21,20 @@
         - false
 
     - name: Add setfacl to logrotate script
-      lineinfile:
+      ansible.builtin.lineinfile:
         path: "{{ logrotate_file }}"
         insertbefore: 'endscript'
         line: '        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log'
       become: True
 
     - name: Check if auditd.conf is present
-      stat:
+      ansible.builtin.stat:
         path: /etc/audit/auditd.conf
       register: result_auditd_conf
       become: true
 
     - name: Allow splunk to read /var/log/audit.log
-      ini_file:
+      community.general.ini_file:
         path: /etc/audit/auditd.conf
         section: null
         option: log_group

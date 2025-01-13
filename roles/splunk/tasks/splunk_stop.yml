@@ -1,6 +1,6 @@
 ---
 - name: Stop splunk
-  service:
+  ansible.builtin.service:
     name: "{{ splunk_service }}"
     state: stopped
   become: true

@@ -1,15 +1,15 @@
 ---
 - name: Install cleanup_diags.sh
-  template:
+  ansible.builtin.template:
     src: cleanup_diags.sh.j2
     dest: "{{ splunk_home }}/cleanup_diags.sh"
     owner: root
     group: root
-    mode: 0755
+    mode: "0755"
   become: true
 
 - name: Configure cron to run cleanup_diags.sh daily at midnight
-  cron:
+  ansible.builtin.cron:
     name: "Run cleanup_diags.sh"
     state: present
     job: "{{ splunk_home }}/cleanup_diags.sh"

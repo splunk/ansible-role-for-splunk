@@ -1,6 +1,6 @@
 ---
 - name: Bring up cluster captain
-  command: "{{ splunk_home }}/bin/splunk bootstrap shcluster-captain -servers_list {{ splunk_shc_uri_list }} -auth {{ splunk_auth }}"
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk bootstrap shcluster-captain -servers_list {{ splunk_shc_uri_list }} -auth {{ splunk_auth }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: shc_bootstrap_result

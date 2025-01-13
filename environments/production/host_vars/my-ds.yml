@@ -1,7 +1,7 @@
 ---
 # Example host_vars for a deployment server that is leveraging the configure_serverclass.yml task to manage serverclass.conf
 serverclasses:
-# First server class example, basic definition:
+  # First server class example, basic definition:
   - serverclass: ALL
     whitelist:
       - '*'
@@ -9,7 +9,7 @@ serverclasses:
       - name: my_outputs_addon
         options:
           restartSplunkd: 1
-# Second server class example, adding in the platform filter:
+  # Second server class example, adding in the platform filter:
   - serverclass: ALL_NIX
     whitelist:
       - '*'
@@ -18,7 +18,7 @@ serverclasses:
       - name: Splunk_TA_nix
         options:
           restartSplunkd: 1
-# Third server class example, adding multiple apps and filters with additional options configured for each app:
+  # Third server class example, adding multiple apps and filters with additional options configured for each app:
   - serverclass: ALL_WINDOWS_x64
     whitelist:
       - 'hosta'
@@ -38,7 +38,7 @@ serverclasses:
           restartSplunkd: 1
           stateOnClient: enabled
 
-# Fourth server class example, setting the restartSplunkd on the serverclass level:
+  # Fourth server class example, setting the restartSplunkd on the serverclass level:
   - serverclass: ALL_WEB
     restartSplunkd: 1
     whitelist:

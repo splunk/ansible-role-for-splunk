@@ -1,25 +1,25 @@
 ---
 - name: Check permissions of splunk.key for mongo
-  file:
+  ansible.builtin.file:
     state: file
     path: "{{ splunk_home }}/var/lib/splunk/kvstore/mongo/splunk.key"
-    mode: 0600
+    mode: "0600"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
   become: true
 
 - name: Delete mongod.lock if present
-  file:
+  ansible.builtin.file:
     state: absent
     path: "{{ splunk_home }}/var/lib/splunk/kvstore/mongo/mongod.lock"
   become: true
 
 - name: Update file permissions for journal
-  file:
+  ansible.builtin.file:
     state: directory
     recurse: true
     path: "{{ splunk_home }}/var/lib/splunk/kvstore/mongo/journal"
-    mode: 0710
+    mode: "0710"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
   become: true

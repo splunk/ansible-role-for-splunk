@@ -1,18 +1,18 @@
 ---
 - name: Extract encrypted value
-  include_tasks: check_decrypted_secret.yml
+  ansible.builtin.include_tasks: check_decrypted_secret.yml
   vars:
     req_secret_conf: server
     req_secret_section: shclustering
     req_secret_option: pass4SymmKey
 
 - name: Configure pass4SymmKey in  shclustering stanza for deployer
-  ini_file:
+  community.general.ini_file:
     path: "{{ splunk_home }}/etc/system/local/server.conf"
     section: shclustering
     option: pass4SymmKey
     value: "{{ splunk_shc_key }}"
-    mode: 0644
+    mode: "0644"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
   become: true
@@ -26,7 +26,7 @@
     section: shclustering
     option: shcluster_label
     value: "{{ splunk_shc_label }}"
-    mode: 0644
+    mode: "0644"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
   become: true

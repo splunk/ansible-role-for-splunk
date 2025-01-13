@@ -1,3 +1,4 @@
+---
 galaxy_info:
   author: Mason Morales <mason@splunk.com>
   description: Splunk's official Ansible role for installing Splunk, upgrading Splunk, and installing apps/addons from Git repositories to Splunk deployments
