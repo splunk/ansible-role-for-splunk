@@ -1,0 +1,12 @@
+---
+# Splunk version < 8.1 supports mode=master
+# https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/Configuremasterwithserverconf
+# Splunk version >= 8.1 supports mode=manager
+# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/Configuremanagerwithserverconf
+
+- name: Setting clustering mode and value based on Splunk version
+  set_fact:
+    manager_mode_value: "{% if splunk_version_release | version('8.1', '<') %}master{% else %}manager{% endif %}"
+    peer_mode_value: "{% if splunk_version_release | version('8.1', '<') %}slave{% else %}peer{% endif %}"
+    manager_uri_value: "{% if splunk_version_release | version('8.1', '<') %}master_uri{% else %}manager_uri{% endif %}"
+  when: splunk_version_release is version('8.1', '>=')
