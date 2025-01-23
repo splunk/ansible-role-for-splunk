@@ -10,3 +10,4 @@
     - splunk_authenticationconf is defined
     - ad_bind_password != 'undefined'
   notify: restart splunk
+  no_log: true

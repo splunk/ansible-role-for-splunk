@@ -1,15 +1,33 @@
 ---
-- name: Configure shclustering stanza for deployer
+- name: Extract encrypted value
+  include_tasks: check_decrypted_secret.yml
+  vars:
+    req_secret_conf: server
+    req_secret_section: shclustering
+    req_secret_option: pass4SymmKey
+
+- name: Configure pass4SymmKey in  shclustering stanza for deployer
   ini_file:
     path: "{{ splunk_home }}/etc/system/local/server.conf"
     section: shclustering
-    option: "{{ item.option }}"
-    value: "{{ item.value }}"
+    option: pass4SymmKey
+    value: "{{ splunk_shc_key }}"
     mode: 0644
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
   become: true
   notify: restart splunk
-  loop:
-    - { option: "pass4SymmKey", value: "{{ splunk_shc_key }}" }
-    - { option: "shcluster_label", value: "{{ splunk_shc_label }}" }
+  no_log: true
+  when: encrypted_secret_value.stdout == "" or (splunk_shc_key != decrypted_secret_value.stdout | default(''))
+
+- name: Configure shcluster_label in shclustering stanza for deployer
+  community.general.ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: shclustering
+    option: shcluster_label
+    value: "{{ splunk_shc_label }}"
+    mode: 0644
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+  become: true
+  notify: restart splunk
