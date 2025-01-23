@@ -30,6 +30,7 @@ splunk_general_key: undefined # Configures a pass4SymmKey in server.conf under t
 splunk_ds_key: undefined # Configures a pass4SymmKey in server.conf for authenticating against a deployment server
 splunk_admin_username: admin
 splunk_admin_password: undefined # Use ansible-vault encrypt_string, e.g. ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'var_name'
+splunk_authenticated: false # DO NOT CHANGE. This fact is set to true in the `splunk_login.yml` task, and reset to false if `splunk_restart.yml`, `splunk_stop.yml` or `splunk_start.yml` are manually called in another task.
 splunk_configure_secret: false # If set to true, you need to update files/splunk.secret
 splunk_secret_file: splunk.secret # Used to specify your splunk.secret filename(s), files should be placed in the "files" folder of the role
 # Although there are tasks for the following Splunk configurations in this role, they are not included in any tasks by default. You can add them to your install_splunk.yml if you would like to have Ansible manage any of these files
@@ -72,6 +73,10 @@ splunk_shc_target_group: shc
 splunk_shc_deployer: "{{ groups['shdeployer'] | first }}" # If you manage multiple SHCs, configure the var value in group_vars
 splunk_shc_uri_list: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].splunk_mgmt_uri }}:{{ splunkd_port }}{% if not loop.last %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
 start_splunk_handler_fired: false # Do not change; used to prevent unnecessary splunk restarts
+splunk_enable_kvstore: true
+splunk_kvstore_storage: undefined # Can be defined here or at the group_vars level - accepted values: "wiredTiger" or "undefined", which leaves as default
+splunk_kvstore_version: undefined # Can be defined here or at the group_vars level - accepted values: 4.2 or "undefined", which leaves as default1
+splunk_oplog_size: 1000 # Default for Splunk Enterprise - should be changed at the group_vars level only at the behest of Splunk support with special care taken
 # Linux and scripting related vars
 add_crashlog_script: false # Set to true to install a script and cron job to automatically cleanup splunk crash logs older than 7 days
 add_diag_script: false # Set to true to install a script and cron job to automatically cleanup splunk diag files older than 30 days

@@ -1,0 +1,28 @@
+---
+- name: Disable KVStore if specified
+  include_tasks: disable_kvstore.yml
+  when: not splunk_enable_kvstore
+
+- name: Configure initial KVStore storage engine in server.conf
+  community.general.ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: storageEngine
+    value: "{{ splunk_kvstore_storage }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  when:
+    - splunk_kvstore_storage == "wiredTiger"
+    - splunk_enable_kvstore
+
+- name: Configure initial KVStore oplog size in server.conf
+  community.general.ini_file:
+    path: "{{ splunk_home }}/etc/system/local/server.conf"
+    section: kvstore
+    option: oplogSize
+    value: "{{ splunk_oplog_size }}"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  when: splunk_enable_kvstore

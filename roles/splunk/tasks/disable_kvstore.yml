@@ -1,6 +1,8 @@
 ---
 - name: Disable KVStore
-  when: ansible_system == "Linux"
+  when:
+    - ansible_system == "Linux"
+    - not splunk_enable_kvstore
   ini_file:
     path: "{{ splunk_home }}/etc/system/local/server.conf"
     section: kvstore

@@ -1,0 +1,116 @@
+---
+# oplog size should not be changed unless the oplog window is too small causing members to become stale - or is gradually shrinking.
+# Do NOT use this on a standalone instance - oplog size does not matter for a standalone KV Store.
+# Deployments should monitor the oplog window and react in time. If the window is already too small - KV Store may have to be re-crated with increased oplog size.
+
+- name: Check if authenticated
+  include_tasks: splunk_login.yml
+  when: not splunk_authenticated
+
+- name: Make sure we're in an SHC
+  ansible.builin.fail:
+    msg: "SHC not found in group_names - detected group names are \"{{ group_names }}\". This play will only run on an SHC"
+  when: splunk_shc_target_group not in group_names
+
+- name: Get current oplog size
+  ansible.builtin.shell: |
+    {{ splunk_home }}/bin/splunk btool server list kvstore | grep oplogSize | sed 's/[^0-9]*//g'
+  register: current_oplog_size_out
+  failed_when: current_oplog_size_out.rc != 0
+  run_once: true
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+
+- name: Debug current OpLog Size in MB
+  ansible.builtin.debug:
+    var: current_oplog_size_out.stdout
+    verbosity: 1
+
+- name: Make sure the oplog size var differs from our current value, if they're the same, exit play
+  ansible.builtin.meta: end_play
+  when: current_oplog_size_out == splunk_oplog_size
+
+# sets fact splunk_shc_captain
+- name: Find SHC Captain
+  include_tasks: get_shcluster_captain.yml
+
+# GUID from SPLUNK_HOME/etc/instance.cfg, not just hostname
+- name: Find KVStore Captain
+  block:
+    - name: Check if authenticated
+      include_tasks: splunk_login.yml
+      when: not splunk_authenticated
+
+    # Gets KVStore captain hostname - like splunk_captain.domain.com
+    # guid for GUID, hostAndPort for host with port - like `| sed -r 's/\s+hostAndPort : //g' | sed -r 's/:[0-9]+//g'`
+    - name: Get current KVStore captain
+      ansible.builtin.command: |
+        {{ splunk_home }}/bin/splunk show kvstore-status | grep -B10 "KV store captain" | grep "guid" | sed -r 's/\s+guid : //g'
+      become: true
+      become_user: "{{ splunk_nix_user }}"
+      register: splunk_get_kvcaptain
+      changed_when: false
+      failed_when: splunk_get_kvcaptain.rc != 0
+
+    - name: Register KVStore captain fact
+      ansible.builtin.set_fact:
+        splunk_kv_captain_guid: "{{ splunk_get_kvcaptain.stdout }}"
+
+- name: Make KVCaptain SHC captain
+  ansible.builtin.command: |
+    {{ splunk_home }}/bin/splunk transfer shcluster-captain -mgmt_uri "https://{{ splunk_shc_captain }}:{{ splunkd_port }}"
+  register: transfer_captain_out
+  changed_when: transfer_captain_out.rc == 0
+  failed_when: transfer_captain_out.rc != 0
+
+- name: Get current KVCaptain
+  include_tasks: get_kvstore_captain.yml
+
+- name: Ensure SHC Captain and KV Captain are the same
+  include_tasks: get_shcluster_captain.yml
+  until: "'{{ splunk_shc_captain }}' == '{{ splunk_kv_captain }}'"
+  delay: 10
+  retries: 30
+
+- name: Make a backup of the whole kvstore located in $SPLUNK_DB/kvstore only on one member
+  include_tasks: adhoc_backup_kvstore.yml
+  run_once: true # this works here to run the entire task only once, whereas import_tasks would run this on all hosts
+  vars:
+    archive_name: "{{ inventory_hostname }}-preoplog-backup"
+#- name: Make a backup of the whole KVStore directory ($SPLUNK_DB/kvstore) on only one member
+#  ansible.builtin.shell: |
+#    echo "{{ splunk_home }}/{{ inventory_hostname }}-preoplog-backup.tar.gz"; tar -czf {{ splunk_home }}/{{ inventory_hostname }}-preoplog-backup.tar.gz {{ splunk_db_path }}/kvstore
+#  register: kvstore_backup_out
+#  changed_when: kvstore_backup_out.rc == 0
+#  failed_when: kvstore_backup_out.rc != 1
+#  become: true
+#  run_once: true
+
+# Note - make this a separate task so that we can repeat it later for the final member
+- name: For each of the other SHC cluster members - increase the oplog
+  include_tasks: adhoc_increase_oplog_helper.yml
+  when: splunk_shc_captain != inventory_hostname
+
+- name: Select new node to be SHC captain
+  ansible.builtin.set_fact:
+    splunk_new_shc_captain: "{% for h in groups[splunk_shc_target_group] %}https://{{ hostvars[h].ansible_fqdn }}:{{ splunkd_port }}{% if not loop.last and hostvars[h].ansible_fqdn != splunk_shc_captain %},{% endif %}{% endfor %}" # If you manage multiple SHCs, configure the var value in group_vars
+
+
+- name: Transfer SHC captain to a different node
+  ansible.builtin.command: |
+    {{ splunk_home }}/bin/splunk transfer shcluster-captain -mgmt_uri "{{ splunk_new_shc_captain }}"
+  register: transfer_captain_out
+  changed_when: transfer_captain_out.rc == 0
+  failed_when: transfer_captain_out.rc != 0
+
+- name: Increase oplog on final member
+  include_tasks: adhoc_increase_oplog_helper.yml
+  when: splunk_shc_captain == inventory_hostname
+
+- name: Try to check data
+  ansible.builtin.debug:
+    msg:
+      - Check if the data is available - if something went wrong during the process
+      - use backup to restore the data. Backup is on this searchhead with this name={{ kvstore_backup_out.stdout }}
+      - If members are out of sync, resync the KVStore from the SHCluster captain {{ splunk_new_shc_captain }} 
+      - with `splunk resync kvstore -source {{ splunk_kv_captain_guid }}`
