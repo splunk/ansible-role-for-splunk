@@ -3,8 +3,8 @@
   template:
     src: cleanup_crashlogs.sh.j2
     dest: "{{ splunk_home }}/cleanup_crashlogs.sh"
-    owner: root
-    group: root
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
     mode: 0755
   become: true
 
@@ -12,6 +12,8 @@
   cron:
     name: "Run cleanup_crashlogs.sh"
     state: present
+    cron_file: cleanup_crashlogs
+    user: "{{ splunk_nix_user }}"
     job: "{{ splunk_home }}/cleanup_crashlogs.sh"
     hour: 0
     minute: 0
