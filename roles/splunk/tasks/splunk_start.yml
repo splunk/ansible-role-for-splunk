@@ -1,6 +1,6 @@
 ---
 - name: Start splunk
-  service:
+  ansible.builtin.service:
     name: "{{ splunk_service }}"
     state: started
   become: true

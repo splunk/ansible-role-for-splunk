@@ -1,6 +1,6 @@
 ---
 - name: Install authentication.conf for admins
-  template:
+  ansible.builtin.template:
     src: "{{ splunk_authenticationconf }}"
     dest: "{{ splunk_home }}/etc/system/local/authentication.conf"
     owner: "{{ splunk_nix_user }}"

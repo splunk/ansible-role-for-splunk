@@ -2,19 +2,19 @@
 - name: Execute this block only when splunk_admin_password has been configured
   block:
     - name: "Check for existing {{ splunk_home }}/etc/passwd"
-      stat:
+      ansible.builtin.stat:
         path: "{{ splunk_home }}/etc/passwd"
       register: splunk_etc_passwd
       become: true
       become_user: "{{ splunk_nix_user }}"
 
     - name: Create user-seed.conf file with splunk_admin_username and splunk_admin_password
-      template:
+      ansible.builtin.template:
         src: user-seed.conf.j2
         dest: "{{ splunk_home }}/etc/system/local/user-seed.conf"
         owner: "{{ splunk_nix_user }}"
         group: "{{ splunk_nix_group }}"
-        mode: 0644
+        mode: "0644"
       become: true
       no_log: true
       when: not splunk_etc_passwd.stat.exists

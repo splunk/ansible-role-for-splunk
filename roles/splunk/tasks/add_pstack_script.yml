@@ -1,9 +1,9 @@
 ---
 - name: "Add genpstacks.sh to {{ splunk_home }}/genpstacks.sh for troubleshooting purposes"
-  template:
+  ansible.builtin.template:
     src: genpstacks.sh.j2
     dest: "{{ splunk_home }}/genpstacks.sh"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-    mode: 0755
+    mode: "0755"
   become: true

@@ -1,22 +1,22 @@
 ---
 - name: "get {{ splunk_nix_user }} user uid"
-  getent:
+  ansible.builtin.getent:
     database: passwd
     key: "{{ splunk_nix_user }}"
 
 - name: auditd - set 20-splunk.rules
   become: true
-  template:
+  ansible.builtin.template:
     src: 20-splunk.rules.j2
     dest: /etc/audit/rules.d/20-splunk.rules
-    mode: 0600
+    mode: "0600"
     owner: root
     group: root
   register: splunk_rule
 
 - name: Get auditd enabled level
   become: true
-  shell: auditctl -s | grep enabled | cut -d" " -f2
+  ansible.builtin.shell: auditctl -s | grep enabled | cut -d" " -f2
   changed_when: false
   check_mode: false
   register: auditctl_enabled
@@ -24,7 +24,7 @@
 # restart auditd if not immutable
 - name: restart auditd if not immutable
   become: true
-  service:
+  ansible.builtin.service:
     name: auditd
     state: restarted
     use: service
@@ -35,7 +35,7 @@
 
 # if immutable output "auditd immutable - OS REBOOT REQUIRED"
 - name: auditd immutable  # noqa no-handler
-  debug:
+  ansible.builtin.debug:
     msg: "auditd immutable - OS REBOOT REQUIRED"
   when:
     - splunk_rule is changed

@@ -1,7 +1,7 @@
 ---
 # Todo: Use vars to define distribution-specific packages. For now, it'll just ignore errors for any package names that aren't available for your distro.
 - name: Install useful packages for Linux troubleshooting
-  package:
+  ansible.builtin.package:
     name: "{{ linux_packages }}"
     state: present
     update_cache: true

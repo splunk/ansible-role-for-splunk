@@ -1,6 +1,6 @@
 ---
 - name: Splunk offline
-  command: "{{ splunk_home }}/bin/splunk offline -auth {{ splunk_auth }}"
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk offline -auth {{ splunk_auth }}"
   register: splunk_offline_result
   changed_when: splunk_offline_result.rc == 0
   failed_when: splunk_offline_result.rc != 0
