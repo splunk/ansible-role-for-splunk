@@ -40,4 +40,4 @@ rules:
     forbid-implicit-octal: true
   quoted-strings: disable
   trailing-spaces: enable
-  truthy: { allowed-values: ["True", "False", "true", "false"] }
+  truthy: { allowed-values: ["true", "false"] }
