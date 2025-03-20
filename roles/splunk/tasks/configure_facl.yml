@@ -5,7 +5,7 @@
       ansible.builtin.package:
         name: "acl"
         state: present
-      become: True
+      become: true
     - name: Set default facl to allow splunk user to read /var/log
       ansible.posix.acl:
         path: /var/log
@@ -25,7 +25,7 @@
         path: "{{ logrotate_file }}"
         insertbefore: 'endscript'
         line: '        /usr/bin/setfacl -Rm u:{{ splunk_nix_user }}:rx /var/log'
-      become: True
+      become: true
 
     - name: Check if auditd.conf is present
       ansible.builtin.stat:

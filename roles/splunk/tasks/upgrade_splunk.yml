@@ -26,7 +26,7 @@
 
 - name: set splunk_upgraded variable
   ansible.builtin.set_fact:
-    splunk_upgraded: True
+    splunk_upgraded: true
 
 - name: Enable boot start
   ansible.builtin.include_tasks: configure_splunk_boot.yml
