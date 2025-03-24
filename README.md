@@ -41,7 +41,7 @@ Third, ansible-role-for-splunk was designed to manage all Splunk configurations 
 
 ## Getting Started
 Getting started with this role will requires you to:
-1. Install Ansible (version >=v2.7 is supported and should work through v2.10)
+1. Install Ansible (version >=v2.10 is supported and should work through v2.19)
 1. Setup your inventory correctly
 1. Configure the appropriate variables to describe the desired state of your environment
 1. Create a playbook or leverage one of the included example playbooks that specifies the deployment_task you'd like to run
