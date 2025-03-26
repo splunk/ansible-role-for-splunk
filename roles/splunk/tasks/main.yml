@@ -14,7 +14,7 @@
   tags: always
   ansible.builtin.set_fact:
     start_splunk_handler_fired: false
-    configure_boot_start: False
+    configure_boot_start: false
   changed_when: false
 
 - name: Set boot-start method to systemd

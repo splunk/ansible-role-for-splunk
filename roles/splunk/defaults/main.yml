@@ -39,7 +39,7 @@ splunk_authenticationconf: authentication.conf.j2
 splunk_create_polkit: 0  # If set to 1 `enable boot-start` will create a polkit rules file allowing the 'splunk_nix_user' to restart the splunk service without authentication.
 splunk_use_initd: false  # If set to true, the system will use init.d. Default false
 splunk_use_systemd: true  # DO NOT EDIT. To use init.d, set `splunk_use_initd` to true.
-splunk_force_kill: False
+splunk_force_kill: false
 systemd_unit_full: Splunkd  # You can change this in `host_vars` or `group_vars` to customize the service name.
 systemd_unit_uf: SplunkForwarder  # You can change this in `host_vars` or `group_vars` to customize the service name.
 splunk_disable_mgmt_port: false  # If set to true, will disable splunkd management port during installation

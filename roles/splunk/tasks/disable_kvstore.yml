@@ -6,5 +6,5 @@
     section: kvstore
     option: disabled
     value: "true"
-  become: True
+  become: true
   become_user: "{{ splunk_nix_user }}"
