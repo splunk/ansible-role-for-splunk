@@ -2,7 +2,7 @@
 - name: Install .bashrc and .bash_profile files
   ansible.builtin.template:
     src: "{{ item.bashtemplate }}"
-    dest: "{{ splunk_home }}/{{ item.bashfilepath }}"
+    dest: "{{ splunk_nix_home }}/{{ item.bashfilepath }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
     mode: "0644"

@@ -4,6 +4,7 @@
 slack_channel: undefined
 slack_token: undefined
 splunk_home: auto_determined  # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
+splunk_nix_home: "{{ splunk_home }}" # This is the Linux home directory for the splunk user as set in /etc/passwd. It is set to the same value as splunk_home by default.
 splunk_package_url: auto_determined  # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
 splunk_package_path: ~/
 splunk_package_version: 9.4.2 # The default version to install or update to. This can be set in `group_vars` or `host_vars`.
