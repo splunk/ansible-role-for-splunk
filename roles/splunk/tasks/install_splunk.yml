@@ -16,7 +16,7 @@
       ansible.builtin.user:
         name: "{{ splunk_nix_user }}"
         group: "{{ splunk_nix_group }}"
-        home: "{{ splunk_home }}"
+        home: "{{ splunk_nix_home }}"
         state: present
         shell: /bin/bash
         local: "{{ local_os_user }}"
