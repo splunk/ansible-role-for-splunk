@@ -79,6 +79,7 @@
     recursive: true
     delete: true
     checksum: true
+    private_key: "{{ rsync_private_key|default(omit) }}"
     rsync_opts:
       - "--prune-empty-dirs"
       - "--itemize-changes"
