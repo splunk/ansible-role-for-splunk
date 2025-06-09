@@ -1,0 +1,12 @@
+---
+# Install using: ansible-galaxy collection install -r requirements.yml
+collections:
+  # For the sefcontext module (used for SELinux context management)
+  - name: ansible.posix
+    version: ">=2.0.0"
+  # For ini_file and slack modules    
+  - name: community.general
+    version: ">=3.0.0"
+  # Most other modules (stat, command, include_tasks, debug, file, unarchive, template, git, etc.)
+  # are part of ansible-core and require no additional collection.
+
