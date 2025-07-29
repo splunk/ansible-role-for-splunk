@@ -17,7 +17,7 @@
 
   # Configure auditd for both fresh and old installs
 - name: Configure Auditd
-  ansible.builtin.include_tasks: configure_auditd.yml
+  ansible.builtin.include_tasks: os_common/configure_auditd.yml
   when: splunk_auditd_configure
 
 - name: Execute this block only if splunk is already installed
