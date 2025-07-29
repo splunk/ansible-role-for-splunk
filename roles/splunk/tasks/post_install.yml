@@ -28,5 +28,5 @@
   when: add_pstack_script
 
 - name: Install additional utilities and troubleshooting tools
-  ansible.builtin.include_tasks: install_utilities.yml
+  ansible.builtin.include_tasks: os_common/install_utilities.yml
   when: install_utilities
