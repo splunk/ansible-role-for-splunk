@@ -7,9 +7,6 @@
     - "{{ ansible_os_family }}{{ ansible_distribution_major_version }}.yml"
     - "{{ ansible_os_family }}.yml"
 
-- name: Include prerequisites
-  ansible.builtin.include_tasks: prereqs.yml
-
 - name: Reset value of start_splunk_handler_fired and configure_boot_start
   tags: always
   ansible.builtin.set_fact:

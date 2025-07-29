@@ -1,0 +1,22 @@
+---
+- name: Block for non-root splunk user setup
+  block:
+    - name: Add nix splunk group
+      ansible.builtin.group:
+        name: "{{ splunk_nix_group }}"
+        state: present
+        local: "{{ local_os_group }}"
+      become: true
+
+    - name: Add nix splunk user
+      ansible.builtin.user:
+        name: "{{ splunk_nix_user }}"
+        group: "{{ splunk_nix_group }}"
+        groups: "{{ splunk_nix_groups | default(omit) }}"
+        home: "{{ splunk_nix_home }}"
+        state: present
+        shell: /bin/bash
+        local: "{{ local_os_user }}"
+        append: "{{ true if (splunk_nix_groups | default([]) | length > 0) else omit }}"
+      become: true
+  when: splunk_nix_user != 'root'

@@ -5,7 +5,7 @@
   when: splunk_nix_user != 'root'
 
 - name: Configure OS to disable THP and increase ulimits for splunk process
-  ansible.builtin.include_tasks: configure_os.yml
+  ansible.builtin.include_tasks: os_common/configure_os.yml
 
 - name: Include task to kill any stale splunkd processes
   ansible.builtin.include_tasks: adhoc_kill_splunkd.yml
