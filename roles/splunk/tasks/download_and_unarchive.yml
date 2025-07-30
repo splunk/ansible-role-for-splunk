@@ -1,16 +1,16 @@
 ---
-- debug:
+- ansible.builtin.debug:
     msg: "The splunk_package_url is set to: {{ splunk_package_url }}"
 
-- debug:
+- ansible.builtin.debug:
     msg: "The filename that will be downloaded is {{ splunk_file }}"
 
-- debug:
+- ansible.builtin.debug:
     msg: "The upgrade file will be downloaded to {{ splunk_package_path }}/{{ splunk_file }}"
 
 - name: "Download Splunk {{ splunk_install_type }} package"
-  become: "{{ splunk_download_local | ternary( false, true ) }}"  # true == false; false == true
-  get_url:
+  become: "{{ splunk_download_local | ternary(false, true) }}"  # true == false; false == true
+  ansible.builtin.get_url:
     url: "{{ splunk_package_url }}"
     dest: "{{ splunk_package_path }}/{{ splunk_file }}"
   delegate_to: "{{ splunk_download_local | ternary('localhost', omit) }}"
@@ -21,19 +21,27 @@
   run_once: "{{ splunk_download_local }}"
 
 - name: "Unarchive Splunk {{ splunk_install_type }} package to {{ splunk_home }}"
-  unarchive:
+  ansible.builtin.unarchive:
     src: "{{ splunk_package_path }}/{{ splunk_file }}"
     dest: "{{ splunk_install_path }}"
     owner: "{{ splunk_nix_user }}"
     group: "{{ splunk_nix_group }}"
-    remote_src: "{{ splunk_download_local | ternary( false, true ) }}"  # true == false; false == true
+    remote_src: "{{ splunk_download_local | ternary(false, true) }}"  # true == false; false == true
   become: true
   notify:
     - start splunk
 
+- name: "Restore SELinux contexts on Splunk directory"
+  become: true
+  command: "restorecon -Rv {{ splunk_home }}"
+  when:
+    - ansible_facts['os_family'] == "RedHat"
+    - ansible_facts['selinux']['status'] == "enabled"
+    - ansible_facts['selinux']['mode'] == "enforcing"
+
 - name: "Remove {{ splunk_package_path }}/{{ splunk_file }} package"
   become: true
-  file:
+  ansible.builtin.file:
     path: "{{ splunk_package_path }}/{{ splunk_file }}"
     state: absent
   when: not splunk_download_local

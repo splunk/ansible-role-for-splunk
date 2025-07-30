@@ -1,78 +1,80 @@
 ---
 #  This task should be used for fresh installations of Splunk, refer to upgrade_splunk.yml for upgrades
 - name: Install Required Packages
-  include_tasks: prereqs.yml
+  ansible.builtin.include_tasks: prereqs.yml
 
 - name: Block for non-root splunk user setup
   block:
     - name: Add nix splunk group
-      group:
+      ansible.builtin.group:
         name: "{{ splunk_nix_group }}"
         state: present
         local: "{{ local_os_group }}"
       become: true
 
     - name: Add nix splunk user
-      user:
+      ansible.builtin.user:
         name: "{{ splunk_nix_user }}"
         group: "{{ splunk_nix_group }}"
-        home: "{{ splunk_home }}"
+        groups: "{{ splunk_nix_groups | default(omit) }}"
+        home: "{{ splunk_nix_home }}"
         state: present
         shell: /bin/bash
         local: "{{ local_os_user }}"
+        append: "{{ true if (splunk_nix_groups | default([]) | length > 0) else omit }}"
       become: true
 
     - name: Allow splunk user to read /var/log
-      include_tasks: configure_facl.yml
+      ansible.builtin.include_tasks: configure_facl.yml
 
     - name: Configure .bash_profile and .bashrc for splunk user
-      include_tasks: configure_bash.yml
+      ansible.builtin.include_tasks: configure_bash.yml
 
   when: splunk_nix_user != 'root'
 
 - name: Configure OS to disable THP and increase ulimits for splunk process
-  include_tasks: configure_os.yml
+  ansible.builtin.include_tasks: configure_os.yml
 
 - name: Include download and unarchive task
-  include_tasks: download_and_unarchive.yml
+  ansible.builtin.include_tasks: download_and_unarchive.yml
 
 - name: Include configure splunk.secret task to standardize splunk.secret
-  include_tasks: configure_splunk_secret.yml
+  ansible.builtin.include_tasks: configure_splunk_secret.yml
   when: splunk_configure_secret
 
 - name: Include configure deployment client task
-  include_tasks: configure_deploymentclient.yml
+  ansible.builtin.include_tasks: configure_deploymentclient.yml
   when:
     - clientName != 'undefined'
     - splunk_uri_ds != 'undefined'
 
 - name: Include configure user-seed task
-  include_tasks: configure_user-seed.yml
+  ansible.builtin.include_tasks: configure_user-seed.yml
   when:
     - splunk_admin_password != 'undefined'
 
 - name: Include configure default authentication.conf for AD authentication and admin role mapping
-  include_tasks: configure_authentication.yml
+  ansible.builtin.include_tasks: configure_authentication.yml
   when:
     - splunk_configure_authentication
     - ad_bind_password != 'undefined'
 
 - name: Include custom management port task
-  include_tasks: configure_custom_mgmt_port.yml
+  ansible.builtin.include_tasks: configure_custom_mgmt_port.yml
   when: splunkd_port != '8089'
 
 - name: Include disable management port task
-  include_tasks: configure_disable_mgmt_port.yml
+  ansible.builtin.include_tasks: configure_disable_mgmt_port.yml
   when: splunk_disable_mgmt_port
 
 - name: Include accept license task
-  include_tasks: splunk_license_accept.yml
+  ansible.builtin.include_tasks: splunk_license_accept.yml
 
 - name: Configure Splunk launch before boot
   include_tasks: configure_splunk_launch.yml
 
 - name: Enable boot start
-  include_tasks: configure_splunk_boot.yml
+  ansible.builtin.include_tasks: configure_splunk_boot.yml
 
 - name: Include post-install tasks
-  include_tasks: post_install.yml
+  ansible.builtin.include_tasks: post_install.yml

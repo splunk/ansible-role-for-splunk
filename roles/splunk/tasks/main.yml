@@ -1,31 +1,31 @@
 ---
 - name: include distribution vars
-  include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
     - "{{ ansible_distribution }}{{ ansible_distribution_version }}.yml"
-    - "{{ ansible_distribution }}.yml"
     - "{{ ansible_os_family }}{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution }}.yml"
     - "{{ ansible_os_family }}.yml"
 
 - name: Include prerequisites
-  include_tasks: prereqs.yml
+  ansible.builtin.include_tasks: prereqs.yml
 
 - name: Reset value of start_splunk_handler_fired and configure_boot_start
   tags: always
-  set_fact:
+  ansible.builtin.set_fact:
     start_splunk_handler_fired: false
-    configure_boot_start: False
+    configure_boot_start: false
   changed_when: false
 
 - name: Set boot-start method to systemd
-  set_fact:
+  ansible.builtin.set_fact:
     desired_start_method: "systemd"
   when:
     - splunk_use_systemd
     - not splunk_use_initd
 
 - name: Set boot-start method to initd
-  set_fact:
+  ansible.builtin.set_fact:
     desired_start_method: "initd"
   when:
     - splunk_use_initd
@@ -33,7 +33,7 @@
 - block:
     - name: Configure vars for full package
       tags: always
-      set_fact:
+      ansible.builtin.set_fact:
         splunk_home: "{{ splunk_install_path }}/splunk"
         splunk_package_url: "{{ splunk_package_url_full }}"
         splunk_product: "Splunk"
@@ -43,16 +43,16 @@
 
     - name: Configure var for splunk systemd service handler
       tags: always
-      set_fact:
+      ansible.builtin.set_fact:
         splunk_service: "{{ systemd_unit }}"
       when:
-        -  desired_start_method == "systemd"
+        - desired_start_method == "systemd"
   when: ('full' in group_names or splunk_install_type == "full")
 
 - block:
     - name: Configure vars for uf package
       tags: always
-      set_fact:
+      ansible.builtin.set_fact:
         splunk_home: "{{ splunk_install_path }}/splunkforwarder"
         splunk_package_url: "{{ splunk_package_url_uf }}"
         splunk_product: "Splunk Universal Forwarder"
@@ -61,7 +61,7 @@
       changed_when: false
 
     - name: Setting least priviledged mode
-      set_fact:
+      ansible.builtin.set_fact:
         least_privileged: true
       when: >
         (splunk_package_version is version(9.0, '>=') and splunk_install_type == "uf") or
@@ -69,19 +69,19 @@
 
     - name: Configure var for splunkforwarder systemd service handler
       tags: always
-      set_fact:
+      ansible.builtin.set_fact:
         splunk_service: "{{ systemd_unit }}"
       when:
         - desired_start_method == "systemd"
   when: ('uf' in group_names or splunk_install_type == "uf")
 
 - name: Configure var for splunk init.d service handler
-  set_fact:
+  ansible.builtin.set_fact:
     splunk_service: splunk
   when: desired_start_method == "initd"
 
 - name: Check if Splunk is installed
-  stat:
+  ansible.builtin.stat:
     path: "{{ splunk_home }}/bin/splunk"
     follow: true
   register: splunkd_found
@@ -91,36 +91,36 @@
   when: splunkd_found.stat.exists
   block:
     - name: Check if active boot-start configuration is systemd
-      stat:
+      ansible.builtin.stat:
         path: "/etc/systemd/system/{{ splunk_service }}.service"
         follow: true
       register: systemd_boot_file
       become: true
 
     - name: Set current_start_method var to systemd if systemd is being used for splunk
-      set_fact:
+      ansible.builtin.set_fact:
         current_start_method: "systemd"
       when: systemd_boot_file.stat.exists
 
     - name: Check if active boot-start method is init.d
-      stat:
+      ansible.builtin.stat:
         path: /etc/init.d/splunk
         follow: true
       register: initd_boot_file
       become: true
 
     - name: Set current_start_method to initd if initd is being used for splunk
-      set_fact:
+      ansible.builtin.set_fact:
         current_start_method: "initd"
       when: initd_boot_file.stat.exists
 
     - name: set current_start_method to disabled if boot-start is disabled
-      set_fact:
+      ansible.builtin.set_fact:
         current_start_method: "disabled"
       when: current_start_method is not defined
 
 - name: Set boot-start misconfigured var
-  set_fact:
+  ansible.builtin.set_fact:
     configure_boot_start: true
   when: >
     not splunkd_found.stat.exists or
@@ -128,7 +128,7 @@
     current_start_method == "disabled"
 
 - name: Fail the play if the currently configured boot-start method does match the expected state or boot-start is not enabled
-  fail:
+  ansible.builtin.fail:
     msg:
       - "ERROR: Misconfiguration detected! Unable to proceed as handlers will fail in the play later."
       - "Either splunk boot-start is not enabled on this host, or its current boot-start method does not matched the expected value of splunk_use_initd/splunk_use_systemd."
@@ -139,7 +139,7 @@
     - not deployment_task == "configure_splunk_boot.yml"
 
 - name: Send Slack messages
-  include_tasks: slack_messenger.yml
+  ansible.builtin.include_tasks: slack_messenger.yml
   tags: always
   when:
     - slack_token != 'undefined'
@@ -148,4 +148,4 @@
 # Always set the deployment_task var to your desired task in the playbook! e.g. check_splunk.yml (install|upgrade) or configure_apps.yml  (app/addon install|upgrade)
 - name: Include the specified task file
   tags: always
-  include_tasks: "{{ deployment_task }}"
+  ansible.builtin.include_tasks: "{{ deployment_task }}"

@@ -1,12 +1,12 @@
 ---
-- include_tasks: splunk_stop.yml
+- ansible.builtin.include_tasks: splunk_stop.yml
 
 - name: Disable boot-start
-  command: "{{ splunk_home }}/bin/splunk disable boot-start"
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk disable boot-start"
   become: true
 
 - name: Remove splunk folder
-  file:
+  ansible.builtin.file:
     path: "{{ splunk_home }}"
     state: absent
   become: true

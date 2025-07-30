@@ -1,46 +1,46 @@
 ---
-  # Configure default splunk_app_deploy_path based on which group the host is a member of
+# Configure default splunk_app_deploy_path based on which group the host is a member of
 - name: Set default splunk_app_deploy_path for clustermanager hosts
-  set_fact:
+  ansible.builtin.set_fact:
     splunk_app_deploy_path: etc/master-apps
   when: "'clustermanager' in group_names"
 
 - name: Set default splunk_app_deploy_path for shdeployer hosts
-  set_fact:
+  ansible.builtin.set_fact:
     splunk_app_deploy_path: etc/shcluster/apps
   when: "'shdeployer' in group_names"
 
 - name: Set default splunk_app_deploy_path for deploymentserver hosts
-  set_fact:
+  ansible.builtin.set_fact:
     splunk_app_deploy_path: etc/deployment-apps
   when: "'deploymentserver' in group_names"
 
 - name: "Set default splunk_app_deploy_path all other hosts"
-  set_fact:
+  ansible.builtin.set_fact:
     splunk_app_deploy_path: "etc/apps"
   when:
     - "'clustermanager' not in group_names"
     - "'shdeployer' not in group_names"
     - "'deploymentserver' not in group_names"
 
-  # Prep the Ansible host to deploy apps then install them
+# Prep the Ansible host to deploy apps then install them
 - block:
     - name: Create local directory for managing repos on the target host
-      file:
+      ansible.builtin.file:
         path: "{{ git_local_clone_path }}{{ ansible_nodename }}"
         state: directory
       delegate_to: localhost
       changed_when: false
 
     - name: Install .rsync-filter to avoid copying undesirable files and folders to the target host later
-      copy:
+      ansible.builtin.copy:
         src: rsync-filter
         dest: "{{ git_local_clone_path }}{{ ansible_nodename }}/.rsync-filter"
       delegate_to: localhost
       changed_when: false
 
     - name: Download defined Git repos to local Ansible host
-      git:
+      ansible.builtin.git:
         accept_hostkey: true
         repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
         version: "{{ item.git_version | default(git_version) }}"
@@ -53,14 +53,14 @@
       check_mode: false
 
     - name: Ensure rsync is installed on target host
-      package:
+      ansible.builtin.package:
         name: rsync
         state: present
         update_cache: true
       become: true
 
     - name: "Comment out requiretty in sudoers as it causes synchronize to fail on target host"
-      lineinfile:
+      ansible.builtin.lineinfile:
         dest: "/etc/sudoers"
         state: present
         regexp: "^#?{{ item }}"
@@ -68,20 +68,20 @@
         create: true
         owner: root
         group: root
-        mode: 0440
+        mode: "0440"
       loop:
         - "Defaults    requiretty"
       become: true
 
     - name: Install apps
-      include_tasks: install_apps.yml
+      ansible.builtin.include_tasks: install_apps.yml
       loop: "{{ git_apps }}"
       vars:
         app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
         app_src: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}"
 
     - name: Cleanup the local directory that was used to manage repos on the target host
-      file:
+      ansible.builtin.file:
         path: "{{ git_local_clone_path }}{{ ansible_nodename }}"
         state: absent
       delegate_to: localhost
