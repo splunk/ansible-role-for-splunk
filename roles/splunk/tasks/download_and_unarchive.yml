@@ -31,6 +31,14 @@
   notify:
     - start splunk
 
+- name: "Restore SELinux contexts on Splunk directory"
+  become: true
+  command: "restorecon -Rv {{ splunk_home }}"
+  when:
+    - ansible_facts['os_family'] == "RedHat"
+    - ansible_facts['selinux']['status'] == "enabled"
+    - ansible_facts['selinux']['mode'] == "enforcing"
+
 - name: "Remove {{ splunk_package_path }}/{{ splunk_file }} package"
   become: true
   ansible.builtin.file:

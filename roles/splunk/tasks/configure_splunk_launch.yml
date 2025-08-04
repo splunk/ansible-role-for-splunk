@@ -1,0 +1,12 @@
+---
+- name: Ensure splunk DB set correctly for IDX in splunk-launch
+  community.general.ini_file:
+    path: "{{ splunk_home }}/etc/splunk-launch.conf"
+    section: null
+    option: SPLUNK_DB
+    value: "{{ splunk_db_path }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    mode: 0644
+  become: true
+  when: splunk_db_path is defined and splunk_db_path != "undefined"
