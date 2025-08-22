@@ -1,0 +1,16 @@
+---
+# This task is not called by any other task and can only be run manually
+# To run this task, you must add -e deployment_task=splunk_common/clone_prep.yml to the ansible command,
+- name: Clear configs from server.conf and instance.cfg
+  when: splunkd_found.stat.exists
+  block:
+    - name: Run splunk_stop.yml
+      ansible.builtin.include_tasks: ../splunk_stop.yml
+
+    - name: Clear splunk serverName and instance.cfg
+      ansible.builtin.command: "{{ splunk_home }}/bin/splunk clone-prep-clear-config"
+      become: true
+      become_user: "{{ splunk_nix_user }}"
+
+    - name: Run splunk_start.yml
+      ansible.builtin.include_tasks: ../splunk_start.yml

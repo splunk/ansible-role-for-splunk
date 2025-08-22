@@ -173,6 +173,11 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 - **splunk_stop.yml** - Stops splunk via the service module.  Used when waiting for a handler to run at the end of the play would be inappropriate.
 - **upgrade_splunk.yml** -  *Do not call upgrade_splunk.yml directly! Use check_splunk.yml* - Called by check_splunk.yml. Performs an upgrade of an existing splunk installation. Configures .bash_profile and .bashrc for splunk user (by calling configure_bash.yml), disables THP and increases ulimits (by calling configure_os.yml), kills any stale splunkd processes present when `splunk_force_kill` is set to `True` (by calling adhoc_kill_splunkd.yml). Note: You should NOT run the upgrade_splunk.yml task directly from a playbook. check_splunk.yml will call upgrade_splunk.yml if it determines that an upgrade is needed; It will then download and unarchive the new version of Splunk (by calling download_and_unarchive.yml), ensure that mongod is in a good stopped state (by calling adhoc_fix_mongo.yml), and will then perform post-installation tasks using the post_install.yml task.
 
+#### Common Splunk tasks
+In the `splunk_common` sub-directory is where tasks common to all Splunk installations will live.
+In the future, all common splunk tasks will move to this directory.
+- **splunk_common/clone_prep.yml** - This task runs the `clone-prep-clear-config` command. This removes the `$SPLUNK_HOME/etc/instance,cfg` file and the `serverName` from `$SPLUNK_HOME/etc/system/local/server.conf` file.
+
 ## Frequently Asked Questions
 **Q:** What is the difference between this and splunk-ansible?
 
