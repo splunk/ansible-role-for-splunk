@@ -1,0 +1,45 @@
+---
+# Molecule converge playbook for day0
+# Installs Splunk on target hosts using local software
+
+# Copy Splunk software to target hosts
+- name: Copy Splunk software to target hosts
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  tasks:
+    - name: Create software directory on target hosts
+      file:
+        path: /opt/software
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Copy Splunk Enterprise to target hosts
+      copy:
+        src: "/workspace/testing/software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+        dest: "/opt/software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+        mode: '0644'
+      become: true
+      when: "'full' in group_names"
+
+    - name: Copy Splunk Universal Forwarder to target hosts
+      copy:
+        src: "/workspace/testing/software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+        dest: "/opt/software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+        mode: '0644'
+      become: true
+      when: "'uf' in group_names"
+
+# Install Splunk on target hosts using the role's natural download process
+- name: Install Splunk on target hosts
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  roles:
+    - ../../../roles/splunk
+  serial: 50
+  vars:
+    deployment_task: check_splunk.yml
+    splunk_install_app: true
+    splunk_build_remote_src: false
+    splunk_install_method: "package"
+    splunk_home: "/opt/splunk"
+    splunk_nix_home: "/opt/splunk"
+    splunk_install_path: "/opt"

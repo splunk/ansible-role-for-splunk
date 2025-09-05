@@ -11,7 +11,8 @@ ansible:
     backend: ansible-playbook
     args:
       ansible_playbook:
-        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../inventory/
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/small/
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/inventory/
 
 dependency:
   name: galaxy
@@ -25,15 +26,14 @@ verifier:
   name: ansible
 
 scenario:
-  # Day 0 operations workflow - uses existing infrastructure
+  # Day 0 operations workflow - assumes infra is already running
   destroy_sequence:
     - cleanup
   create_sequence:
-    - dependency
+    - converge
   converge_sequence:
-    - dependency
     - converge
   test_sequence:
-    - dependency
     - converge
     - verify
+    # Removed destroy to keep lab running for testing

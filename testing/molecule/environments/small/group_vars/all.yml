@@ -15,24 +15,16 @@ splunk_backup: true
 splunk_backup_path: "{{ splunk_home }}/.."
 splunk_backup_tar: "splunk-test-backup.tar"
 
-# SSH connection configuration for all plays (including imported playbooks)
-# These are duplicated above for clarity but will be overridden by the first definition
-
 # Testing-only toggles to avoid modifying the role under test
 skip_acl_install: true
 
 # Splunk installation configuration
 splunk_install_app: true
-splunk_build_remote_src: true
+splunk_build_remote_src: false
 splunk_install_method: "package"
 
 # Default container configuration
 docker_image: splunk-base-ubuntu2204:latest
-
-# Git configuration for app deployment testing
-git_server: "git@git-server"  # Using lightweight git server container
-git_key: "/tmp/test_git_key"  # Test key for git access
-git_local_clone_path: ~/git_apps
 
 # Splunk configuration - adapted for testing
 splunk_home: /opt/splunk
@@ -44,31 +36,26 @@ splunk_admin_username: admin
 splunk_admin_password: "Password123!"  # Test password
 splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
 
-# Cluster configuration for testing
-splunk_idxc_key: test-indexer-key
-splunk_idxc_rf: 1  # Reduced for testing
-splunk_idxc_sf: 1  # Reduced for testing
-splunk_idxc_rep_port: 9887
-splunk_idxc_label: test-idxc
+# Force reinstallation to handle existing installations
+splunk_reinstall: true
 
-splunk_shc_key: test-searchhead-key
-splunk_shc_label: test-shc
-splunk_shc_rf: 2  # Reduced for testing
-splunk_shc_rep_port: 8100
-splunk_shc_target_group: shcluster
+# Boot-start configuration - force initd
+splunk_use_initd: true
+splunk_use_systemd: false
+
+# Skip ACL installation to avoid network issues in containers
+skip_acl_install: true
+
+# Boot-start configuration - use initd
+splunk_use_systemd: false
+splunk_use_initd: true
 
 # Test versions - using stable versions for testing
 splunk_version: 9.1.2
-splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/9.1.2/linux/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
-splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/9.1.2/linux/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+# Local software configuration - tell Splunk role where to find files
+splunk_download_local: true
+splunk_package_path: "/opt/software"
 
 # Additional variables for Splunk role
 splunk_file: "splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
 logrotate_file: "/etc/logrotate.d/splunk"
-
-# Lab environment configuration
-# Note: remoteit-jumpbox has been removed from the lab configuration
-# SSH connectivity is now directly between containers via Docker network
-# Web terminal access is available at http://localhost:3000/ttyd with credentials:
-# username: ansible
-# password: 2L6pL8IHVUOLvN9qMAt0

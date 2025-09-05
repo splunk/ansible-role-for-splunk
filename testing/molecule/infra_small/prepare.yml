@@ -174,7 +174,7 @@
           loop:
             - /var/log/test-data
             - /tmp/test-logs
-          when: inventory_hostname in groups['uf'] and ansible_distribution != 'Ubuntu' and ansible_distribution != 'AlmaLinux'
+          when: (groups['uf'] is defined and inventory_hostname in groups['uf']) and ansible_distribution != 'Ubuntu' and ansible_distribution != 'AlmaLinux'
 
     - name: Permit user logins on systemd hosts (clear pam_nologin gate)
       block:

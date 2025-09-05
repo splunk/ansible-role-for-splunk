@@ -59,15 +59,19 @@ task infra:create       # Create all containers (9 Splunk + git-server)
 task infra:prepare      # Setup SSH infrastructure and services
 task infra:destroy      # Clean up all containers
 # OR complete workflow:
-task infra:test         # Run complete infrastructure scenario (create + prepare + verify)
+task infra:setup        # Setup infrastructure for testing (create + prepare, no destroy)
+task infra:test         # Run complete infrastructure scenario (create + prepare + verify + destroy)
 ```
 
 ### Phase 2: Day 0 - Splunk Deployment
 ```bash
-task day0:test          # Run complete deployment scenario
+task setup              # Downloads Splunk software to testing/software/
+task infra_small:setup  # Create infrastructure with SSH connectivity
+task day0_small:test    # Run complete deployment scenario using local software
 # OR step-by-step:
-task day0:converge      # Deploy Splunk via SSH
-task day0:verify        # Verify deployment
+task day0_small:converge # Deploy Splunk via SSH using predownloaded software
+task day0_small:verify   # Verify deployment
+task infra_small:destroy # Clean up containers when done
 ```
 
 ### Phase 3: Day 1 - Operations (Planned)
@@ -189,7 +193,7 @@ task dev:shell          # Interactive shell in molecule-runner
 task dev:cleanup        # Clean up Docker resources
 ```
 
-**Current Status:** ✅ Infrastructure scenario fully working - SSH setup, container creation, and service management all operational. Day0 deployment partially working with Splunk package downloads. Ready for next sprint to complete Splunk role integration.
+**Current Status:** ✅ Sprint 5 Complete - Day0 infrastructure with local software setup working. Splunk binaries predownloaded to testing/software/, ansible native inventory configured, and day0 converge playbook updated to use local software. Infrastructure ready for Splunk deployment, blocked by existing Splunk installation cleanup needed.
 
 ## 🌐 Web Terminal Interface
 
@@ -221,23 +225,26 @@ task diag:terminal      # Check ttyd and nginx health
 ### ✅ Current Working Workflow (Updated)
 ```bash
 # Step 1: Environment setup (one-time)
-task setup              # Complete environment setup (secrets + images)
+task setup              # Complete environment setup (secrets + images + software)
 
 # Step 2: Infrastructure creation
-task infra:create       # Create all containers (9 Splunk + git-server + services)
-# OR complete workflow:
-task infra:test         # Run complete infrastructure scenario
+task infra_small:setup  # Setup small infrastructure for testing (create + prepare, keeps containers)
+# OR for testing infrastructure only:
+task infra_small:test   # Run complete small infrastructure scenario (includes destroy)
 
 # Step 3: Splunk deployment
-task day0:test          # Run complete deployment scenario
+task day0_small:test    # Run complete deployment scenario using local software
 # OR step-by-step:
-task day0:converge      # Deploy Splunk via SSH
-task day0:verify        # Verify deployment
+task day0_small:converge # Deploy Splunk via SSH using predownloaded software
+task day0_small:verify   # Verify deployment
 
-# Step 4: Operations
-task day1:test          # Run complete operations scenario
+# Step 4: Operations (planned)
+task day1:test          # Run complete operations scenario (when implemented)
 
-# Step 5: Check status
+# Step 5: Cleanup
+task infra_small:destroy # Clean up containers when done
+
+# Step 6: Check status
 task status             # All containers running properly ✅
 ```
 

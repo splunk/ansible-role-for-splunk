@@ -7,7 +7,7 @@ ansible:
     backend: ansible-playbook
     args:
       ansible_playbook:
-        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../inventory/
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/small/
 
 dependency:
   name: galaxy

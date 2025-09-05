@@ -1,13 +1,16 @@
 ---
-# Destroy containers using Ansible
+# Molecule destroy playbook for day0_small
+# Dynamically cleans up containers based on inventory
+
 - hosts: localhost
   gather_facts: false
   vars:
-    targets: "{{ groups['full'] | default([]) + groups['git_server'] | default([]) }}"
+    targets: "{{ groups['full'] | default([]) }}"
   tasks:
     - name: Set Python interpreter for Docker modules
       set_fact:
         ansible_python_interpreter: /usr/local/bin/python3
+
     - name: Stop and remove ansible-controller
       community.docker.docker_container:
         name: ansible-controller
@@ -20,20 +23,11 @@
         name: "{{ item }}"
         state: absent
         force_kill: true
-      loop: "{{ targets | reject('equalto', 'git-server') | list }}"
+      loop: "{{ targets }}"
       loop_control:
         label: "{{ item }}"
       ignore_errors: true
 
-    - name: Stop and remove git-server
-      community.docker.docker_container:
-        name: git-server
-        state: absent
-        force_kill: true
-      ignore_errors: true
+    # Removed network removal step - containers may still be using it
 
-    - name: Remove Docker network
-      community.docker.docker_network:
-        name: splunk-test-network
-        state: absent
-      ignore_errors: true
+    # Removed network removal step - containers may still be using it

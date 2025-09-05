@@ -111,48 +111,48 @@ curl http://localhost:3000/ttyd/  # Returns ttyd interface
 - **Web Terminal**: ttyd service with nginx proxy for browser access
 - **User Authentication**: ansible user with password-based login
 
-### 2025-09-15 - Sprint 5: Day1 Operations Implementation [Planned]
-**Goal:** Implement comprehensive Day1 operations testing for production readiness
+
+### 2025-09-05 - Sprint 6: Container State Management & Splunk User Setup [In Progress]
+**Goal:** Clean up container state and fix Splunk user setup to enable full deployment testing
 
 **Scope:**
-- Service restart procedures and validation using upstream playbooks
-- Backup and recovery operations (if available in upstream)
-- Maintenance tasks and troubleshooting (accommodate upstream capabilities)
-- Emergency response scenarios (test upstream emergency procedures)
-- Performance monitoring and health checks
+- Clean up existing Splunk installations from previous test runs
+- Fix splunk user creation in containers (currently missing)
+- Resolve boot-start method detection issues
+- Complete end-to-end Splunk installation and service startup
+- Add verification framework for deployment validation
 
-**Tasks Planned:**
-- ✅ Test service restart procedures using existing upstream playbooks
-- ✅ Implement backup/recovery testing if upstream playbooks exist
-- ✅ Add maintenance task automation based on upstream capabilities
-- ✅ Develop troubleshooting verification steps for upstream scenarios
-- ✅ Implement performance monitoring checks
-- ✅ Create emergency response test cases (may require splunkops role if upstream lacks coverage)
+**Tasks In Progress:**
+- 🔄 Clean up existing Splunk installations from containers
+- 🔄 Fix splunk user setup in AlmaLinux containers
+- 🔄 Resolve Splunk role boot-start configuration validation
+- 🔄 Complete full Splunk installation and startup testing
+- 🔄 Add health checks and service validation
 
 **Expected Technical Achievements:**
-- Complete operational testing coverage
-- Automated maintenance procedures
-- Performance baseline establishment
-- Troubleshooting automation
-- Emergency response validation
+- Clean container state for reliable testing
+- Proper splunk user creation and permissions
+- Successful Splunk installation using local software
+- Service startup and basic functionality verification
+- Automated health checks for deployment validation
 
 **Key Files to Modify:**
-- `testing/molecule/day1/converge.yml`: Operations using upstream playbooks
-- `testing/molecule/day1/verify.yml`: Health check validations
-- `roles/splunkops/tasks/`: Create if upstream lacks operational coverage
-- `testing/Taskfile.yml`: Add operations-specific tasks
+- Container cleanup procedures
+- Splunk user creation fixes in container images
+- Boot-start configuration validation
+- Verification playbooks for Splunk services
+- Health check automation
 
 **Success Criteria:**
 ```bash
-task day1               # All operations execute successfully
-task day1-verify        # All health checks pass
-task day1-backup        # Backup operations complete
-task day1-restore       # Recovery operations work
+task infra_small:setup  # Clean container state
+task day0_small:converge # Successful Splunk installation
+task day0_small:verify   # All services running and healthy
 ```
 
 **Dependencies:**
-- Sprint 4 completion (full Splunk deployment)
-- Stable container infrastructure
+- Sprint 5 completion (infrastructure with local software ready)
+- Container state cleanup procedures
 
 ### 2025-09-29 - Sprint 6: CI/CD Integration [Planned]
 **Goal:** Implement automated testing pipeline for continuous integration
@@ -242,14 +242,15 @@ task perf-test          # Performance validation
 ## Current Status & Sprint Progress
 
 ### ✅ Completed Infrastructure
-- **12-container Splunk cluster**: 9 Splunk + 3 management containers operational
+- **11-container Splunk cluster**: 9 Splunk + ansible-controller + git-server operational
 - **SSH architecture**: Key generation and distribution working
 - **Web terminal**: ttyd implementation with nginx proxy
 - **Shared inventory**: Single source of truth for all scenarios
-- **Container networking**: Docker network and volume sharing functional
+- **Container networking**: Docker network with molecule-runner connected
 - **Task orchestration**: Complete workflow via Taskfile.yml
 - **Molecule v25.9.0rc1**: Pre-release version with native inventory support
 - **Native inventory**: Working configuration without platforms/driver sections
+- **Role testing**: Day0 configured to test role naturally (no manual software copying)
 
 ### 🚧 Current Blockers (Sprint 4 Focus)
 - **Architecture simplification**: Remove getting-started and lab scenarios
@@ -310,6 +311,45 @@ task perf-test          # Performance validation
 ## Historical Sprint Progress
 <!-- Completed sprints in reverse chronological order (newest first) -->
 <!-- Move completed sprints here when they finish -->
+
+### 2025-09-05 - Sprint 5: Day0 Testing Infrastructure Setup ✅
+**Goal:** Set up day0:testing infrastructure with predownloaded Splunk software and local software directory
+
+**Tasks Completed:**
+- ✅ **Software Download Task**: Created `task download:splunk` to download Splunk Enterprise and Universal Forwarder to `testing/software/`
+- ✅ **Group Vars Update**: Modified `testing/molecule/inventory/group_vars/all.yml` to use `splunk_build_remote_src: false` and local software paths
+- ✅ **Converge Playbook Update**: Updated `testing/molecule/day0/converge.yml` to copy software from local directory to target hosts
+- ✅ **Setup Integration**: Added software download to setup process (`task setup` now includes `task download:splunk`)
+- ✅ **Inventory Configuration**: Verified ansible native inventory is working correctly
+- ✅ **Local Software Paths**: Configured `splunk_package_path_full` and `splunk_package_path_uf` for local software
+- ✅ **Dynamic Container Cleanup**: Fixed `day0_small/destroy.yml` to use inventory-based container discovery
+- ✅ **Boot-start Configuration**: Set proper initd configuration for Splunk services
+- ✅ **ACL Package Resolution**: Fixed network connectivity issues for package installation
+
+**Technical Achievements:**
+- **Local Software Directory**: Created `testing/software/` with predownloaded Splunk binaries (586MB Enterprise + 44MB Forwarder)
+- **Offline Installation**: Day0 scenario now uses local software instead of downloading from remote URLs
+- **Faster Testing**: Eliminates network dependency for Splunk software downloads during testing
+- **Reproducible Setup**: Software versions are pinned and cached locally
+- **Native Inventory**: Confirmed ansible native inventory working with shared `testing/molecule/inventory/`
+- **Dynamic Cleanup**: Container destruction now uses Ansible inventory instead of hardcoded names
+- **Infrastructure Ready**: SSH connectivity, software distribution, and prerequisites all working
+
+**Key Files Modified:**
+- `testing/Taskfile.yml`: Added `download:splunk` task and integrated into setup
+- `testing/molecule/inventory/group_vars/all.yml`: Updated to use local software paths
+- `testing/molecule/day0/converge.yml`: Added software copy tasks and updated variables
+- `testing/molecule/day0_small/destroy.yml`: Fixed to use inventory-based container discovery
+
+**Success Criteria:**
+```bash
+task setup              # Downloads Splunk software to testing/software/
+task infra_small:setup  # Creates infrastructure with SSH connectivity
+task day0_small:converge # Copies and installs Splunk using local software
+ls testing/software/    # Shows downloaded Splunk binaries
+```
+
+**Next Sprint Ready:** Container state management and Splunk user setup
 
 ### 2025-08-29 - Inventory & SSH Stabilization → Ready for Day 0 ✅
 **Goal:** Finalize inventory, SSH diagnostics, and artifact sourcing to unblock Day 0
