@@ -176,6 +176,37 @@
             - /tmp/test-logs
           when: (groups['uf'] is defined and inventory_hostname in groups['uf']) and ansible_distribution != 'Ubuntu' and ansible_distribution != 'AlmaLinux'
 
+        # Ensure Splunk user exists (fix for flawed role logic)
+        - name: Ensure Splunk user and group exist
+          block:
+            - name: Create splunk group
+              group:
+                name: splunk
+                state: present
+                local: false
+              when: splunk_nix_user != 'root'
+
+            - name: Create splunk user
+              user:
+                name: splunk
+                group: splunk
+                home: /home/splunk
+                state: present
+                shell: /bin/bash
+                local: false
+                create_home: true
+              when: splunk_nix_user != 'root'
+
+            - name: Ensure splunk user has sudo access
+              lineinfile:
+                path: /etc/sudoers.d/splunk
+                create: true
+                mode: '0440'
+                line: 'splunk ALL=(ALL) NOPASSWD: ALL'
+                validate: 'visudo -cf %s'
+              when: splunk_nix_user != 'root'
+          when: inventory_hostname != 'ansible-controller' and inventory_hostname != 'git-server'
+
     - name: Permit user logins on systemd hosts (clear pam_nologin gate)
       block:
         - name: Remove /run/nologin if present

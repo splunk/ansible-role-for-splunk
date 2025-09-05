@@ -48,7 +48,7 @@
           - name: splunk-test-network
         volumes:
           - /sys/fs/cgroup:/sys/fs/cgroup:rw
-          - "{{ item }}-data:/opt/splunk:rw"
+          - "{{ item }}-data:/opt:rw"
         tmpfs:
           - /run
           - /run/lock

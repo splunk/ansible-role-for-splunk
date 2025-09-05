@@ -21,21 +21,21 @@
       systemd:
         name: splunkforwarder
       register: splunkforwarder_service_status
-      when: inventory_hostname in groups['uf']
+      when: inventory_hostname in groups.get('uf', [])
 
     - name: Verify Splunk is listening on management port
       wait_for:
-        host: "{{ ansible_default_ipv4.address }}"
+        host: "{{ ansible_host | default(inventory_hostname) }}"
         port: 8089
         timeout: 60
       when: inventory_hostname in groups['full']
 
     - name: Verify Splunk web interface is accessible (search heads)
       wait_for:
-        host: "{{ ansible_default_ipv4.address }}"
+        host: "{{ ansible_host | default(inventory_hostname) }}"
         port: 8000
         timeout: 60
-      when: inventory_hostname in groups['shcluster']
+      when: inventory_hostname in groups.get('shcluster', [])
 
 - name: Verify cluster status
   hosts: clustermanager
@@ -47,12 +47,13 @@
       register: cluster_status
       failed_when: false
       changed_when: false
-
+      when: groups.get('clustermanager', []) | length > 0
     - name: Display cluster status
       debug:
         var: cluster_status.stdout_lines
+      when: groups.get('clustermanager', []) | length > 0
 
-- name: Verify search head cluster status  
+- name: Verify search head cluster status
   hosts: shdeployer
   become: true
   become_user: splunk
@@ -62,17 +63,18 @@
       register: shc_status
       failed_when: false
       changed_when: false
-
+      when: groups.get('shdeployer', []) | length > 0
     - name: Display SHC status
       debug:
         var: shc_status.stdout_lines
+      when: groups.get('shdeployer', []) | length > 0
 
 - name: Verify GitLab is accessible
   hosts: git_server
   tasks:
     - name: Check GitLab web interface
       uri:
-        url: "http://{{ ansible_default_ipv4.address }}:8929"
+        url: "http://{{ ansible_host | default(inventory_hostname) }}:8929"
         method: GET
         status_code: [200, 302]
       register: gitlab_check

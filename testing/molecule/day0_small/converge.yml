@@ -13,6 +13,14 @@
         mode: '0755'
       become: true
 
+    - name: Create software directory on localhost for downloads
+      file:
+        path: /opt/software
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+
     - name: Copy Splunk Enterprise to target hosts
       copy:
         src: "/workspace/testing/software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
@@ -43,3 +51,8 @@
     splunk_home: "/opt/splunk"
     splunk_nix_home: "/opt/splunk"
     splunk_install_path: "/opt"
+    # Force use of local software
+    splunk_download_local: false
+    splunk_package_version: 9.1.2
+    build_id: b6b9c8185839
+    splunk_package_path: "/opt/software"

@@ -43,6 +43,12 @@ tasks:
        docker images | grep -q molecule-runner || docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
        echo "✅ All images ready!"
        echo "📝 Note: ansible-controller and molecule-runner images include Molecule v25.9.0rc1 (pre-release) for native inventory support"
+   status:
+     - docker images | grep -q splunk-base-almalinux9
+     - docker images | grep -q splunk-base-ubuntu2204
+     - docker images | grep -q splunk-ansible-controller
+     - docker images | grep -q splunk-git-server
+     - docker images | grep -q molecule-runner
 
   setup:secrets:
    desc: Create testing/.secrets directory with SSH keys and password (idempotent)
@@ -65,6 +71,8 @@ tasks:
    cmds:
      - docker network ls | grep -q splunk-test-network || docker network create splunk-test-network
      - echo "✅ Network splunk-test-network ready"
+   status:
+     - docker network ls | grep -q splunk-test-network
 
   download:splunk:
    desc: "Download Splunk binaries to testing/software directory (idempotent)"
@@ -83,6 +91,9 @@ tasks:
          echo "✅ Splunk binaries downloaded to testing/software/"
          ls -la software/
        fi
+   status:
+     - test -f software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz
+     - test -f software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz
 
   # === MOLECULE SCENARIOS ===
   # These map directly to testing/molecule/ scenario directories
@@ -92,7 +103,7 @@ tasks:
 
   # === INFRASTRUCTURE SCENARIO ===
   infra_small:test:
-    desc: Run complete infra_small scenario (create → converge → verify → destroy)
+    desc: Run complete infra_small scenario (create → converge → verify → destroy) - supports extra args
     cmds:
       - task: setup
       - echo "🏗️ Running complete infrastructure scenario..."
@@ -103,7 +114,7 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           molecule-runner:latest \
-          molecule test -s infra_small
+          molecule test -s infra_small {{if .CLI_ARGS}}-- {{.CLI_ARGS}}{{end}}
       - echo "✅ Infrastructure scenario complete!"
 
   infra_small:create:
@@ -156,24 +167,24 @@ tasks:
   # Lab destroy and status tasks removed - consolidated into infra scenario
 
   day0_small:test:
-   desc: Run complete Day 0 small scenario (converge → verify)
+   desc: Run complete Day 0 small scenario (converge → verify) - supports extra args like --limit
    cmds:
      - echo "🚀 Day 0 Small - Running complete Splunk deployment scenario..."
      - |
        docker exec mol-run bash -c "
          cd /workspace/testing && \
-         molecule test -s day0_small
+         molecule test -s day0_small {{if .CLI_ARGS}}-- {{.CLI_ARGS}}{{end}}
        "
      - echo "✅ Day 0 Small scenario complete!"
 
   day0_small:converge:
-   desc: Deploy Splunk via SSH (molecule converge -s day0_small)
+   desc: Deploy Splunk via SSH (molecule converge -s day0_small) - supports extra args like --limit
    cmds:
      - echo "🚀 Day 0 Small - Deploying Splunk via SSH..."
      - |
        docker exec mol-run bash -c "
          cd /workspace/testing && \
-         molecule converge -s day0_small
+         molecule converge -s day0_small {{if .CLI_ARGS}}-- {{.CLI_ARGS}}{{end}}
        "
      - echo "✅ Day 0 Small deployment complete!"
 
@@ -201,7 +212,7 @@ tasks:
           bash -c "ansible-galaxy collection install community.general && ansible-playbook -i testing/molecule/inventory/hosts.yml playbooks/splunk_install_or_upgrade.yml"
 
   day1:test:
-    desc: Run complete Day 1 scenario (converge → verify)
+    desc: Run complete Day 1 scenario (converge → verify) - supports extra args
     cmds:
       - task: setup
       - echo "🔧 Day 1 - Running complete operations scenario..."
@@ -212,11 +223,11 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           molecule-runner:latest \
-          molecule test -s day1
+          molecule test -s day1 {{if .CLI_ARGS}}-- {{.CLI_ARGS}}{{end}}
       - echo "✅ Day 1 scenario complete!"
 
   day1:converge:
-    desc: Run Day 1 operations (molecule converge -s day1)
+    desc: Run Day 1 operations (molecule converge -s day1) - supports extra args
     cmds:
       - echo "🔧 Day 1 - Running operational tasks..."
       - |
@@ -226,7 +237,7 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           molecule-runner:latest \
-          molecule converge -s day1
+          molecule converge -s day1 {{if .CLI_ARGS}}-- {{.CLI_ARGS}}{{end}}
       - echo "✅ Day 1 operations complete!"
 
   day1:verify:
@@ -331,6 +342,8 @@ tasks:
            sleep infinity
          echo "✅ Molecule runner started (container: mol-run)"
        fi
+   status:
+     - docker ps --filter name=^mol-run$ --filter status=running | grep -q mol-run
 
   runner:shell:
     desc: "Shell into persistent molecule-runner (mol-run)"
@@ -434,6 +447,8 @@ tasks:
 
   dev:cleanup:
     desc: Clean up Docker resources (containers, volumes, networks)
+    deps:
+      - infra_small:destroy
     cmds:
       - echo "🧹 Cleaning up Docker resources..."
       - docker system prune -f
