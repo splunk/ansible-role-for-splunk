@@ -1,4 +1,9 @@
 ---
+- name: Check if instance is a Universal Forwarder
+  ansible.builtin.fail:
+    msg: "splunkupgrader role can only be applied to Universal Forwarder instances (splunk_install_type must be 'uf'). Current type: {{ splunk_install_type | default('undefined') }}"
+  when: splunk_install_type != "uf"
+
 - name: Check if splunkupgrader is already installed
   ansible.builtin.include_tasks: check_package.yml
 
