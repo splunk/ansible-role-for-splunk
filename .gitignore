@@ -1,2 +1,3 @@
 environments/test
 roles/splunk/files/*.lic
+roles/splunkupgrader/files/splunk-upgrader-linux-*.tgz

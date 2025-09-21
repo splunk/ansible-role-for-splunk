@@ -1,0 +1,7 @@
+---
+- name: Check if splunkupgrader is already installed
+  ansible.builtin.include_tasks: check_package.yml
+
+- name: Install splunkupgrader if not installed or version mismatch
+  ansible.builtin.include_tasks: install_upgrader.yml
+  when: not splunkupgrader_installed.stat.exists or installed_upgrader_version != upgrader_version

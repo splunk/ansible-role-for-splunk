@@ -1,0 +1,12 @@
+---
+upgrader_version: 102
+SPLUNK_UPDATER_USER: splunkupgrader
+SPLUNK_UPDATER_GROUP: splunkupgrader
+MONITOR_PKG_INTERVAL_SEC: 5
+FWD_UPGRADE_TIMEOUT_SEC: 300
+FWD_UPGRADE_MAX_RETRY: 3
+ROTATE_HISTORY_LOG_DAYS: 30
+upgrader_package_file: splunk-upgrader-linux-{{ upgrader_version }}.tgz
+upgrader_package_dest: /tmp/
+upgrader_install_base: /opt/
+upgrader_install_path: "{{ upgrader_install_base }}splunkupgrader/"

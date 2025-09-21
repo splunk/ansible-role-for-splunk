@@ -1,0 +1,28 @@
+---
+- name: Copy splunkupgrader app to target
+  ansible.builtin.unarchive:
+    src: "{{ upgrader_package_file }}"
+    dest: "{{ upgrader_install_base }}"
+    owner: root
+    group: root
+    mode: '0755'
+  become: true
+  become_user: root
+
+- name: Copy config template for splunkupgrader
+  ansible.builtin.template:
+    src: "local_config_{{ upgrader_version }}.j2"
+    dest: "{{ upgrader_install_path }}/config/local_config"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  become_user: root
+
+- name: Install splunkupgrader
+  ansible.builtin.command:
+    cmd: "{{ upgrader_install_path }}/bin/install.sh --accept-license --create-user"
+  become: true
+  become_user: root
+  args:
+    creates: /etc/systemd/system/splunk-upgrader.service
