@@ -9,4 +9,4 @@
 
 - name: Get Splunk version number only
   ansible.builtin.set_fact:
-    splunk_version_release: "{{ current_version.stdout | regex_search('(\\d\\.\\d+\\.[^\\s]+)') }}"
+    splunk_version_release: "{{ current_version.stdout | regex_search('(\\d+\\.\\d+\\.[^\\s]+)') }}"
