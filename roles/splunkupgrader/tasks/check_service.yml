@@ -1,0 +1,7 @@
+---
+- name: Check if splunkupgrader service is running
+  ansible.builtin.systemd:
+    name: splunk-upgrader
+    state: started
+  register: splunkupgrader_service_status
+  ignore_errors: true

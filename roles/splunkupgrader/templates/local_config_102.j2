@@ -1,0 +1,45 @@
+# Splunk Remote Upgrader configurations
+
+# *DO NOT* update this file. Copy and create another "local_config" file
+# in the same folder, and customize configurations there. This file will
+# be overwritten once the Upgrader daemon upgrades, so all customized changes 
+# on this file will be missing.
+
+# Should add validation rules for each configurations in ./bin/load_config_file.sh
+
+# ============= Configurations from Upgrader owner only ===========
+# NOTE: these are sensitive configurations, which should be managed by System admin only!
+
+# To customize these configuration, System admin should:
+# 1. Login each box where Upgrader installed
+# 2. Go to the Upgrader ./config dir, create a local_config file
+# 3. Copy these configurations to the local_config, update values
+# 4. Restart the Upgrader daemon
+
+# Installation only configurations. Update them before executing ./install.sh if needed,
+# and leave them in the local_config. Update them after installation will not change 
+# anything since the Upgrader has been configured and running as this user & group.
+SPLUNK_UPDATER_USER={{ SPLUNK_UPDATER_USER }}    # default name if pre-created user is not provided
+SPLUNK_UPDATER_GROUP={{ SPLUNK_UPDATER_GROUP }}   # default name if pre-created user is not provided
+
+# ============= Configurations from anyone ===========
+# Both System admin and Splunk admin can update these configurations.
+
+# System admin can follow exactly same steps mentioned in above section.
+
+# Splunk admin can either put their own local_config file into the delivery app, 
+# and push the app from Deployment Server to UF, or just put the file directly to
+# the "/tmp/SPLUNK_UPDATER_MONITORED_DIR". And then the Upgrader picks it up, validate
+# it and apply it.
+
+# DO NOT set SPLUNK_HOME from monitored dir, unless Upgrader is running as ROOT,
+# otherwise Splunk cannot start after upgrade due to lack of permissions for
+# the new SPLUNK_HOME
+
+# SPLUNK_HOME=<path-to-splunk-home-dir>
+
+MONITOR_PKG_INTERVAL_SEC={{ MONITOR_PKG_INTERVAL_SEC }}    # range [5, 300]
+FWD_UPGRADE_TIMEOUT_SEC={{ FWD_UPGRADE_TIMEOUT_SEC }}   # range [60, 600]
+FWD_UPGRADE_MAX_RETRY={{ FWD_UPGRADE_MAX_RETRY }}
+ROTATE_HISTORY_LOG_DAYS={{ ROTATE_HISTORY_LOG_DAYS }}    # range [0, 360]
+

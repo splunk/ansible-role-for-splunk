@@ -1,0 +1,26 @@
+---
+- name: Check if splunkupgrader is already installed
+  ansible.builtin.stat:
+    path: "{{ upgrader_install_path }}"
+  register: splunkupgrader_installed
+
+- name: Check splunkupgrader version
+  ansible.builtin.slurp:
+    src: "{{ upgrader_install_path }}/VERSION"
+  register: installed_version_file
+  when: splunkupgrader_installed.stat.exists
+
+- name: Set installed version fact
+  ansible.builtin.set_fact:
+    installed_upgrader_version: "{{ installed_version_file['content'] | b64decode | trim | replace('.', '') }}"
+  when: splunkupgrader_installed.stat.exists
+
+- name: Print installation status - Not Installed
+  ansible.builtin.debug:
+    msg: "Splunk Upgrader is NOT installed at {{ upgrader_install_path }}"
+  when: not splunkupgrader_installed.stat.exists
+
+- name: Print installation status - Installed
+  ansible.builtin.debug:
+    msg: "Splunk Upgrader is installed at {{ upgrader_install_path }} - Version: {{ installed_upgrader_version }}"
+  when: splunkupgrader_installed.stat.exists
