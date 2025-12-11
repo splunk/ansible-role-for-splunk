@@ -3,6 +3,8 @@
 
 - name: Disable boot-start
   ansible.builtin.command: "{{ splunk_home }}/bin/splunk disable boot-start"
+  register: splunk_bootstart_disabled
+  failed_when: splunk_bootstart_disabled.rc not in [0, 8]
   become: true
 
 - name: Remove splunk folder
