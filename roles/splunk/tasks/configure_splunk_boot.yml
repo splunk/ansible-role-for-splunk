@@ -28,7 +28,9 @@
     - name: Disable boot-start if it needs to be to reconfigured
       ansible.builtin.command: "{{ splunk_home }}/bin/splunk disable boot-start"
       become: true
+      register: splunk_bootstart_disabled
       when: current_start_method is defined or splunk_upgraded is defined
+      failed_when: splunk_bootstart_disabled.rc not in [0, 8]
 
     - name: Ensure init.d file is really gone
       ansible.builtin.file:
@@ -55,8 +57,10 @@
     - name: Enable splunk boot-start via systemd
       ansible.builtin.command: "{{ splunk_home }}/bin/splunk enable boot-start -user {{ splunk_nix_user }} -group {{ splunk_nix_group }} -systemd-managed 1 -systemd-unit-file-name {{ systemd_unit }} -create-polkit-rules {{ splunk_create_polkit }} --answer-yes --auto-ports --no-prompt --accept-license"
       become: true
+      register: splunk_bootstart_enabled
       when:
         - desired_start_method == "systemd"
+      failed_when: splunk_bootstart_enabled.rc not in [0, 8]
       notify:
         - reload systemctl daemon
         - start splunk
