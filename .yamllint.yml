@@ -32,8 +32,7 @@ rules:
   key-duplicates: enable
   key-ordering: disable
   line-length: disable
-  # When using `ansible-galaxy init ..` the newline is removed
-  new-line-at-end-of-file: disable
+  new-line-at-end-of-file: enable
   new-lines: enable
   octal-values:
     forbid-explicit-octal: true

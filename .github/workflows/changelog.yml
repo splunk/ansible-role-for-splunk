@@ -1,0 +1,27 @@
+name: Changelog
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - master
+
+jobs:
+  check-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if CHANGELOG.md was modified
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            changelog:
+              - 'CHANGELOG.md'
+
+      - name: Require CHANGELOG.md update
+        continue-on-error: true
+        if: steps.changes.outputs.changelog != 'true'
+        run: |
+          echo "CHANGELOG.md was not updated in this PR."
+          echo "Please add an entry describing your change."
+          exit 1

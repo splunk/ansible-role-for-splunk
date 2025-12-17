@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## 2025
 
+- **[Added]** GitHub workflows for linting and changelog enforcement ([#XXX](...)) - 2025-12-17 by @dtwersky
+  - Added lint workflow with yamllint, ansible-lint, and newline checks
+  - Added changelog enforcement workflow for PRs
+  - Enabled new-line-at-end-of-file yamllint rule
 - **[Fixed]** fix debian 13 boot start error: version OPENSSL_3.4.0 not found ([#250](https://github.com/splunk/ansible-role-for-splunk/pull/250)) - 2025-12-17 by @dtwersky
   - Accept exit code 8 in boot-start tasks to handle OpenSSL library version mismatch on Debian 13 with Splunk 10.0.2
 - **[Added]** new splunkupgrader role for remote upgrader service ([#247](https://github.com/splunk/ansible-role-for-splunk/pull/247)) - 2025-11-03 by @dtwersky
