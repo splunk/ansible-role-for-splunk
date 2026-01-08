@@ -1,11 +1,11 @@
 ---
 # This task is called by check_splunk.yml to perform splunk upgrades. Do not run this task directly as check_splunk.yml will stop splunk first.
 - name: Configure .bash_profile and .bashrc for splunk user
-  ansible.builtin.include_tasks: configure_bash.yml
+  ansible.builtin.include_tasks: os_common/configure_bash.yml
   when: splunk_nix_user != 'root'
 
 - name: Configure OS to disable THP and increase ulimits for splunk process
-  ansible.builtin.include_tasks: configure_os.yml
+  ansible.builtin.include_tasks: os_common/configure_os.yml
 
 - name: Include task to kill any stale splunkd processes
   ansible.builtin.include_tasks: adhoc_kill_splunkd.yml
