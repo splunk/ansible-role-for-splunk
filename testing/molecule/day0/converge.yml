@@ -38,6 +38,23 @@
       when: "'uf' in group_names"
 
 # Install Splunk on target hosts using the role's natural download process
+- name: Ensure Splunk boot-start is configured for existing installs
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  gather_facts: true
+  tasks:
+    - name: Check if Splunk Enterprise is installed
+      stat:
+        path: /opt/splunk/bin/splunk
+      register: splunk_ent_stat
+      changed_when: false
+
+    - name: Enable boot-start on existing Splunk installs
+      ansible.builtin.include_role:
+        name: splunk
+      vars:
+        deployment_task: configure_splunk_boot.yml
+      when: splunk_ent_stat.stat.exists | default(false)
+
 - name: Install Splunk on target hosts
   hosts: all:!ansible_controller:!git_server:!jumpbox
   roles:
@@ -51,7 +68,6 @@
     splunk_home: "/opt/splunk"
     splunk_nix_home: "/opt/splunk"
     splunk_install_path: "/opt"
-    # Force use of local software
     splunk_download_local: false
     splunk_package_version: 9.1.2
     build_id: b6b9c8185839

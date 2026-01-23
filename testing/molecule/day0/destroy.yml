@@ -1,5 +1,5 @@
 ---
-# Molecule destroy playbook for day0_small
+# Molecule destroy playbook for day0
 # Dynamically cleans up containers based on inventory
 
 - hosts: localhost
@@ -27,7 +27,3 @@
       loop_control:
         label: "{{ item }}"
       ignore_errors: true
-
-    # Removed network removal step - containers may still be using it
-
-    # Removed network removal step - containers may still be using it

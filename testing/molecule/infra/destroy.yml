@@ -1,5 +1,6 @@
 ---
 # Destroy containers using Ansible
+# Dynamically destroys containers based on environment inventory
 - hosts: localhost
   gather_facts: false
   vars:
@@ -8,6 +9,7 @@
     - name: Set Python interpreter for Docker modules
       set_fact:
         ansible_python_interpreter: /usr/local/bin/python3
+
     - name: Stop and remove ansible-controller
       community.docker.docker_container:
         name: ansible-controller
@@ -31,5 +33,3 @@
         state: absent
         force_kill: true
       ignore_errors: true
-
-    # Removed network removal step - containers may still be using it

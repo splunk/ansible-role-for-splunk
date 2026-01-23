@@ -2,7 +2,7 @@
 # Infrastructure Preparation - SSH Setup
 # Sets up SSH connectivity between ansible-controller and all Splunk containers
 
-- name: Setup SSH Infrastructure for Infra Scenario
+- name: Setup SSH Infrastructure
   hosts: all:!git_server
   gather_facts: true
   connection: docker
@@ -75,15 +75,12 @@
     - name: Set up SSH infrastructure for all Splunk hosts
       tags: [ssh_keys]
       block:
-        # Critical step: Remove /run/nologin to allow non-root logins
         - name: Remove /run/nologin if it exists (prevent login denials)
           file:
             path: /run/nologin
             state: absent
           when: inventory_hostname != 'ansible-controller'
 
-        # Critical step: Ensure systemd-user-sessions is started
-        # This service removes /run/nologin on boot
         - name: Ensure systemd-user-sessions is enabled and started
           systemd:
             name: systemd-user-sessions
@@ -91,16 +88,12 @@
             enabled: true
           when: inventory_hostname != 'ansible-controller' and ansible_service_mgr == 'systemd' and ansible_distribution != 'AlmaLinux'
 
-        # Start SSH service
         - name: Start SSH service
           systemd:
             name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
             state: started
             enabled: true
           when: inventory_hostname != 'ansible-controller'
-
-        # NOTE: ansible user and sudo already configured in Dockerfile base images
-        # No need to recreate user or configure sudo - this was causing PAM conflicts
 
         - name: Create ansible user SSH directory
           file:
@@ -150,22 +143,6 @@
                 UserKnownHostsFile /dev/null
                 LogLevel ERROR
 
-        - name: Ensure sshd server allows pubkey and password auth and uses PAM (RedHat family)
-          lineinfile:
-            path: /etc/ssh/sshd_config
-            regexp: '^\s*{{ item.key }}\s+'
-            line: '{{ item.key }} {{ item.value }}'
-            state: present
-            create: no
-            backrefs: false
-          loop:
-            - { key: 'UsePAM', value: 'yes' }
-            - { key: 'PubkeyAuthentication', value: 'yes' }
-            - { key: 'PasswordAuthentication', value: 'yes' }
-          when: ansible_os_family == 'RedHat' and ansible_distribution != 'AlmaLinux'
-
-        # SSH configuration is now handled in the Dockerfile
-
         - name: Create test data directories
           file:
             path: "{{ item }}"
@@ -176,7 +153,6 @@
             - /tmp/test-logs
           when: (groups['uf'] is defined and inventory_hostname in groups['uf']) and ansible_distribution != 'Ubuntu' and ansible_distribution != 'AlmaLinux'
 
-        # Ensure Splunk user exists (fix for flawed role logic)
         - name: Ensure Splunk user and group exist
           block:
             - name: Create splunk group
@@ -184,7 +160,13 @@
                 name: splunk
                 state: present
                 local: false
-              when: splunk_nix_user != 'root'
+              when: splunk_nix_user | default('splunk') != 'root'
+
+            - name: Check for splunk user
+              command: id -u splunk
+              register: splunk_user_id
+              changed_when: false
+              failed_when: false
 
             - name: Create splunk user
               user:
@@ -195,7 +177,9 @@
                 shell: /bin/bash
                 local: false
                 create_home: true
-              when: splunk_nix_user != 'root'
+              when:
+                - splunk_nix_user | default('splunk') != 'root'
+                - splunk_user_id.rc != 0
 
             - name: Ensure splunk user has sudo access
               lineinfile:
@@ -204,7 +188,7 @@
                 mode: '0440'
                 line: 'splunk ALL=(ALL) NOPASSWD: ALL'
                 validate: 'visudo -cf %s'
-              when: splunk_nix_user != 'root'
+              when: splunk_nix_user | default('splunk') != 'root'
           when: inventory_hostname != 'ansible-controller' and inventory_hostname != 'git-server'
 
     - name: Permit user logins on systemd hosts (clear pam_nologin gate)
@@ -229,7 +213,6 @@
 
     - name: Configure Ansible Controller
       block:
-        # Start SSH service on controller
         - name: Start SSH service on controller
           systemd:
             name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
@@ -237,7 +220,6 @@
             enabled: true
           tags: [controller, ssh]
 
-        # Configure SSH for ansible user
         - name: Ensure ansible SSH directory on controller
           file:
             path: /home/ansible/.ssh
@@ -247,7 +229,6 @@
             group: ansible
           tags: [controller, ssh_keys]
 
-        # Configure ttyd service to run as ansible user with credential authentication
         - name: Create ttyd service file
           copy:
             dest: /etc/systemd/system/ttyd.service
@@ -327,9 +308,6 @@
             group: ansible
           tags: [controller, ssh_keys]
 
-
-        # ttyd and nginx are now configured in the Dockerfile
-
         - name: Ensure nginx sites directories exist
           file:
             path: "{{ item }}"
@@ -365,12 +343,12 @@
 
 - name: Bootstrap Git Server
   hosts: git_server
-  gather_facts: false  # Git server doesn't need Python3/Ansible management
-  connection: docker   # Use docker connection, not SSH
+  gather_facts: false
+  connection: docker
   vars:
-    ansible_connection: docker  # Override inventory SSH settings
+    ansible_connection: docker
   tasks:
-    - name: Check Gitea container is running (no Python3 needed)
+    - name: Check Gitea container is running
       raw: echo 'Git server container running - Gitea will auto-start'
 
     - name: Create test repositories (placeholder)

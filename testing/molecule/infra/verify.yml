@@ -13,11 +13,13 @@
       debug:
         msg: "{{ infra_test.stdout }}"
 
-    - name: Verify systemd is running
-      command: systemctl is-active systemd
-      register: systemd_check
-      ignore_errors: true
+    - name: Verify PID 1 is systemd
+      command: ps -p 1 -o comm=
+      register: pid1_comm
+      changed_when: false
 
-    - name: Display systemd status
-      debug:
-        msg: "Systemd status: {{ systemd_check.stdout | default('not running') }}"
+    - name: Assert systemd is running as PID 1
+      assert:
+        that:
+          - pid1_comm.stdout | trim == 'systemd'
+        fail_msg: "Expected PID 1 to be systemd, got: {{ pid1_comm.stdout | trim | default('') }}"

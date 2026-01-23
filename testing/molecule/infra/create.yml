@@ -1,5 +1,6 @@
 ---
 # Create containers using Ansible
+# Dynamically creates containers based on environment inventory
 - hosts: localhost
   gather_facts: false
   vars:
@@ -8,6 +9,7 @@
     - name: Set Python interpreter for Docker modules
       set_fact:
         ansible_python_interpreter: /usr/local/bin/python3
+
     - name: Ensure Docker network exists
       community.docker.docker_network:
         name: splunk-test-network
@@ -35,6 +37,7 @@
           - /tmp
         restart_policy: unless-stopped
         state: started
+      when: "'ansible_controller' in groups"
 
     - name: Start Splunk containers
       community.docker.docker_container:
@@ -73,6 +76,7 @@
           - gitea-data:/data:rw
         restart_policy: unless-stopped
         state: started
+      when: "'git_server' in groups"
 
     - name: Wait for containers to be ready
       pause:

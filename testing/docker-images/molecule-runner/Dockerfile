@@ -19,10 +19,8 @@ ENV PATH="/root/.local/bin:$PATH"
 # Install ansible-dev-tools for complete Ansible development environment
 RUN pip3 install ansible-dev-tools
 
-# Upgrade to Molecule pre-release version for native inventory support
-RUN pip3 install --pre --upgrade molecule
-
-# Intentionally do NOT install molecule-plugins to avoid container drivers
+RUN pip3 install --upgrade molecule==25.12.0
+RUN pip3 install --upgrade molecule-plugins
 
 # Install additional tools
 RUN uv tool install ansible-lint

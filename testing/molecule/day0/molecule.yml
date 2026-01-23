@@ -1,7 +1,12 @@
 ---
-# Day 0 - Splunk Provisioning Scenario
-# Initial deployment of Splunk via SSH connections (production-like)
-# Uses native inventory approach with pre-release Molecule v25.9.0rc1
+# Unified Day 0 - Splunk Provisioning Scenario
+# Uses MOLECULE_ENV to select environment inventory (default: small)
+# Layers scenario-specific inventory on top of environment inventory
+#
+# Usage:
+#   MOLECULE_ENV=small molecule test -s day0   # 2 nodes
+#   MOLECULE_ENV=prod molecule test -s day0    # 9 nodes
+#   MOLECULE_ENV=dev molecule test -s day0     # 1 node
 
 ansible:
   cfg:
@@ -12,7 +17,7 @@ ansible:
     backend: ansible-playbook
     args:
       ansible_playbook:
-        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/small/
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/${MOLECULE_ENV:-small}/
         - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/inventory/
 
 dependency:
@@ -37,4 +42,3 @@ scenario:
   test_sequence:
     - converge
     - verify
-    # Removed destroy to keep lab running for testing

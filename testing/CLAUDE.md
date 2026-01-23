@@ -21,25 +21,23 @@ This is the official Ansible role for Splunk administration (`ansible-role-for-s
 
 ## ⚠️ IMPORTANT: Molecule Version Compatibility
 
-**Critical Discovery**: The official Molecule documentation examples **do not work** with the current released version (25.7.0), but **do work** with the pre-release version (25.9.0rc1).
+**Update**: The official Molecule documentation examples are supported in the current stable release (v25.12.0). Ansible-native configuration (`ansible:` section) is available since v25.9.0 and remains supported alongside the legacy driver/platforms format.
 
 ### Version Differences:
-- **Molecule 25.7.0** (current): Requires `platforms` + `driver` sections in `molecule.yml`
-- **Molecule 25.9.0rc1** (pre-release): Simplified `ansible:` section only (no platforms/driver needed)
+- **Molecule 25.7.0**: Requires `platforms` + `driver` sections in `molecule.yml`
+- **Molecule 25.12.0** (current): Supports both ansible-native (`ansible:`) and legacy (`driver`/`platforms`) formats
 
 ### Recommendation:
-**Use the pre-release version** for new setups to get the cleaner, documented configuration:
+Use the stable release (v25.12.0) for new setups:
 ```bash
-pip install --pre --upgrade molecule  # Installs v25.9.0rc1
+pip install --upgrade molecule  # Installs v25.12.0
 ```
 
-This provides the simplified configuration shown in the official documentation.
-
 ### Containerized Environment:
-The `molecule-runner` Docker image has been updated to automatically install the pre-release version, ensuring consistent behavior across all environments:
+The `molecule-runner` Docker image installs the stable release:
 ```dockerfile
 # In testing/docker-images/molecule-runner/Dockerfile
-RUN pip3 install --pre --upgrade molecule
+RUN pip3 install --upgrade molecule==25.12.0
 ```
 
 ### Architecture Simplification:
@@ -103,15 +101,16 @@ The testing framework uses a fully containerized approach:
 roles/splunk/           # Main Ansible role for Splunk administration
 playbooks/             # Example playbooks for various Splunk operations
 testing/               # Docker + Molecule testing infrastructure (implemented)
-├── Taskfile.yml      # Cross-platform task runner (moved from root)
-├── .env.example      # Environment configuration (moved from root)
+├── Taskfile.yml      # Cross-platform task runner
+├── .env.example      # Environment configuration
 ├── molecule/         # Molecule scenario configurations
-│   ├── inventory/    # SHARED inventory - single source of truth
-│   │   ├── hosts.yml # Infrastructure specification
-│   │   └── group_vars/
-│   ├── infra/        # Infrastructure setup (native inventory)
-│   ├── day0/         # Initial Splunk provisioning (ansible-controller)
-│   └── day1/         # Operational tasks (ansible-controller)
+│   ├── environments/ # Environment-specific inventories (parameterized)
+│   │   ├── small/   # 2 nodes (1 indexer + 1 license/search) - default
+│   │   ├── prod/    # 9 nodes (full cluster topology)
+│   │   └── dev/     # 1 node (single all-in-one)
+│   ├── infra/       # Unified infrastructure scenario (uses MOLECULE_ENV)
+│   ├── day0/        # Unified deployment scenario (uses MOLECULE_ENV)
+│   └── day1/        # Operational tasks
 ├── docker-images/    # Custom Docker images with systemd + SSH
 │   ├── almalinux9-systemd-sshd/
 │   ├── ubuntu2204-systemd-sshd/
@@ -139,29 +138,36 @@ ansible-playbook -i environments/production/inventory.yml playbooks/splunk_shc_d
 **Host Dependencies**: None - complete containerized approach
 
 ```bash
-cd testing  # All testing commands run from testing directory
+cd testing  # All commands run from testing directory
 
-# Complete setup from scratch
-task setup                    # Build Docker images (includes pre-release Molecule)
+# One-time setup
+task setup                       # Build images, create secrets, download Splunk
 
-# Development workflow
-task infra:test              # Create infrastructure (native inventory)
-task day0:test               # Deploy Splunk via SSH (ansible-controller)
-task day1:test               # Run operations (ansible-controller)
+# Scenarios (default env=small, override with MOLECULE_ENV=prod)
+task infra:test                  # Test infrastructure (create → verify → destroy)
+task infra:setup                 # Create infrastructure (keeps containers)
+task day0:test                   # Deploy Splunk
+task day1:test                   # Run operations
 
-# Combined workflows
-task workflow:full           # Run infra → day0 → day1
-task workflow:quick          # Run infra → day0 only
+# Workflows
+task workflow:full               # infra → day0 → day1 → destroy
+task workflow:quick              # infra → day0 (keeps containers)
 
 # Utilities
-task status                  # Show container status
-task controller:start        # Start ansible-controller for manual testing
-task controller:shell        # Shell into ansible-controller
-task reset                   # Complete environment reset
+task status                      # Show container status
+task diag:ssh                    # Test SSH connectivity
+task diag:terminal               # Check web terminal health
+task shell -- <container>        # Shell into any container
+task runner:shell                # Shell into molecule-runner
+task reset                       # Destroy + prune Docker
 
-# Web terminal access (after infra:test)
-# Access at http://localhost:3000/ttyd
-# Login with: ansible / 2L6pL8IHVUOLvN9qMAt0
+# Backward compatible aliases
+task infra_small:test            # Same as MOLECULE_ENV=small task infra:test
+task day0_small:test             # Same as MOLECULE_ENV=small task day0:test
+
+# Web terminal (after infra:setup)
+# URL: http://localhost:3000/ttyd
+# Login: ansible / <see .secrets/ansible_password>
 ```
 
 ## Ansible Role Architecture
@@ -321,57 +327,45 @@ When working on this repository:
 ### Docker Images
 - `testing/docker-images/almalinux9-systemd-sshd/Dockerfile`: AlmaLinux 9 with systemd + SSH
 - `testing/docker-images/ubuntu2204-systemd-sshd/Dockerfile`: Ubuntu 22.04 with systemd + SSH  
-- `testing/docker-images/gitlab/Dockerfile`: Gitea lightweight git server
-- `testing/docker-images/ansible-webterminal/Dockerfile`: Web terminal for lab access
+- `testing/docker-images/git-server/Dockerfile`: Gitea lightweight git server
+- `testing/docker-images/ansible-controller/Dockerfile`: Ansible controller with web terminal
+- `testing/docker-images/molecule-runner/Dockerfile`: Molecule execution container
 
 ### Generated/Runtime Files
 - `ssh-keys` Docker volume: Shared SSH keys for container communication
 - `splunk-test-network` Docker network: Container communication network
 
-## Current Sprint Status: SSH Architecture Fixed ✅
+## Current Sprint Status: Parameterized Scenarios ✅
 
-### ✅ Sprint 3 Completed (2025-01-08)
-**Goal: Fix SSH Key Architecture & Test Framework**
+### ✅ Latest: Unified Parameterized Scenarios (2025-12-05)
+**Goal: Replace size-specific scenarios with unified parameterized scenarios**
 
-**Completed Tasks:**
-1. **SSH Key Architecture Fixed** - SSH keys now generated in molecule-runner (localhost) instead of ansible-controller
-2. **Shared Inventory Working** - Single source of truth inventory drives all scenarios (lab/day0/day1)
-3. **End-to-End Connectivity Verified** - SSH connectivity from molecule-runner to all 12 containers working
-4. **Day0 Deployment Architecture** - Ansible-playbook can successfully reach all Splunk hosts via SSH
-5. **Clean Task Organization** - Taskfile reorganized with industry-standard scenario naming (lab → day0 → day1)
-6. **Container-First Dependencies** - Zero host dependencies, everything runs in Docker containers
-
-**Technical Achievements:**
-- SSH key generation: `delegate_to: localhost` (molecule-runner) ✅
-- SSH key distribution: Ansible copy from localhost to containers ✅  
-- SSH connectivity: All Splunk hosts reachable via `/shared/ssh_keys/id_rsa` ✅
-- Network communication: Docker network hostname resolution working ✅
-- Shared inventory: Single `molecule/inventory/` drives all scenarios ✅
+**Completed:**
+1. **Unified `infra/` scenario** - Uses `MOLECULE_ENV` variable for environment selection
+2. **Unified `day0/` scenario** - Uses `MOLECULE_ENV` variable for environment selection
+3. **Environment inventories** - `small/` (2 nodes), `prod/` (9 nodes), `dev/` (1 node)
+4. **Parameterized Taskfile** - `task infra:test -- --env=small|prod|dev`
+5. **Backward compatible aliases** - `task infra_small:test` still works
 
 **Current Working Commands:**
 ```bash
 cd testing/
-task lab-create        # Create 12-container infrastructure with SSH
-task day0-deploy       # Deploy Splunk via SSH (connectivity verified)
-task status           # Show all container status
-task lab-destroy      # Clean shutdown
+task setup                       # One-time setup
+task infra:test -- --env=small   # 2 nodes (default)
+task infra:test -- --env=prod    # 9 nodes
+task infra:test -- --env=dev     # 1 node
+task day0:test -- --env=small    # Deploy Splunk
+task status                      # Show container status
+task infra:destroy               # Clean shutdown
 ```
 
-### 🎯 Next Sprint Priorities 
+### 🎯 Next Priorities
 
-**Sprint 4: Splunk Role Integration & Operations**
-1. **Fix Splunk role prerequisites** (acl package, sudo configuration)
-2. **Complete day0 Splunk deployment** (full installation testing)
-3. **Implement day1 operations scenarios** (restart, backup, maintenance)
-4. **Add verification playbooks** (test Splunk services, cluster health)
-5. **CI/CD integration** (GitHub Actions workflow)
-
-**Technical Debt:**
-- Remove git-server from `all` group or fix SSH configuration
-- Optimize container startup sequence
-- Add role dependency validation
-- Create end-to-end verification tests
+1. **Complete day0 Splunk deployment** (full installation testing)
+2. **Implement day1 operations scenarios** (restart, backup, maintenance)
+3. **Add verification playbooks** (test Splunk services, cluster health)
+4. **CI/CD integration** (GitHub Actions workflow)
 
 ---
-*Last Updated: 2025-01-08*
-*Status: SSH Architecture Fixed - Ready for Splunk Role Integration*
+*Last Updated: 2025-12-05*
+*Status: Parameterized Scenarios Implemented - Ready for Testing*

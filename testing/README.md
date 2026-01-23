@@ -51,42 +51,57 @@ task setup              # Complete environment setup (secrets + images)
 
 ## ▶️ Development Workflow
 
-The testing framework follows a structured approach with three main phases:
+The testing framework uses **parameterized scenarios** with environment selection.
+
+### Environment Options
+| Environment | Nodes | Use Case |
+|-------------|-------|----------|
+| `small` | 2 | Quick testing (default) |
+| `prod` | 9 | Full cluster topology |
+| `dev` | 1 | Single-node development |
 
 ### Phase 1: Infrastructure Setup (Container Creation)
 ```bash
-task infra:create       # Create all containers (9 Splunk + git-server)
-task infra:prepare      # Setup SSH infrastructure and services
-task infra:destroy      # Clean up all containers
-# OR complete workflow:
-task infra:setup        # Setup infrastructure for testing (create + prepare, no destroy)
-task infra:test         # Run complete infrastructure scenario (create + prepare + verify + destroy)
+# Parameterized approach (recommended)
+task infra:test                  # 2 nodes (default)
+MOLECULE_ENV=prod task infra:test # 9 nodes
+MOLECULE_ENV=dev task infra:test  # 1 node
+
+# Step-by-step
+task infra:create                # Create containers
+task infra:prepare               # Setup SSH
+task infra:destroy               # Clean up
+
+# Convenience aliases (backward compatible)
+task infra_small:test             # Same as default (small)
 ```
 
 ### Phase 2: Day 0 - Splunk Deployment
 ```bash
-task setup              # Downloads Splunk software to testing/software/
-task infra_small:setup  # Create infrastructure with SSH connectivity
-task day0_small:test    # Run complete deployment scenario using local software
-# OR step-by-step:
-task day0_small:converge # Deploy Splunk via SSH using predownloaded software
-task day0_small:verify   # Verify deployment
-task infra_small:destroy # Clean up containers when done
+task setup                        # Downloads Splunk software to testing/software/
+task infra:setup                 # Create infrastructure with SSH connectivity
+task day0:test                   # Run complete deployment scenario
+
+# Step-by-step
+task day0:converge               # Deploy Splunk via SSH
+task day0:verify                 # Verify deployment
+
+# Convenience aliases (backward compatible)
+task day0_small:test              # Same as default (small)
 ```
 
-### Phase 3: Day 1 - Operations (Planned)
+### Phase 3: Day 1 - Operations
 ```bash
-task day1:test          # Run complete operations scenario (when implemented)
+task day1:test                   # Run operations scenario
 ```
 
 **Key Points:**
-- Inventory source of truth: `testing/molecule/inventory/hosts.yml`
+- Environment inventories: `testing/molecule/environments/{small,prod,dev}/`
 - SSH diagnostics: `task diag:ssh` targets group `full` (excludes `git_server`)
-- Artifacts: Fetched via remote URLs in `testing/molecule/inventory/group_vars/all.yml`
+- Artifacts: Predownloaded to `testing/software/`
 - ACL: `skip_acl_install: true` for faster container testing
 
-**Optional Environment Variables:**
-- `R3_REGISTRATION_CODE` - Get your free registration code from [remote.it](https://remote.it) for external access
+
 
 ## 🌐 Web Terminal Access
 
@@ -100,52 +115,13 @@ After running `task infra:test`, access the web terminal at `http://localhost:30
 
 ### Login Credentials
 - **Username**: `ansible`
-- **Password**: `2L6pL8IHVUOLvN9qMAt0`
+- **Password**: see `testing/.secrets/ansible_password`
 
 ### Web Terminal Features
 - **ttyd Service**: Lightweight web terminal using xterm.js
 - **nginx Proxy**: Secure reverse proxy on port 3000
 - **Systemd Managed**: Automatic service startup and management
 - **SSH Integration**: Full SSH connectivity to all containers
-
-## 🌐 External Access (Optional)
-
-Enable external access to your testing environment using Twingate:
-
-### Setup
-1. Get your Twingate network name and access tokens from your Twingate admin
-2. Set in `.env`:
-   ```bash
-   TWINGATE_NETWORK=your-network-name
-   TWINGATE_ACCESS_TOKEN=your-access-token
-   TWINGATE_REFRESH_TOKEN=your-refresh-token
-   ```
-3. Start with remote access: `task twingate:start`
-
-### Usage
-```bash
-# Start Twingate connector
-task twingate:start
-
-# Check status
-task twingate:status
-
-# Stop Twingate connector
-task twingate:stop
-```
-
-### Integration with Testing
-Twingate can be integrated with your testing workflow:
-```bash
-# Start testing with remote access
-task infra:test && task twingate:start
-
-# Access via Twingate when containers are running
-# Stop everything when done
-task infra:destroy && task twingate:stop
-```
-
-**Note:** Twingate provides secure, zero-trust network access to your testing environment. The connector runs independently and can be started/stopped as needed.
 
 ## 🛠️ Usage
 
@@ -171,12 +147,11 @@ task status             # Show all container status
 ```bash
 task day0:converge      # Deploy Splunk via SSH to existing infrastructure
 task day0:verify        # Verify Splunk deployment
-task day0:playbook      # Direct ansible-playbook deployment (bypasses molecule)
 ```
 
-### 🔧 Day 1 - Operations (Planned)
+### 🔧 Day 1 - Operations
 ```bash
-task day1:test          # Complete operations scenario (when implemented)
+task day1:test          # Complete operations scenario
 task day1:converge      # Run operational tasks
 task day1:verify        # Verify operations
 ```
@@ -186,11 +161,9 @@ task day1:verify        # Verify operations
 task setup:images       # Build all Docker base images
 task diag:ssh           # Test SSH connectivity between containers
 task diag:terminal      # Check ttyd and nginx health
-task controller:start   # Start ansible-controller container
-task controller:shell   # Shell into ansible-controller
 task shell -- <container>   # Shell into any container
-task dev:shell          # Interactive shell in molecule-runner
-task dev:cleanup        # Clean up Docker resources
+task runner:shell       # Shell into molecule-runner
+task reset              # Destroy + prune Docker resources
 ```
 
 **Current Status:** ✅ Sprint 5 Complete - Day0 infrastructure with local software setup working. Splunk binaries predownloaded to testing/software/, ansible native inventory configured, and day0 converge playbook updated to use local software. Infrastructure ready for Splunk deployment, blocked by existing Splunk installation cleanup needed.
@@ -328,15 +301,16 @@ Guarantees:
 - Private key never distributed to Splunk hosts
 - Project mount enables direct host filesystem access
 
-### 📁 Scenario Structure (Current Working)
+### 📁 Scenario Structure (Parameterized)
 ```
 molecule/
-├── inventory/           # Shared inventory drives all scenarios
-│   ├── hosts.yml       # Infrastructure specification
-│   └── group_vars/     # SSH configuration overrides
-├── infra/              # Container creation + SSH setup + services ✅
-├── day0/               # Splunk provisioning (SSH working) ✅
-└── day1/               # Operations (planned Sprint 4)
+├── environments/        # Environment-specific inventories
+│   ├── small/          # 2 nodes (default)
+│   ├── prod/           # 9 nodes (full cluster)
+│   └── dev/            # 1 node (all-in-one)
+├── infra/              # Unified infrastructure scenario (uses MOLECULE_ENV) ✅
+├── day0/               # Unified deployment scenario (uses MOLECULE_ENV) ✅
+└── day1/               # Operations scenario
 ```
 
 ### 👤 End-to-End User Management Logic and Execution Contexts
@@ -432,8 +406,8 @@ Use this environment to:
 
 ## 📖 Documentation
 
-- [CLAUDE.md](../CLAUDE.md) - Complete project documentation and current status
-- [PLAN.md](PLAN.md) - Development roadmap and sprint planning
+- [CLAUDE.md](CLAUDE.md) - AI assistant context and project overview
+- [PROGRESS.md](PROGRESS.md) - Development progress tracking
 - [Molecule Testing Guide](https://ansible.readthedocs.io/projects/molecule/)
 
 ---
