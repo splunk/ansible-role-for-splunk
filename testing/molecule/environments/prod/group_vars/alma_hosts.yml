@@ -1,0 +1,3 @@
+---
+# AlmaLinux-specific configuration
+docker_image: splunk-base-almalinux9:latest

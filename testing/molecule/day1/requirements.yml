@@ -1,0 +1,9 @@
+---
+# Ansible Galaxy requirements for day1 scenario
+collections:
+  - name: community.docker
+    version: ">=3.0.0"
+  - name: ansible.posix
+    version: ">=1.4.0"
+  - name: community.general
+    version: ">=6.0.0"

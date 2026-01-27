@@ -1,0 +1,84 @@
+---
+# Day 1 Operations - Verification
+# Verifies operational tasks completed successfully
+
+- name: Verify Day 1 Operations
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  gather_facts: true
+  tasks:
+    - name: Check if Splunk binary exists
+      stat:
+        path: "{{ item }}"
+      register: splunk_binary
+      loop:
+        - /opt/splunk/bin/splunk
+        - /opt/splunkforwarder/bin/splunk
+      ignore_errors: true
+
+    - name: Set Splunk binary path
+      set_fact:
+        splunk_bin: "{{ '/opt/splunk/bin/splunk' if splunk_binary.results[0].stat.exists | default(false) else '/opt/splunkforwarder/bin/splunk' }}"
+        splunk_home: "{{ '/opt/splunk' if splunk_binary.results[0].stat.exists | default(false) else '/opt/splunkforwarder' }}"
+      when: splunk_binary.results[0].stat.exists | default(false) or splunk_binary.results[1].stat.exists | default(false)
+
+    - name: Detect Splunk systemd unit
+      stat:
+        path: /etc/systemd/system/Splunkd.service
+      register: splunkd_systemd_unit
+      become: true
+      changed_when: false
+      when: splunk_home is defined
+
+    - name: Set splunk_service fact
+      set_fact:
+        splunk_service: "{{ 'Splunkd' if splunkd_systemd_unit.stat.exists | default(false) else 'splunk' }}"
+      when: splunk_home is defined
+
+    - name: Debug Splunk binary path
+      debug:
+        msg: "Splunk binary path: {{ splunk_bin | default('Not found') }}"
+
+    - name: Verify Splunk service is active
+      command: "systemctl is-active {{ splunk_service }}"
+      register: splunk_service_status
+      changed_when: false
+      failed_when: false
+      become: true
+      when: splunk_service is defined
+
+    - name: Get detailed Splunk process information
+      shell: ps aux | grep -v grep | grep -E 'splunkd|splunk'
+      register: detailed_splunk_processes
+      changed_when: false
+      ignore_errors: true
+
+    - name: Display detailed Splunk process information
+      debug:
+        msg: "{{ detailed_splunk_processes.stdout_lines | default(['No Splunk processes found']) }}"
+
+    - name: Check Splunk log for startup issues
+      shell: "grep -Ei 'error|warn|fail' {{ splunk_home }}/var/log/splunk/splunkd.log | tail -20 || echo 'No log file found'"
+      register: splunk_logs
+      changed_when: false
+      ignore_errors: true
+      when: splunk_home is defined
+
+    - name: Display Splunk log issues
+      debug:
+        msg: "{{ splunk_logs.stdout_lines | default(['No log data available']) }}"
+      when: splunk_home is defined
+      
+    - name: Confirm operational status
+      assert:
+        that:
+          - splunk_service_status.stdout | trim == 'active'
+        success_msg: "Day 1 operations completed successfully on {{ inventory_hostname }}"
+        fail_msg: "Day 1 operations failed - {{ splunk_service | default('splunk') }} not active on {{ inventory_hostname }} (status={{ splunk_service_status.stdout | default('unknown') | trim }})"
+
+    - name: Summarize verification results
+      debug:
+        msg: |
+          Splunk verification results for {{ inventory_hostname }}:
+          - Binary exists: {{ splunk_bin is defined }}
+          - Service status: {{ splunk_service_status.stdout | default('unknown') | trim }}
+          - Process details: {{ 'Found' if detailed_splunk_processes.stdout_lines | default([]) | length > 0 else 'None detected' }}

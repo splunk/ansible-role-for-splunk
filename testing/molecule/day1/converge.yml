@@ -1,0 +1,44 @@
+---
+# Day 1 Operations - Converge
+# Performs operational tasks on running Splunk cluster using upstream playbooks
+
+- name: Day 1 Splunk Operations - Service Restart
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  gather_facts: true
+  tasks:
+    - name: Detect Splunk service manager
+      stat:
+        path: /etc/systemd/system/Splunkd.service
+      register: splunkd_systemd_unit
+      become: true
+      changed_when: false
+
+    - name: Set splunk_service fact
+      set_fact:
+        splunk_service: "{{ 'Splunkd' if splunkd_systemd_unit.stat.exists | default(false) else 'splunk' }}"
+
+    - name: Include Splunk restart task from upstream role
+      include_role:
+        name: splunk
+        tasks_from: splunk_restart.yml
+
+- name: Day 1 Splunk Operations - Health Checks
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  gather_facts: true
+  tasks:
+    - name: Include Splunk status check from upstream role
+      include_role:
+        name: splunk
+        tasks_from: check_splunk_status.yml
+
+- name: Day 1 Splunk Operations - License Acceptance
+  hosts: all:!ansible_controller:!git_server:!jumpbox
+  gather_facts: true
+  tasks:
+    - name: Accept Splunk license (non-fatal if already accepted)
+      ansible.builtin.command: "{{ splunk_home }}/bin/splunk status --accept-license --answer-yes --no-prompt"
+      register: splunk_license_result
+      changed_when: false
+      failed_when: false
+      become: true
+      become_user: "{{ splunk_nix_user }}"

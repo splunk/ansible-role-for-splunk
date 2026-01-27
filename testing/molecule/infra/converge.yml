@@ -1,0 +1,48 @@
+---
+# Infrastructure converge - setup SSH connectivity
+- hosts: full:!git_server:!ansible_controller
+  gather_facts: true
+  vars:
+    ansible_connection: docker  # Use Docker for initial setup
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Wait for systemd to be ready
+      wait_for:
+        path: /run/systemd/system
+      when: ansible_service_mgr == "systemd"
+
+    - name: Ensure SSH server is running
+      systemd:
+        name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
+        state: started
+        enabled: true
+      when: ansible_distribution != 'Ubuntu' and ansible_distribution != 'AlmaLinux'
+
+    - name: Create ansible user SSH directory
+      file:
+        path: /home/ansible/.ssh
+        state: directory
+        owner: ansible
+        group: ansible
+        mode: '0700'
+
+    - name: Copy SSH public key to authorized_keys
+      copy:
+        content: "{{ lookup('file', '/workspace/testing/.secrets/id_rsa.pub') }}"
+        dest: /home/ansible/.ssh/authorized_keys
+        owner: ansible
+        group: ansible
+        mode: '0600'
+
+    - name: Configure SSH client settings
+      blockinfile:
+        path: /home/ansible/.ssh/config
+        create: true
+        owner: ansible
+        group: ansible
+        mode: '0600'
+        block: |
+          Host *
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+            LogLevel ERROR

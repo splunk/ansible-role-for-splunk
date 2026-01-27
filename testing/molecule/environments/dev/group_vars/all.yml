@@ -1,0 +1,48 @@
+---
+# Development environment configuration
+# Single-node all-in-one setup for quick testing
+
+# SSH connection overrides for Ansible deployment
+ansible_user: ansible
+ansible_connection: ssh
+ansible_host: "{{ inventory_hostname }}"
+ansible_ssh_private_key_file: /workspace/testing/.secrets/id_rsa
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_python_interpreter: /usr/bin/python3
+
+# Essential configuration
+splunk_backup: false
+skip_acl_install: true
+
+# Splunk installation configuration
+splunk_install_app: true
+splunk_build_remote_src: false
+splunk_install_method: "package"
+splunk_download_local: true
+
+# Default container configuration
+docker_image: splunk-base-ubuntu2204:latest
+
+# Splunk configuration
+splunk_home: /opt/splunk
+splunk_install_path: /opt
+splunk_nix_user: splunk
+splunk_nix_group: splunk
+splunk_nix_home: /home/splunk
+splunk_admin_username: admin
+splunk_admin_password: "Password123!"
+splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
+
+# Force reinstallation
+splunk_reinstall: true
+
+# Boot-start configuration - use systemd (containers run systemd as PID 1)
+splunk_use_initd: false
+splunk_use_systemd: true
+
+# Test versions
+splunk_package_version: 9.1.2
+build_id: b6b9c8185839
+splunk_package_path: "/opt/software"
+splunk_file: "splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+logrotate_file: "/etc/logrotate.d/splunk"

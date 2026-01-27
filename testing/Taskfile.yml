@@ -1,0 +1,461 @@
+# Splunk Testing Framework Task Runner
+# =====================================
+# Parameterized Molecule scenarios with environment selection
+#
+# Environments:
+#   small  - 2 nodes (default)
+#   prod   - 9 nodes (full cluster)
+#   dev    - 1 node (all-in-one)
+#
+# Quick Start:
+#   task setup                        # One-time setup
+#   task infra:test                   # Test with small env (default)
+#   MOLECULE_ENV=prod task infra:test # Test with prod env
+#
+# Aliases (backward compatible):
+#   task infra_small:test             # Same as default
+#   task day0_small:test              # Same as default
+
+version: '3'
+
+dotenv: ['.env']
+
+vars:
+  PROJECT_ROOT: '{{.TASKFILE_DIR}}/..'
+  DOCKER_IMAGES_DIR: '{{.TASKFILE_DIR}}/docker-images'
+  # Default environment - can be overridden via MOLECULE_ENV env var
+  ENV: '{{.MOLECULE_ENV | default "small"}}'
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  # === Setup & Prereqs ===
+  # Creates SSH secrets, builds images, downloads Splunk tarballs.
+  #
+  # Environment selection:
+  #   MOLECULE_ENV=prod task infra:test
+  #   MOLECULE_ENV=dev  task infra:test
+
+  setup:
+    desc: Complete environment setup (secrets + images + software + network + runner)
+    cmds:
+      - task: setup:secrets
+      - task: setup:images
+      - task: download:splunk
+      - task: network:create
+      - task: runner:start
+      - echo "✅ Environment setup complete!"
+      - echo "💡 Run 'task infra:test' (or 'MOLECULE_ENV=prod task infra:test') to create containers and start testing"
+
+  setup:secrets:
+    desc: Create testing/.secrets directory with SSH keys and password (idempotent)
+    dir: "{{.PROJECT_ROOT}}/testing"
+    cmds:
+      - |
+        if [ -f .secrets/id_rsa ] && [ -f .secrets/ansible_password ]; then
+          echo "✅ SSH secrets already exist"
+        else
+          mkdir -p .secrets && chmod 700 .secrets
+          test -f .secrets/id_rsa || ssh-keygen -t rsa -b 2048 -N '' -C 'splunk-test-cluster' -f .secrets/id_rsa
+          test -f .secrets/ansible_password || (tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20 > .secrets/ansible_password)
+          chmod 600 .secrets/id_rsa .secrets/ansible_password
+          chmod 644 .secrets/id_rsa.pub
+          echo "✅ SSH secrets created"
+        fi
+
+  setup:images:
+    desc: Build all Docker images required for testing (idempotent)
+    cmds:
+      - |
+        echo "🔧 Checking/building Splunk testing framework images..."
+        docker images | grep -q splunk-base-almalinux9 || docker build -t splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
+        docker images | grep -q splunk-base-ubuntu2204 || docker build -t splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
+        docker images | grep -q splunk-ansible-controller || docker build -t splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
+        docker images | grep -q splunk-git-server || docker build -t splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
+        docker images | grep -q molecule-runner || docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
+        echo "✅ All images ready!"
+        echo "📝 Note: ansible-controller and molecule-runner images include Molecule v25.12.0 (stable) with native inventory support and molecule-plugins for docker driver scenarios"
+    status:
+      - docker images | grep -q splunk-base-almalinux9
+      - docker images | grep -q splunk-base-ubuntu2204
+      - docker images | grep -q splunk-ansible-controller
+      - docker images | grep -q splunk-git-server
+      - docker images | grep -q molecule-runner
+
+  download:splunk:
+    desc: "Download Splunk binaries to testing/software directory (idempotent)"
+    dir: "{{.PROJECT_ROOT}}/testing"
+    cmds:
+      - |
+        if [ -f software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz ] && [ -f software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz ]; then
+          echo "✅ Splunk binaries already downloaded"
+          ls -la software/
+        else
+          mkdir -p software
+          echo "📥 Downloading Splunk Enterprise 9.1.2..."
+          curl -L -o software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz "https://download.splunk.com/products/splunk/releases/9.1.2/linux/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+          echo "📥 Downloading Splunk Universal Forwarder 9.1.2..."
+          curl -L -o software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz "https://download.splunk.com/products/universalforwarder/releases/9.1.2/linux/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+          echo "✅ Splunk binaries downloaded to testing/software/"
+          ls -la software/
+        fi
+    status:
+      - test -f software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz
+      - test -f software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz
+
+  network:create:
+    desc: Create Docker network for testing (idempotent)
+    cmds:
+      - docker network ls | grep -q splunk-test-network || docker network create splunk-test-network
+      - echo "✅ Network splunk-test-network ready"
+    status:
+      - docker network ls | grep -q splunk-test-network
+
+  # === Infra (Containers + SSH) ===
+
+  infra:test:
+    desc: "Run complete infra scenario (create → prepare → verify → destroy)"
+    cmds:
+      - task: setup
+      - echo "🏗️ Running infrastructure scenario with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule test -s infra
+      - echo "✅ Infrastructure scenario complete!"
+
+  infra:create:
+    desc: "Create infrastructure containers"
+    cmds:
+      - task: setup
+      - echo "📦 Creating infrastructure containers with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule create -s infra
+
+  infra:prepare:
+    desc: "Run prepare phase (SSH setup)"
+    cmds:
+      - echo "🔧 Running infra prepare phase with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule prepare -s infra
+
+  infra:setup:
+    desc: "Setup infrastructure (create + prepare, keeps containers)"
+    cmds:
+      - task: infra:create
+      - task: infra:prepare
+      - echo "✅ Infrastructure ready! Web terminal at http://localhost:3000/ttyd"
+
+  infra:destroy:
+    desc: "Destroy infrastructure containers"
+    cmds:
+      - echo "💥 Destroying infrastructure containers..."
+      - |
+        docker run --rm \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule destroy -s infra
+
+  # === Day 0 (Deploy) ===
+
+  day0:test:
+    desc: "Run complete Day 0 scenario (converge → verify)"
+    cmds:
+      - echo "🚀 Day 0 - Running Splunk deployment with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          --network splunk-test-network \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule test -s day0
+      - echo "✅ Day 0 scenario complete!"
+
+  day0:converge:
+    desc: "Deploy Splunk via SSH"
+    cmds:
+      - echo "🚀 Day 0 - Deploying Splunk via SSH with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          --network splunk-test-network \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule converge -s day0
+      - echo "✅ Day 0 deployment complete!"
+
+  day0:verify:
+    desc: "Verify Splunk deployment"
+    cmds:
+      - echo "🔍 Day 0 - Verifying Splunk deployment with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          --network splunk-test-network \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule verify -s day0
+
+  # === Day 1 (Ops) ===
+
+  day1:test:
+    desc: "Run complete Day 1 scenario (converge → verify)"
+    cmds:
+      - echo "🔧 Day 1 - Running operations scenario with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          --network splunk-test-network \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule test -s day1
+      - echo "✅ Day 1 scenario complete!"
+
+  day1:converge:
+    desc: "Run Day 1 operations"
+    cmds:
+      - echo "🔧 Day 1 - Running operational tasks with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          --network splunk-test-network \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule converge -s day1
+      - echo "✅ Day 1 operations complete!"
+
+  day1:verify:
+    desc: "Verify Day 1 operations"
+    cmds:
+      - echo "🔍 Day 1 - Verifying operational tasks with env={{.ENV}}..."
+      - |
+        docker run --rm \
+          --network splunk-test-network \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v {{.PROJECT_ROOT}}:/workspace \
+          -w /workspace/testing \
+          -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
+          -e MOLECULE_ENV={{.ENV}} \
+          molecule-runner:latest \
+          molecule verify -s day1
+
+  # === Workflows ===
+
+  workflow:full:
+    desc: "Full workflow (infra → day0 → day1 → destroy)"
+    cmds:
+      - task: infra:setup
+      - task: day0:test
+      - task: day1:test
+      - task: infra:destroy
+      - echo "🎉 Full workflow complete!"
+
+  workflow:quick:
+    desc: "Quick workflow (infra → day0, keeps containers)"
+    cmds:
+      - task: infra:setup
+      - task: day0:test
+      - echo "✅ Quick workflow complete!"
+      - echo "💡 Run 'task infra:destroy' to clean up"
+
+  # === Diagnostics ===
+
+  diag:terminal:
+    desc: "Check web terminal (ttyd/nginx) health"
+    cmds:
+      - |
+          echo "🌐 Checking http://localhost:3000/ttyd"
+          curl -sS -o /dev/null -w 'HTTP %{http_code}\n' http://localhost:3000/ttyd 2>/dev/null || echo "Not accessible"
+          docker exec ansible-controller bash -c '
+            echo "=== Service Status ==="
+            systemctl is-active ttyd nginx 2>/dev/null || true
+            echo "=== Port 3000 ==="
+            ss -ltnp 2>/dev/null | grep ":3000" || true
+          ' 2>/dev/null || echo "ansible-controller not running"
+
+  diag:ssh:
+    desc: "Test SSH connectivity to hosts (uses current MOLECULE_ENV)"
+    cmds:
+      - echo "🔍 Testing SSH connectivity for env={{.ENV}}"
+      - |
+        docker exec -u ansible ansible-controller bash -c '
+          echo "=== SSH Keys ==="
+          ls -la ~/.ssh/ 2>/dev/null || echo "No SSH keys found"
+          echo ""
+          echo "=== Ansible Ping (full group) ==="
+          ansible -i /workspace/testing/molecule/environments/{{.ENV}}/ full -m ping 2>/dev/null || echo "Ping failed - check inventory"
+        ' 2>/dev/null || echo "ansible-controller not running - run task infra:setup first"
+
+  # === Utilities ===
+
+  status:
+    desc: "Show container status"
+    cmds:
+      - echo "📋 Containers on splunk-test-network"
+      - docker ps --filter network=splunk-test-network
+
+  shell:
+    desc: "Shell into container (usage: task shell -- <container-name>)"
+    cmds:
+      - docker exec -it {{.CLI_ARGS}} bash
+
+  # === Runner (Persistent Container) ===
+
+  runner:start:
+    desc: "Start persistent molecule-runner container"
+    cmds:
+      - |
+        if docker ps --filter name=^mol-run$ --filter status=running -q | grep -q .; then
+          echo "✅ Molecule runner already running"
+        else
+          docker rm -f mol-run 2>/dev/null || true
+          docker run -d --name mol-run --network splunk-test-network \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v {{.PROJECT_ROOT}}:/workspace \
+            -w /workspace/testing \
+            molecule-runner:latest sleep infinity
+          echo "✅ Molecule runner started (use: task runner:shell)"
+        fi
+
+  runner:shell:
+    desc: "Shell into molecule-runner"
+    cmds:
+      - docker exec -it mol-run bash
+
+  runner:stop:
+    desc: "Stop molecule-runner"
+    cmds:
+      - docker rm -f mol-run 2>/dev/null || true
+      - echo "✅ Molecule runner stopped"
+
+  # === Cleanup ===
+
+  reset:
+    desc: "Reset everything (destroy + prune Docker)"
+    cmds:
+      - task: infra:destroy
+      - task: runner:stop
+      - echo "🧹 Pruning Docker resources..."
+      - docker system prune -f
+      - docker volume prune -f
+      - echo "✅ Reset complete!"
+
+  # === Backward-Compatible Aliases (small) ===
+
+  infra_small:test:
+    desc: "[Alias] Run infra scenario with small environment"
+    cmds:
+      - task: infra:test
+    env:
+      MOLECULE_ENV: small
+
+  infra_small:create:
+    desc: "[Alias] Create infra with small environment"
+    cmds:
+      - task: infra:create
+    env:
+      MOLECULE_ENV: small
+
+  infra_small:prepare:
+    desc: "[Alias] Prepare infra with small environment"
+    cmds:
+      - task: infra:prepare
+    env:
+      MOLECULE_ENV: small
+
+  infra_small:setup:
+    desc: "[Alias] Setup infra with small environment"
+    cmds:
+      - task: infra:setup
+    env:
+      MOLECULE_ENV: small
+
+  infra_small:destroy:
+    desc: "[Alias] Destroy infra with small environment"
+    cmds:
+      - task: infra:destroy
+    env:
+      MOLECULE_ENV: small
+
+  day0_small:test:
+    desc: "[Alias] Run day0 scenario with small environment"
+    cmds:
+      - task: day0:test
+    env:
+      MOLECULE_ENV: small
+
+  day0_small:converge:
+    desc: "[Alias] Run day0 converge with small environment"
+    cmds:
+      - task: day0:converge
+    env:
+      MOLECULE_ENV: small
+
+  day0_small:verify:
+    desc: "[Alias] Run day0 verify with small environment"
+    cmds:
+      - task: day0:verify
+    env:
+      MOLECULE_ENV: small
+
+  day1_small:test:
+    desc: "[Alias] Run day1 scenario with small environment"
+    cmds:
+      - task: day1:test
+    env:
+      MOLECULE_ENV: small
+
+  day1_small:converge:
+    desc: "[Alias] Run day1 converge with small environment"
+    cmds:
+      - task: day1:converge
+    env:
+      MOLECULE_ENV: small
+
+  day1_small:verify:
+    desc: "[Alias] Run day1 verify with small environment"
+    cmds:
+      - task: day1:verify
+    env:
+      MOLECULE_ENV: small

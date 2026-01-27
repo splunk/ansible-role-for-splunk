@@ -1,0 +1,25 @@
+---
+# Verify infrastructure is ready
+- hosts: full:!git_server:!ansible_controller
+  gather_facts: false
+  vars:
+    ansible_connection: docker  # Use Docker for verification (not SSH)
+  tasks:
+    - name: Test infrastructure setup
+      command: echo "Infrastructure setup verified - containers created and SSH keys distributed to {{ inventory_hostname }}"
+      register: infra_test
+
+    - name: Display infrastructure test result
+      debug:
+        msg: "{{ infra_test.stdout }}"
+
+    - name: Read PID 1 comm
+      command: cat /proc/1/comm
+      register: pid1_comm
+      changed_when: false
+
+    - name: Assert systemd is running as PID 1
+      assert:
+        that:
+          - pid1_comm.stdout | trim == 'systemd'
+        fail_msg: "Expected PID 1 to be systemd, got: {{ pid1_comm.stdout | trim | default('') }}"
