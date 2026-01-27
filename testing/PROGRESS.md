@@ -68,6 +68,23 @@ MOLECULE_ENV=dev task infra:test
 
 ---
 
+## ✅ Verified: Small Workflow + Prod Infra (2026-01-27)
+
+### What Was Verified
+1. **infra prepare (docker connection)**: force `ansible_user: root` to avoid tmp dir creation failures during docker-based prepare
+2. **infra verify (systemd check)**: switched to `/proc/1/comm` so AlmaLinux containers without `ps` still validate PID 1
+3. **workflow:full (small)**: infra:setup → day0:test → day1:test → infra:destroy succeeds
+4. **infra:test (prod)**: create → prepare → verify → destroy succeeds
+
+### Commands Run
+```bash
+cd testing
+MOLECULE_ENV=small task workflow:full
+MOLECULE_ENV=prod task infra:test
+```
+
+---
+
 ## 🎯 Next Priorities
 
 1. **Complete day0 Splunk deployment** - Full installation testing
@@ -95,4 +112,4 @@ MOLECULE_ENV=dev task infra:test
 - Consolidated scenarios (removed getting-started, lab)
 
 ---
-*Last Updated: 2026-01-22*
+*Last Updated: 2026-01-27*

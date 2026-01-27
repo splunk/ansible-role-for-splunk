@@ -10,6 +10,9 @@
   become_user: root
   vars:
     ansible_connection: docker  # Override inventory SSH setting for prepare phase
+    ansible_user: root
+    # Some base images can have restrictive/odd $HOME perms for root; force tmp into /tmp.
+    ansible_remote_tmp: /tmp/.ansible/tmp
   tasks:
     - name: Wait for systemd to be ready
       wait_for:

@@ -15,20 +15,13 @@ This framework serves multiple use cases:
 
 ## 🏗️ Architecture
 
-### Complete Splunk Cluster (12 containers):
-- **Cluster Manager** (`splunk-master`) - Manages indexer cluster
-- **License Master + DMC** (`splunk-license`) - Licensing and monitoring
-- **Deployment Server** (`splunk-fwdmanager`) - App distribution to forwarders
-- **2x Indexers** (`splunkapp-prod01/02`) - Multi-site data indexing  
-- **2x Search Heads** (`splunkshc-prod01/02`) - Search head cluster
-- **SH Deployer** (`splunk-deploy`) - App deployment to search heads
-- **Universal Forwarder** (`splunk-uf01`) - Data collection
-- **Git Server** (`git-server`) - Gitea lightweight git server for app deployment testing
+This framework provides multiple environment topologies driven by `MOLECULE_ENV`:
 
-### Management & Access Layer:
-- **Ansible Controller** (`ansible-controller`) - Web terminal and deployment control
-- **Persistent Volumes** - Maintains state across container restarts
-- **Docker Networking** - Full connectivity between all components
+- `small` (default): 2 Splunk nodes + `ansible-controller`
+- `dev`: 1 Splunk node + `ansible-controller`
+- `prod`: 9 Splunk nodes + `ansible-controller` + `git-server`
+
+All Splunk nodes run systemd and persist `/opt` via named Docker volumes.
 
 ## 🚀 Quick Start
 
@@ -44,7 +37,6 @@ cd ansible-role-for-splunk/testing
 
 # Copy environment template and configure (optional)
 cp .env.example .env
-# Edit .env and add your Remote.it registration code if needed
 
 task setup              # Complete environment setup (secrets + images)
 ```
@@ -105,7 +97,7 @@ task day1:test                   # Run operations scenario
 
 ## 🌐 Web Terminal Access
 
-After running `task infra:test`, access the web terminal at `http://localhost:3000/ttyd`:
+After running `task infra:setup`, access the web terminal at `http://localhost:3000/ttyd`:
 
 - **Web Terminal**: Direct shell access to ansible-controller container
 - **SSH Connectivity**: All Splunk containers accessible via SSH from the terminal
@@ -166,7 +158,7 @@ task runner:shell       # Shell into molecule-runner
 task reset              # Destroy + prune Docker resources
 ```
 
-**Current Status:** ✅ Sprint 5 Complete - Day0 infrastructure with local software setup working. Splunk binaries predownloaded to testing/software/, ansible native inventory configured, and day0 converge playbook updated to use local software. Infrastructure ready for Splunk deployment, blocked by existing Splunk installation cleanup needed.
+**Current Status:** See `testing/PROGRESS.md` for the latest verified scenarios and commands.
 
 ## 🌐 Web Terminal Interface
 
@@ -182,7 +174,7 @@ Access the web terminal at `http://localhost:3000/ttyd`:
 
 The testing framework uses ttyd as the web terminal:
 ```bash
-task infra:test         # Creates infrastructure with ttyd terminal
+task infra:setup        # Creates infrastructure with ttyd terminal
 task diag:terminal      # Check ttyd and nginx health
 ```
 
@@ -195,58 +187,27 @@ task diag:terminal      # Check ttyd and nginx health
 
 ## 🧪 Testing Scenarios
 
-### ✅ Current Working Workflow (Updated)
 ```bash
-# Step 1: Environment setup (one-time)
-task setup              # Complete environment setup (secrets + images + software)
+cd testing
 
-# Step 2: Infrastructure creation
-task infra_small:setup  # Setup small infrastructure for testing (create + prepare, keeps containers)
-# OR for testing infrastructure only:
-task infra_small:test   # Run complete small infrastructure scenario (includes destroy)
+# One-time setup
+task setup
 
-# Step 3: Splunk deployment
-task day0_small:test    # Run complete deployment scenario using local software
-# OR step-by-step:
-task day0_small:converge # Deploy Splunk via SSH using predownloaded software
-task day0_small:verify   # Verify deployment
+# Infra-only smoke test (create → verify → destroy)
+task infra:test
 
-# Step 4: Operations (planned)
-task day1:test          # Run complete operations scenario (when implemented)
+# End-to-end (default env=small)
+task workflow:full
 
-# Step 5: Cleanup
-task infra_small:destroy # Clean up containers when done
+# Keep infra running for interactive work
+task infra:setup
+task day0:converge
+task day1:test
+task infra:destroy
 
-# Step 6: Check status
-task status             # All containers running properly ✅
-```
-
-### 🎯 Complete Development Workflow
-```bash
-# Full end-to-end testing
-task workflow:full      # Complete workflow: infra → day0 → day1
-
-# Quick development cycle
-task workflow:quick     # Fast iteration: infra → day0 only
-
-# Individual scenario testing
-task infra:test         # Infrastructure testing
-task day0:test          # Deployment testing
-task day1:test          # Operations testing (when implemented)
-```
-
-### Current Development Status
-```bash
-# Working development cycle
-task infra:test         # Create fresh infrastructure environment ✅
-task day0:converge      # Test SSH connectivity to all hosts ✅
-task status             # Verify all containers healthy ✅
-task infra:destroy      # Clean shutdown ✅
-
-# Next priorities:
-# - Complete Splunk role integration (acl, sudo fixes)
-# - Implement day1 operations scenarios
-# - Add comprehensive verification playbooks
+# Other environments
+MOLECULE_ENV=dev task infra:test
+MOLECULE_ENV=prod task infra:test
 ```
 
 ## 📊 Resource Requirements
@@ -264,17 +225,17 @@ task infra:destroy      # Clean shutdown ✅
 
 ## 🔧 Advanced Usage
 
-### 🏗️ SSH Architecture (Sprint 3 Achievement)
+### 🏗️ SSH Architecture
 **Problem Solved:** SSH keys are generated in setup phase and distributed properly to all containers.
 
 **Technical Details:**
 - SSH keys: Generated once via `task setup:secrets` → `testing/.secrets/id_rsa`
 - Project mount: Entire repo mounted to `/workspace` in molecule-runner container
 - Key access: Keys read directly from `/workspace/testing/.secrets/` using `delegate_to: localhost`
-- Key distribution: Public key pushed to all containers during `lab:prepare`; private key never copied to hosts
+- Key distribution: Public key pushed to all containers during `testing/molecule/infra/prepare.yml`; private key never copied to hosts
 - Controller: Keys copied to `/home/ansible/.ssh/` on `ansible-controller` for SSH authentication
 - Ansible: Uses `/home/ansible/.ssh/id_rsa` via `group_vars/all.yml`
-- Connectivity: SSH working from molecule-runner to all 12 Splunk containers
+- Connectivity: SSH working from molecule-runner to all hosts in the selected `MOLECULE_ENV`
 - Network: Docker hostname resolution enabling realistic SSH-based testing
 - Reuse: Same keys persist across test runs for efficiency
 
@@ -286,7 +247,7 @@ task infra:destroy      # Clean shutdown ✅
    - Project root mounted to `/workspace` in molecule-runner container
    - Keys accessible at `/workspace/testing/.secrets/` (no special mounting needed)
 3. Distribution to hosts (Prepare Phase)
-   - `molecule/lab/prepare.yml` reads keys from host filesystem using `delegate_to: localhost`
+   - `testing/molecule/infra/prepare.yml` reads keys from host filesystem using `delegate_to: localhost`
    - Public key copied to `/home/ansible/.ssh/authorized_keys` on every host
    - SSH client config created to disable strict host key checking
 4. Controller convenience
@@ -373,7 +334,7 @@ Containerized systemd environments can block non-root SSH logins during early bo
 
 - Ubuntu/Debian family
   - Issue: `/run/nologin` may be present during boot; `pam_nologin` denies non-root users with “System is booting up…”.
-  - Fix: `systemd-user-sessions.service` enabled in the base image and started in `molecule/lab/prepare.yml`. It removes `/run/nologin` when the system is ready.
+   - Fix: `systemd-user-sessions.service` enabled in the base image and started in `testing/molecule/infra/prepare.yml`. It removes `/run/nologin` when the system is ready.
 
 - RedHat/AlmaLinux family
   - Issue: PAM account phase can deny the `ansible` user via `pam_sepermit.so` in minimal/container contexts (e.g., SELinux mappings or environment not fully initialized).

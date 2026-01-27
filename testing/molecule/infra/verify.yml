@@ -13,8 +13,8 @@
       debug:
         msg: "{{ infra_test.stdout }}"
 
-    - name: Verify PID 1 is systemd
-      command: ps -p 1 -o comm=
+    - name: Read PID 1 comm
+      command: cat /proc/1/comm
       register: pid1_comm
       changed_when: false
 
