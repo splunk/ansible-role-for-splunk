@@ -46,6 +46,6 @@
         - name: Upgrade Splunk if not at expected version
           ansible.builtin.include_tasks: upgrade_splunk.yml
       # Conditional for version mismatch block
-      when: splunk_version_release < splunk_package_version
+      when: splunk_version_release is version(splunk_package_version, '<')
   # Conditional for this block
   when: splunkd_path.stat.exists == true
