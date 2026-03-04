@@ -1,0 +1,44 @@
+---
+# Unified Day 0 - Splunk Provisioning Scenario
+# Uses MOLECULE_ENV to select environment inventory (default: small)
+# Layers scenario-specific inventory on top of environment inventory
+#
+# Usage:
+#   MOLECULE_ENV=small molecule test -s day0   # 2 nodes
+#   MOLECULE_ENV=prod molecule test -s day0    # 9 nodes
+#   MOLECULE_ENV=dev molecule test -s day0     # 1 node
+
+ansible:
+  cfg:
+    defaults:
+      deprecation_warnings: false
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/../roles
+  executor:
+    backend: ansible-playbook
+    args:
+      ansible_playbook:
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/${MOLECULE_ENV:-small}/
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/inventory/
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: requirements.yml
+
+driver:
+  name: default
+
+verifier:
+  name: ansible
+
+scenario:
+  # Day 0 operations workflow - assumes infra is already running
+  destroy_sequence:
+    - cleanup
+  create_sequence:
+    - converge
+  converge_sequence:
+    - converge
+  test_sequence:
+    - converge
+    - verify

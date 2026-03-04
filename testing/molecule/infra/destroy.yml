@@ -1,0 +1,35 @@
+---
+# Destroy containers using Ansible
+# Dynamically destroys containers based on environment inventory
+- hosts: localhost
+  gather_facts: false
+  vars:
+    targets: "{{ groups['full'] | default([]) + groups['git_server'] | default([]) }}"
+  tasks:
+    - name: Set Python interpreter for Docker modules
+      set_fact:
+        ansible_python_interpreter: /usr/local/bin/python3
+
+    - name: Stop and remove ansible-controller
+      community.docker.docker_container:
+        name: ansible-controller
+        state: absent
+        force_kill: true
+      ignore_errors: true
+
+    - name: Stop and remove Splunk containers
+      community.docker.docker_container:
+        name: "{{ item }}"
+        state: absent
+        force_kill: true
+      loop: "{{ targets | reject('equalto', 'git-server') | list }}"
+      loop_control:
+        label: "{{ item }}"
+      ignore_errors: true
+
+    - name: Stop and remove git-server
+      community.docker.docker_container:
+        name: git-server
+        state: absent
+        force_kill: true
+      ignore_errors: true

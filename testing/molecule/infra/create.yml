@@ -1,0 +1,83 @@
+---
+# Create containers using Ansible
+# Dynamically creates containers based on environment inventory
+- hosts: localhost
+  gather_facts: false
+  vars:
+    targets: "{{ groups['full'] | default([]) + groups['git_server'] | default([]) + groups['ansible_controller'] | default([]) }}"
+  tasks:
+    - name: Set Python interpreter for Docker modules
+      set_fact:
+        ansible_python_interpreter: /usr/local/bin/python3
+
+    - name: Ensure Docker network exists
+      community.docker.docker_network:
+        name: splunk-test-network
+        state: present
+
+    - name: Start ansible-controller
+      community.docker.docker_container:
+        name: ansible-controller
+        image: splunk-ansible-controller:latest
+        hostname: ansible-controller
+        privileged: true
+        cgroupns_mode: host
+        command: /usr/sbin/init
+        networks:
+          - name: splunk-test-network
+        published_ports:
+          - "3000:3000"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
+          - "{{ lookup('env', 'HOST_PROJECT_DIRECTORY') }}:/workspace:rw"
+          - "{{ lookup('env', 'HOST_PROJECT_DIRECTORY') }}/testing/.secrets:/workspace/testing/.secrets:ro"
+        tmpfs:
+          - /run
+          - /tmp
+        restart_policy: unless-stopped
+        state: started
+      when: "'ansible_controller' in groups"
+
+    - name: Start Splunk containers
+      community.docker.docker_container:
+        name: "{{ item }}"
+        image: "{{ hostvars[item].docker_image | default('splunk-base-ubuntu2204:latest') }}"
+        hostname: "{{ item }}"
+        privileged: true
+        cgroupns_mode: host
+        command: /usr/sbin/init
+        networks:
+          - name: splunk-test-network
+        volumes:
+          - /sys/fs/cgroup:/sys/fs/cgroup:rw
+          - "{{ item }}-data:/opt:rw"
+        tmpfs:
+          - /run
+          - /run/lock
+          - /tmp
+        restart_policy: unless-stopped
+        state: started
+      loop: "{{ targets | reject('equalto', 'git-server') | reject('equalto', 'ansible-controller') | list }}"
+      loop_control:
+        label: "{{ item }}"
+
+    - name: Start git-server
+      community.docker.docker_container:
+        name: git-server
+        image: splunk-git-server:latest
+        hostname: git-server
+        networks:
+          - name: splunk-test-network
+        published_ports:
+          - "2222:22"
+          - "8929:8929"
+        volumes:
+          - gitea-data:/data:rw
+        restart_policy: unless-stopped
+        state: started
+      when: "'git_server' in groups"
+
+    - name: Wait for containers to be ready
+      pause:
+        seconds: 10

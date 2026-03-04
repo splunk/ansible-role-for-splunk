@@ -1,0 +1,55 @@
+---
+# SSH connection overrides for Ansible deployment
+# These override Molecule's default Docker connection settings
+
+# Connection method override - SSH for realistic testing
+ansible_user: ansible
+ansible_connection: ssh
+ansible_host: "{{ inventory_hostname }}"  # Container name = hostname in Docker network
+ansible_ssh_private_key_file: /workspace/testing/.secrets/id_rsa
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+ansible_python_interpreter: /usr/bin/python3
+
+# Essential configuration from production inventory
+splunk_backup: true
+splunk_backup_path: "{{ splunk_home }}/.."
+splunk_backup_tar: "splunk-test-backup.tar"
+
+# Testing-only toggles to avoid modifying the role under test
+skip_acl_install: true
+
+# Splunk installation configuration
+splunk_install_app: true
+splunk_build_remote_src: false
+splunk_install_method: "package"
+splunk_download_local: true
+
+# Default container configuration
+docker_image: splunk-base-ubuntu2204:latest
+
+# Splunk configuration - adapted for testing
+splunk_home: /opt/splunk
+splunk_install_path: /opt
+splunk_nix_user: splunk
+splunk_nix_group: splunk
+splunk_nix_home: /home/splunk  # Use splunk user home
+splunk_admin_username: admin
+splunk_admin_password: "Password123!"  # Test password
+splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
+
+# Force reinstallation to handle existing installations
+splunk_reinstall: true
+
+# Boot-start configuration - use systemd (containers run systemd as PID 1)
+splunk_use_initd: false
+splunk_use_systemd: true
+
+# Test versions - using stable versions for testing
+splunk_package_version: 9.1.2
+build_id: b6b9c8185839
+# Local software configuration - tell Splunk role where to find files
+splunk_package_path: "/opt/software"
+
+# Additional variables for Splunk role
+splunk_file: "splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+logrotate_file: "/etc/logrotate.d/splunk"

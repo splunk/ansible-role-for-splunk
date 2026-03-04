@@ -1,0 +1,6 @@
+---
+# SSH connection configuration for day0 scenario
+# Overrides Docker connection from environment inventory
+ansible_connection: ssh
+ansible_ssh_private_key_file: /workspace/testing/.secrets/id_rsa
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'

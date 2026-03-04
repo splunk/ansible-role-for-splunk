@@ -1,0 +1,23 @@
+---
+# Day 1 - Splunk Operations Scenario
+# Operational tasks on running Splunk cluster (restart, backup, maintenance)
+# Assumes day0 provisioning already completed and Splunk is running
+
+ansible:
+  cfg:
+    defaults:
+      deprecation_warnings: false
+      roles_path: ${MOLECULE_PROJECT_DIRECTORY}/../roles
+  executor:
+    backend: ansible-playbook
+    args:
+      ansible_playbook:
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/${MOLECULE_ENV:-small}/
+
+scenario:
+  test_sequence:
+    - converge
+    - verify
+
+verifier:
+  name: ansible
