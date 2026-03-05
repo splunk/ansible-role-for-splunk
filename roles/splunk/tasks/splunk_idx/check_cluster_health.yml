@@ -1,0 +1,43 @@
+---
+# Example playbook usage:
+#
+# - hosts: indexer
+#   roles:
+#     - roles/splunk
+#   vars:
+#     deployment_task: splunk_idx/check_cluster_health.yml
+#     cm_check_peers: true
+
+- name: Reset CM reachability flag
+  ansible.builtin.set_fact:
+    splunk_cm_reachable: false
+
+- name: Validate required variables are defined
+  ansible.builtin.assert:
+    that:
+      - splunk_uri_cm is defined
+      - splunk_admin_username is defined
+      - splunk_admin_password is defined
+    fail_msg: "splunk_uri_cm, splunk_admin_username, and splunk_admin_password must all be defined."
+
+- name: Include cm_health
+  ansible.builtin.include_tasks: cm_health.yml
+
+- name: Query optional endpoints
+  when: splunk_cm_reachable
+  block:
+    - name: Include cm_info
+      ansible.builtin.include_tasks: cm_info.yml
+      when: cm_check_info | default(false) | bool
+
+    - name: Include cm_generation
+      ansible.builtin.include_tasks: cm_generation.yml
+      when: cm_check_generation | default(false) | bool
+
+    - name: Include cm_status
+      ansible.builtin.include_tasks: cm_status.yml
+      when: cm_check_status | default(false) | bool
+
+    - name: Include cm_peers
+      ansible.builtin.include_tasks: cm_peers.yml
+      when: cm_check_peers | default(false) | bool

@@ -33,7 +33,7 @@
 
 - name: "Restore SELinux contexts on Splunk directory"
   become: true
-  command: "restorecon -Rv {{ splunk_home }}"
+  ansible.builtin.command: "restorecon -Rv {{ splunk_home }}"
   when:
     - ansible_facts['os_family'] == "RedHat"
     - ansible_facts['selinux']['status'] == "enabled"

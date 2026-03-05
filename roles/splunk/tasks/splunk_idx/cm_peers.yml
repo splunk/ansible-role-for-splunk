@@ -1,0 +1,50 @@
+---
+- name: Query cluster manager peers endpoint
+  ansible.builtin.uri:
+    url: "{{ splunk_uri_cm }}/services/cluster/manager/peers"
+    method: GET
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    return_content: true
+    body: output_mode=json
+  check_mode: false
+  no_log: true
+  changed_when: false
+  failed_when: false
+  register: cm_peers_response
+
+- name: Set peers facts
+  ansible.builtin.set_fact:
+    _cm_peers_by_guid: >-
+      {{ cm_peers_response.json.entry
+         | items2dict(key_name='name', value_name='content') }}
+  when: cm_peers_response.status | default(-1) == 200
+
+- name: Set peers facts on failure
+  ansible.builtin.set_fact:
+    _cm_peers_by_guid: {}
+  when: cm_peers_response.status | default(-1) != 200
+
+- name: "Poll CM until peer {{ item }} is Up"
+  ansible.builtin.uri:
+    url: "{{ splunk_uri_cm }}/services/cluster/manager/peers/{{ item }}"
+    method: GET
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    return_content: true
+    body: output_mode=json
+  check_mode: false
+  no_log: true
+  changed_when: false
+  failed_when: false
+  register: cm_poll_peer_response
+  retries: "{{ cm_peer_wait_retries | default(20) }}"
+  delay: "{{ cm_peer_wait_delay | default(30) }}"
+  until: >
+    cm_poll_peer_response.status == 200 and
+    cm_poll_peer_response.json.entry[0].content.status | default('') == 'Up'
+  loop: "{{ cm_poll_peer_guids | default([]) }}"
