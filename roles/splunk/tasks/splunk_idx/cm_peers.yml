@@ -8,7 +8,7 @@
     force_basic_auth: true
     validate_certs: "{{ splunk_validate_certs | default(false) }}"
     return_content: true
-    body: output_mode=json
+    body: output_mode=json&count=0
   check_mode: false
   no_log: true
   changed_when: false
