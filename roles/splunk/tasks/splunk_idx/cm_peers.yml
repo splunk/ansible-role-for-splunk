@@ -45,6 +45,6 @@
   retries: "{{ cm_peer_wait_retries | default(20) }}"
   delay: "{{ cm_peer_wait_delay | default(30) }}"
   until: >
-    cm_poll_peer_response.status == 200 and
+    cm_poll_peer_response.status | default(-1) == 200 and
     cm_poll_peer_response.json.entry[0].content.status | default('') == 'Up'
   loop: "{{ cm_poll_peer_guids | default([]) }}"

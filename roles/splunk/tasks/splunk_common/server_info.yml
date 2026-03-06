@@ -15,7 +15,7 @@
   register: server_info_response
   retries: 3
   delay: 10
-  until: server_info_response.status == 200
+  until: server_info_response.status | default(-1) == 200
 
 - name: Set server info facts
   ansible.builtin.set_fact:
