@@ -9,6 +9,7 @@
     validate_certs: "{{ splunk_validate_certs | default(false) }}"
     status_code: 200
   no_log: true
+  changed_when: true
   when:
     - ru_state is defined
     - "'clustermanager' in group_names"

@@ -185,7 +185,7 @@ The `splunk_idx` sub-directory contains tasks for indexer operations. Set `deplo
 
 - **splunk_idx/check_cluster_health.yml** - Orchestrator that queries cluster manager REST API endpoints. Always runs `cm_health.yml` and sets `splunk_cm_reachable`. Additional endpoints are opt-in via variables: `cm_check_info`, `cm_check_generation`, `cm_check_status`, `cm_check_peers`. Requires `splunk_uri_cm`, `splunk_admin_username`, and `splunk_admin_password`. The play will not fail if the CM is unreachable. TLS certificate validation is controlled by `splunk_validate_certs` (default: `false`) and applies to all `cm_*.yml` tasks.
 
-The following task files can also be included individually from other tasks using the Orchestrator when only a specific endpoint is needed. The `splunk_idx/cm_health.yml` is automatically included and first sets `splunk_cm_reachable` and guard subsequent calls.
+The following task files can also be included individually from other tasks using the Orchestrator when only a specific endpoint is needed. The `splunk_idx/cm_health.yml` is automatically included and first sets `splunk_cm_reachable` and guards subsequent calls.
 
 - **splunk_idx/cm_health.yml** - Queries `/services/cluster/manager/health`. Sets `splunk_cm_reachable` and `_cm_health`.
 - **splunk_idx/cm_info.yml** - Queries `/services/cluster/manager/info`. Sets `_cm_info`.

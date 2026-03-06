@@ -40,7 +40,6 @@
   check_mode: false
   no_log: true
   changed_when: false
-  failed_when: false
   register: cm_poll_peer_response
   retries: "{{ cm_peer_wait_retries | default(20) }}"
   delay: "{{ cm_peer_wait_delay | default(30) }}"
