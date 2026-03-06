@@ -187,7 +187,7 @@ The `splunk_idx` sub-directory contains tasks for indexer operations. Set `deplo
 
 The following task files can also be included individually from other tasks using the Orchestrator when only a specific endpoint is needed. The `splunk_idx/cm_health.yml` is automatically included and first sets `splunk_cm_reachable` and guard subsequent calls.
 
-- **splunk_idx/cm_health.yml** - Queries `/services/cluster/manager/health`. Asserts required variables, sets `splunk_cm_reachable` and `_cm_health`.
+- **splunk_idx/cm_health.yml** - Queries `/services/cluster/manager/health`. Sets `splunk_cm_reachable` and `_cm_health`.
 - **splunk_idx/cm_info.yml** - Queries `/services/cluster/manager/info`. Sets `_cm_info`.
 - **splunk_idx/cm_generation.yml** - Queries `/services/cluster/manager/generation`. Sets `_cm_generation`.
 - **splunk_idx/cm_status.yml** - Queries `/services/cluster/manager/status`. Sets `_cm_status`.

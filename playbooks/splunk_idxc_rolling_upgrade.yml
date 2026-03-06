@@ -73,6 +73,12 @@
              | map('extract', hostvars, '_server_info')
              | map(attribute='guid') | list }}
 
+    - name: Assert CM was reachable during peer polling
+      ansible.builtin.assert:
+        that:
+          - splunk_cm_reachable | bool
+        fail_msg: "CM became unreachable during peer polling. Aborting upgrade."
+
 # Play 4 - rolling_upgrade_finalize
 - hosts:
     - clustermanager

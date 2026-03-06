@@ -2,7 +2,7 @@
 - name: Check splunk
   ansible.builtin.include_tasks: check_splunk.yml
 
-- name: Configure DMC as a IDXC member
+- name: Configure DMC as an IDXC member
   ansible.builtin.include_tasks: configure_idxc_sh.yml
 
 # Add all hosts to the DMC except indexer cluster hosts as per the docs
