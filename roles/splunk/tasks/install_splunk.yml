@@ -71,7 +71,7 @@
   ansible.builtin.include_tasks: splunk_license_accept.yml
 
 - name: Configure Splunk launch before boot
-  include_tasks: configure_splunk_launch.yml
+  ansible.builtin.include_tasks: configure_splunk_launch.yml
 
 - name: Enable boot start
   ansible.builtin.include_tasks: configure_splunk_boot.yml

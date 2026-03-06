@@ -113,6 +113,7 @@ The following example playbooks have been included in this project for your refe
 - **splunk_install_or_upgrade.yml** - Install or upgrade Splunk (or Splunk UFs) on hosts using the check_splunk.yml task in the splunk role.
 - **splunk_shc_deploy.yml** - Installs Splunk and initializes search head clustering on a shdeployer and group of hosts that will serve as a new search head cluster.
 - **splunk_upgrade_full_stack.yml** - Example playbook that demonstrates how to upgrade an entire Splunk deployment with a single-site indexer cluster and a search head cluster using the splunk role. Note: This playbook does not upgrade forwarders, although you could easily add an extra play to do that.
+- **splunk_idxc_rolling_upgrade.yml** - Performs a safe rolling upgrade of an indexer cluster using Splunk's native rolling upgrade API (`rolling_upgrade_init` / `rolling_upgrade_finalize`). Upgrades peers in batches controlled by `idxc_serial` (default: 1). After each batch, polls the CM until all peers in the batch are `Up` before proceeding.
 
 ## Extended Documentation
 This section contains additional reference documentation.
@@ -177,6 +178,21 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 In the `splunk_common` sub-directory is where tasks common to all Splunk installations will live.
 In the future, all common splunk tasks will move to this directory.
 - **splunk_common/clone_prep.yml** - This task runs the `clone-prep-clear-config` command. This removes the `$SPLUNK_HOME/etc/instance,cfg` file and the `serverName` from `$SPLUNK_HOME/etc/system/local/server.conf` file.
+- **splunk_common/server_info.yml** - Queries `/services/server/info` on the current host, and sets the `_server_info` fact.
+
+#### Indexer tasks
+The `splunk_idx` sub-directory contains tasks for indexer operations. Set `deployment_task: splunk_idx/<task>.yml` in your playbook to use them.
+
+- **splunk_idx/check_cluster_health.yml** - Orchestrator that queries cluster manager REST API endpoints. Always runs `cm_health.yml` and sets `splunk_cm_reachable`. Additional endpoints are opt-in via variables: `cm_check_info`, `cm_check_generation`, `cm_check_status`, `cm_check_peers`. Requires `splunk_uri_cm`, `splunk_admin_username`, and `splunk_admin_password`. The play will not fail if the CM is unreachable. TLS certificate validation is controlled by `splunk_validate_certs` (default: `false`) and applies to all `cm_*.yml` tasks.
+
+The following task files can also be included individually from other tasks using the Orchestrator when only a specific endpoint is needed. The `splunk_idx/cm_health.yml` is automatically included and first sets `splunk_cm_reachable` and guards subsequent calls.
+
+- **splunk_idx/cm_health.yml** - Queries `/services/cluster/manager/health`. Sets `splunk_cm_reachable` and `_cm_health`.
+- **splunk_idx/cm_info.yml** - Queries `/services/cluster/manager/info`. Sets `_cm_info`.
+- **splunk_idx/cm_generation.yml** - Queries `/services/cluster/manager/generation`. Sets `_cm_generation`.
+- **splunk_idx/cm_status.yml** - Queries `/services/cluster/manager/status`. Sets `_cm_status`.
+- **splunk_idx/cm_peers.yml** - Queries `/services/cluster/manager/peers`. Sets `_cm_peers_by_guid` (dict keyed by peer GUID). When `cm_poll_peer_guids` is set (list of GUIDs), polls each peer's individual endpoint with retries until its status is `Up`. Retry count and delay are configurable via `cm_peer_wait_retries` (default: 20) and `cm_peer_wait_delay` (default: 30 seconds).
+- **splunk_idx/cm_rolling_upgrade.yml** - POSTs to the CM's rolling upgrade control endpoint. Requires `ru_state` to be set to either `init` or `finalize`, and only applies to hosts in the `clustermanager` group.
 
 ## Frequently Asked Questions
 **Q:** What is the difference between this and splunk-ansible?

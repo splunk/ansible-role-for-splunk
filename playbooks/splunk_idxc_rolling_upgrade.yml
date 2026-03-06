@@ -1,0 +1,112 @@
+---
+# Performs a rolling upgrade of an indexer cluster using the CM rolling upgrade API.
+# Upgrades peers in batches (serial: idxc_serial, default 1) with health check gates.
+#
+# Prerequisites:
+#   - splunk_uri_cm, splunk_admin_username, splunk_admin_password must be set
+#   - Inventory must have 'clustermanager' and 'indexer' groups
+#   - splunk_package_version and build_id must be set to the target version
+#
+# Usage:
+#   ansible-playbook playbooks/splunk_idxc_rolling_upgrade.yml
+
+# Play 1 - Pre-upgrade health check
+- hosts:
+    - indexer
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: splunk_idx/check_cluster_health.yml
+    cm_check_status: true
+  post_tasks:
+    - name: Assert cluster is ready for upgrade
+      ansible.builtin.assert:
+        that:
+          - splunk_cm_reachable | bool
+          - _cm_health.pre_flight_check | default(false) | bool
+          - not (_cm_status.maintenance_mode | default(false) | bool)
+          - not (_cm_status.rolling_restart_flag | default(false) | bool)
+        fail_msg: "Pre-upgrade cluster health check failed. Aborting."
+
+    - name: Collect peer GUIDs
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/splunk/tasks/splunk_common/server_info.yml"
+
+# Play 2 - rolling_upgrade_init
+- hosts:
+    - clustermanager
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: splunk_idx/cm_rolling_upgrade.yml
+    ru_state: init
+
+# Play 3 - Upgrade indexers in batches
+- hosts:
+    - indexer
+  serial: "{{ idxc_serial | default(1) }}"
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: check_splunk.yml
+  post_tasks:
+    - name: Wait for splunkd to be ready
+      ansible.builtin.wait_for:
+        host: "{{ splunk_mgmt_uri }}"
+        port: "{{ splunkd_port }}"
+        timeout: 300
+
+    - name: Wait for all peers in this batch to rejoin the cluster
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/splunk/tasks/splunk_idx/check_cluster_health.yml"
+      vars:
+        cm_check_peers: true
+        cm_poll_peer_guids: >-
+          {{ ansible_play_batch
+             | map('extract', hostvars, '_server_info')
+             | map(attribute='guid') | list }}
+
+    - name: Assert CM was reachable during peer polling
+      ansible.builtin.assert:
+        that:
+          - splunk_cm_reachable | bool
+        fail_msg: "CM became unreachable during peer polling. Aborting upgrade."
+
+# Play 4 - rolling_upgrade_finalize
+- hosts:
+    - clustermanager
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: splunk_idx/cm_rolling_upgrade.yml
+    ru_state: finalize
+
+# Play 5 - Post-upgrade health check
+- hosts:
+    - indexer
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: splunk_idx/check_cluster_health.yml
+    cm_check_status: true
+  post_tasks:
+    - name: Assert cluster recovered after upgrade
+      ansible.builtin.assert:
+        that:
+          - splunk_cm_reachable | bool
+          - _cm_health.pre_flight_check | default(false) | bool
+          - not (_cm_status.rolling_restart_flag | default(false) | bool)
+        fail_msg: "Post-upgrade cluster health check failed."

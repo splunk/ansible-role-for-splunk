@@ -1,0 +1,22 @@
+---
+- name: Query server info
+  ansible.builtin.uri:
+    url: "https://{{ splunk_mgmt_uri }}:{{ splunkd_port }}/services/server/info"
+    method: GET
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    return_content: true
+    body: output_mode=json
+  check_mode: false
+  no_log: true
+  changed_when: false
+  register: server_info_response
+  retries: 3
+  delay: 10
+  until: server_info_response.status | default(-1) == 200
+
+- name: Set server info facts
+  ansible.builtin.set_fact:
+    _server_info: "{{ server_info_response.json.entry[0].content }}"

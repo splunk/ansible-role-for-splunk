@@ -1,0 +1,26 @@
+---
+- name: Query cluster manager info endpoint
+  ansible.builtin.uri:
+    url: "{{ splunk_uri_cm }}/services/cluster/manager/info"
+    method: GET
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    return_content: true
+    body: output_mode=json
+  check_mode: false
+  no_log: true
+  changed_when: false
+  failed_when: false
+  register: cm_info_response
+
+- name: Set info facts
+  ansible.builtin.set_fact:
+    _cm_info: "{{ cm_info_response.json.entry[0].content }}"
+  when: cm_info_response.status | default(-1) == 200
+
+- name: Set info facts on failure
+  ansible.builtin.set_fact:
+    _cm_info: {}
+  when: cm_info_response.status | default(-1) != 200

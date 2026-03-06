@@ -1,0 +1,26 @@
+---
+- name: Query cluster manager status endpoint
+  ansible.builtin.uri:
+    url: "{{ splunk_uri_cm }}/services/cluster/manager/status"
+    method: GET
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    return_content: true
+    body: output_mode=json
+  check_mode: false
+  no_log: true
+  changed_when: false
+  failed_when: false
+  register: cm_status_response
+
+- name: Set status facts
+  ansible.builtin.set_fact:
+    _cm_status: "{{ cm_status_response.json.entry[0].content }}"
+  when: cm_status_response.status | default(-1) == 200
+
+- name: Set status facts on failure
+  ansible.builtin.set_fact:
+    _cm_status: {}
+  when: cm_status_response.status | default(-1) != 200
