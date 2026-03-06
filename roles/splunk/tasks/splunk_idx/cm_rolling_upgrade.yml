@@ -1,5 +1,5 @@
 ---
-- name: "{{ ru_state }} rolling upgrade on cluster manager"
+- name: "{{ ru_state | default('') }} rolling upgrade on cluster manager"
   ansible.builtin.uri:
     url: "{{ splunk_uri_cm }}/services/cluster/manager/control/control/rolling_upgrade_{{ ru_state }}"
     method: POST

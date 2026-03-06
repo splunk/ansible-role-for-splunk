@@ -32,7 +32,7 @@
         fail_msg: "Pre-upgrade cluster health check failed. Aborting."
 
     - name: Collect peer GUIDs
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/splunk_common/server_info.yml"
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/splunk/tasks/splunk_common/server_info.yml"
 
 # Play 2 - rolling_upgrade_init
 - hosts:
@@ -65,7 +65,7 @@
         timeout: 300
 
     - name: Wait for all peers in this batch to rejoin the cluster
-      ansible.builtin.include_tasks: "{{ role_path }}/tasks/splunk_idx/check_cluster_health.yml"
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/splunk/tasks/splunk_idx/check_cluster_health.yml"
       vars:
         cm_check_peers: true
         cm_poll_peer_guids: >-
