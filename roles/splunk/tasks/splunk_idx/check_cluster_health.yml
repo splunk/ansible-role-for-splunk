@@ -12,14 +12,6 @@
   ansible.builtin.set_fact:
     splunk_cm_reachable: false
 
-- name: Validate required variables are defined
-  ansible.builtin.assert:
-    that:
-      - splunk_uri_cm is defined
-      - splunk_admin_username is defined
-      - splunk_admin_password is defined
-    fail_msg: "splunk_uri_cm, splunk_admin_username, and splunk_admin_password must all be defined."
-
 - name: Include cm_health
   ansible.builtin.include_tasks: cm_health.yml
 
