@@ -1,6 +1,12 @@
 ---
 # defaults file for splunk role
 # Anything that is undefined here should be configured. I recommend setting the values in your group_vars under an all.yml file.
+#
+# BREAKING CHANGE: ansible_python_interpreter is now set to /usr/bin/python3 by default.
+# Splunk 10.2+ ships an embedded Python 3.13 that is missing standard library modules
+# (e.g. grp), causing Ansible module execution failures when auto-discovered.
+# Override this in group_vars or host_vars if your system Python is in a different path.
+ansible_python_interpreter: /usr/bin/python3
 slack_channel: undefined
 slack_token: undefined
 splunk_home: auto_determined  # This gets set by main.yml but we have to define it here or Ansible will complain that it is undefined
