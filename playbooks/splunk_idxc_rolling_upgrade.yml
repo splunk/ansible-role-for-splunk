@@ -95,7 +95,7 @@
         fail_msg: >-
           _server_info.guid is not defined for {{ inventory_hostname }}.
           Play 2 (server_info collection) must complete before Play 5.
-          Do not use --start-at-task to skip Play 1.
+          Do not use --start-at-task to skip Play 2.
   roles:
     - ../roles/splunk
   vars:
@@ -162,8 +162,11 @@
   become: true
   any_errors_fatal: true
   max_fail_percentage: 0
+  pre_tasks:
+    - name: Skip if remove_excess_buckets is not set
+      ansible.builtin.meta: end_play
+      when: not (remove_excess_buckets | default(false) | bool)
   roles:
     - ../roles/splunk
   vars:
     deployment_task: splunk_idx/cm_prune_excess_buckets.yml
-  when: remove_excess_buckets | default(false) | bool
