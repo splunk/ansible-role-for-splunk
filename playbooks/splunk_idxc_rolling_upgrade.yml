@@ -11,6 +11,8 @@
 # Optional Variables:
 #   - idxc_serial: Batch size for peer upgrades (default: 1).
 #                  Accepts integer or percentage (e.g., "20%").
+#   - remove_excess_buckets: Remove excess bucket copies after upgrade (default: false).
+#                            Pass -e remove_excess_buckets=true to enable.
 #
 # Usage:
 #   ansible-playbook playbooks/splunk_idxc_rolling_upgrade.yml
@@ -153,3 +155,15 @@
           - _cm_health.pre_flight_check | default(false) | bool
           - not (_cm_status.rolling_restart_flag | default(false) | bool)
         fail_msg: "Post-upgrade cluster health check failed."
+
+# Play 8 - Remove excess bucket copies (optional, requires -e remove_excess_buckets=true)
+- hosts:
+    - clustermanager
+  become: true
+  any_errors_fatal: true
+  max_fail_percentage: 0
+  roles:
+    - ../roles/splunk
+  vars:
+    deployment_task: splunk_idx/cm_prune_excess_buckets.yml
+  when: remove_excess_buckets | default(false) | bool

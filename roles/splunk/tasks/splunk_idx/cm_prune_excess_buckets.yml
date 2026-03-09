@@ -1,0 +1,13 @@
+---
+- name: Remove excess bucket copies from cluster
+  ansible.builtin.uri:
+    url: "https://{{ splunk_mgmt_uri }}:{{ splunkd_port }}/services/cluster/manager/control/control/prune_index"
+    method: POST
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    status_code: 200
+  no_log: true
+  changed_when: true
+  when: "'clustermanager' in group_names"
