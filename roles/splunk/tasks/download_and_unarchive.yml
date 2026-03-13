@@ -18,7 +18,7 @@
   retries: 3
   delay: 10
   until: download_result is success
-  run_once: "{{ splunk_download_local }}"
+  throttle: "{{ 1 if splunk_download_local else 0 }}"
 
 - name: "Unarchive Splunk {{ splunk_install_type }} package to {{ splunk_home }}"
   ansible.builtin.unarchive:
