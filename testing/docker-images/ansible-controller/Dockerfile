@@ -7,8 +7,9 @@ RUN apt-get update && \
       build-essential cmake git ca-certificates libjson-c-dev libwebsockets-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Clone and build ttyd from source (latest version 1.7.7)
-RUN git clone https://github.com/tsl0922/ttyd.git /tmp/ttyd && \
+# Clone and build ttyd from source
+ARG TTYD_VERSION=1.7.7
+RUN git clone --branch ${TTYD_VERSION} --depth 1 https://github.com/tsl0922/ttyd.git /tmp/ttyd && \
     cd /tmp/ttyd && \
     mkdir build && \
     cd build && \

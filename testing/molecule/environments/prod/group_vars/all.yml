@@ -30,7 +30,9 @@ splunk_nix_user: splunk
 splunk_nix_group: splunk
 splunk_nix_home: /opt/splunk  # Explicitly set home directory for splunk user
 splunk_admin_username: admin
-splunk_admin_password: "Password123!"  # Test password
+splunk_test_version: "{{ lookup('env', 'SPLUNK_VERSION') | default('9.1.2', true) }}"
+splunk_test_build: "{{ lookup('env', 'SPLUNK_BUILD') | default('b6b9c8185839', true) }}"
+splunk_admin_password: "{{ lookup('env', 'SPLUNK_ADMIN_PASSWORD') | default(lookup('file', '/workspace/testing/.secrets/splunk_admin_password') | trim, true) }}"
 splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
 
 # Cluster configuration for testing
@@ -47,16 +49,16 @@ splunk_shc_rep_port: 8100
 splunk_shc_target_group: shcluster
 
 # Test versions - using stable versions for testing
-splunk_version: 9.1.2
+splunk_version: "{{ splunk_test_version }}"
 # Local software paths (predownloaded to testing/software/)
-splunk_package_path_full: "/workspace/testing/software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
-splunk_package_path_uf: "/workspace/testing/software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+splunk_package_path_full: "/workspace/testing/software/splunk-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
+splunk_package_path_uf: "/workspace/testing/software/splunkforwarder-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
 # Remote URLs as fallback
-splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/9.1.2/linux/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
-splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/9.1.2/linux/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+splunk_package_url_full: "https://download.splunk.com/products/splunk/releases/{{ splunk_test_version }}/linux/splunk-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
+splunk_package_url_uf: "https://download.splunk.com/products/universalforwarder/releases/{{ splunk_test_version }}/linux/splunkforwarder-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
 
 # Additional variables for Splunk role
-splunk_file: "splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+splunk_file: "splunk-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
 logrotate_file: "/etc/logrotate.d/splunk"
 
 # Lab environment configuration

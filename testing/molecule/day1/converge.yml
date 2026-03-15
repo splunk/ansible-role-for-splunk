@@ -7,18 +7,18 @@
   gather_facts: true
   tasks:
     - name: Detect Splunk service manager
-      stat:
+      ansible.builtin.stat:
         path: /etc/systemd/system/Splunkd.service
       register: splunkd_systemd_unit
       become: true
       changed_when: false
 
     - name: Set splunk_service fact
-      set_fact:
+      ansible.builtin.set_fact:
         splunk_service: "{{ 'Splunkd' if splunkd_systemd_unit.stat.exists | default(false) else 'splunk' }}"
 
     - name: Include Splunk restart task from upstream role
-      include_role:
+      ansible.builtin.include_role:
         name: splunk
         tasks_from: splunk_restart.yml
 
@@ -27,7 +27,7 @@
   gather_facts: true
   tasks:
     - name: Include Splunk status check from upstream role
-      include_role:
+      ansible.builtin.include_role:
         name: splunk
         tasks_from: check_splunk_status.yml
 

@@ -5,16 +5,19 @@
 # Copy Splunk software to target hosts
 - name: Copy Splunk software to target hosts
   hosts: all:!ansible_controller:!git_server:!jumpbox
+  vars:
+    splunk_test_version: "{{ lookup('env', 'SPLUNK_VERSION') | default('9.1.2', true) }}"
+    splunk_test_build: "{{ lookup('env', 'SPLUNK_BUILD') | default('b6b9c8185839', true) }}"
   tasks:
     - name: Create software directory on target hosts
-      file:
+      ansible.builtin.file:
         path: /opt/software
         state: directory
         mode: '0755'
       become: true
 
     - name: Create software directory on localhost for downloads
-      file:
+      ansible.builtin.file:
         path: /opt/software
         state: directory
         mode: '0755'
@@ -22,17 +25,17 @@
       run_once: true
 
     - name: Copy Splunk Enterprise to target hosts
-      copy:
-        src: "/workspace/testing/software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
-        dest: "/opt/software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+      ansible.builtin.copy:
+        src: "/workspace/testing/software/splunk-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
+        dest: "/opt/software/splunk-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
         mode: '0644'
       become: true
       when: "'full' in group_names"
 
     - name: Copy Splunk Universal Forwarder to target hosts
-      copy:
-        src: "/workspace/testing/software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
-        dest: "/opt/software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+      ansible.builtin.copy:
+        src: "/workspace/testing/software/splunkforwarder-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
+        dest: "/opt/software/splunkforwarder-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
         mode: '0644'
       become: true
       when: "'uf' in group_names"
@@ -43,7 +46,7 @@
   gather_facts: true
   tasks:
     - name: Check if Splunk Enterprise is installed
-      stat:
+      ansible.builtin.stat:
         path: /opt/splunk/bin/splunk
       register: splunk_ent_stat
       changed_when: false
@@ -69,6 +72,6 @@
     splunk_nix_home: "/opt/splunk"
     splunk_install_path: "/opt"
     splunk_download_local: false
-    splunk_package_version: 9.1.2
-    build_id: b6b9c8185839
+    splunk_package_version: "{{ lookup('env', 'SPLUNK_VERSION') | default('9.1.2', true) }}"
+    build_id: "{{ lookup('env', 'SPLUNK_BUILD') | default('b6b9c8185839', true) }}"
     splunk_package_path: "/opt/software"

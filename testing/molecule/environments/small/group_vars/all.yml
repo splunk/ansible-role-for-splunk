@@ -34,7 +34,9 @@ splunk_nix_user: splunk
 splunk_nix_group: splunk
 splunk_nix_home: /home/splunk  # Use splunk user home
 splunk_admin_username: admin
-splunk_admin_password: "Password123!"  # Test password
+splunk_test_version: "{{ lookup('env', 'SPLUNK_VERSION') | default('9.1.2', true) }}"
+splunk_test_build: "{{ lookup('env', 'SPLUNK_BUILD') | default('b6b9c8185839', true) }}"
+splunk_admin_password: "{{ lookup('env', 'SPLUNK_ADMIN_PASSWORD') | default(lookup('file', '/workspace/testing/.secrets/splunk_admin_password') | trim, true) }}"
 splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
 
 # Force reinstallation to handle existing installations
@@ -45,11 +47,11 @@ splunk_use_initd: false
 splunk_use_systemd: true
 
 # Test versions - using stable versions for testing
-splunk_package_version: 9.1.2
-build_id: b6b9c8185839
+splunk_package_version: "{{ splunk_test_version }}"
+build_id: "{{ splunk_test_build }}"
 # Local software configuration - tell Splunk role where to find files
 splunk_package_path: "/opt/software"
 
 # Additional variables for Splunk role
-splunk_file: "splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+splunk_file: "splunk-{{ splunk_test_version }}-{{ splunk_test_build }}-Linux-x86_64.tgz"
 logrotate_file: "/etc/logrotate.d/splunk"

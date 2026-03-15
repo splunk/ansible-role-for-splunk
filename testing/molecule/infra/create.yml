@@ -4,12 +4,10 @@
 - hosts: localhost
   gather_facts: false
   vars:
+    ansible_python_interpreter: /usr/local/bin/python3
     targets: "{{ groups['full'] | default([]) + groups['git_server'] | default([]) + groups['ansible_controller'] | default([]) }}"
+    gitea_secret_key: "{{ lookup('env', 'GITEA_SECRET_KEY') | default(lookup('file', '/workspace/testing/.secrets/gitea_secret_key') | trim, true) }}"
   tasks:
-    - name: Set Python interpreter for Docker modules
-      set_fact:
-        ansible_python_interpreter: /usr/local/bin/python3
-
     - name: Ensure Docker network exists
       community.docker.docker_network:
         name: splunk-test-network
@@ -67,6 +65,8 @@
         name: git-server
         image: splunk-git-server:latest
         hostname: git-server
+        env:
+          GITEA__security__SECRET_KEY: "{{ gitea_secret_key }}"
         networks:
           - name: splunk-test-network
         published_ports:
@@ -79,5 +79,5 @@
       when: "'git_server' in groups"
 
     - name: Wait for containers to be ready
-      pause:
+      ansible.builtin.pause:
         seconds: 10

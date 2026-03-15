@@ -5,12 +5,9 @@
 - hosts: localhost
   gather_facts: false
   vars:
+    ansible_python_interpreter: /usr/local/bin/python3
     targets: "{{ groups['full'] | default([]) }}"
   tasks:
-    - name: Set Python interpreter for Docker modules
-      set_fact:
-        ansible_python_interpreter: /usr/local/bin/python3
-
     - name: Stop and remove ansible-controller
       community.docker.docker_container:
         name: ansible-controller

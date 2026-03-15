@@ -2,7 +2,6 @@ FROM gitea/gitea:latest
 
 # Set basic configuration
 ENV GITEA__database__DB_TYPE=sqlite3
-ENV GITEA__security__SECRET_KEY=test-secret-key
 ENV GITEA__security__INSTALL_LOCK=true
 ENV USER_UID=1000
 ENV USER_GID=1000

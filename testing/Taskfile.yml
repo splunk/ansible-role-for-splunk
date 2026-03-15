@@ -55,13 +55,15 @@ tasks:
     dir: "{{.PROJECT_ROOT}}/testing"
     cmds:
       - |
-        if [ -f .secrets/id_rsa ] && [ -f .secrets/ansible_password ]; then
+        if [ -f .secrets/id_rsa ] && [ -f .secrets/ansible_password ] && [ -f .secrets/splunk_admin_password ] && [ -f .secrets/gitea_secret_key ]; then
           echo "✅ SSH secrets already exist"
         else
           mkdir -p .secrets && chmod 700 .secrets
           test -f .secrets/id_rsa || ssh-keygen -t rsa -b 2048 -N '' -C 'splunk-test-cluster' -f .secrets/id_rsa
           test -f .secrets/ansible_password || (tr -dc 'A-Za-z0-9' </dev/urandom | head -c 20 > .secrets/ansible_password)
-          chmod 600 .secrets/id_rsa .secrets/ansible_password
+          test -f .secrets/splunk_admin_password || (tr -dc 'A-Za-z0-9!@#%^*+=' </dev/urandom | head -c 20 > .secrets/splunk_admin_password)
+          test -f .secrets/gitea_secret_key || (tr -dc 'A-Za-z0-9' </dev/urandom | head -c 40 > .secrets/gitea_secret_key)
+          chmod 600 .secrets/id_rsa .secrets/ansible_password .secrets/splunk_admin_password .secrets/gitea_secret_key
           chmod 644 .secrets/id_rsa.pub
           echo "✅ SSH secrets created"
         fi
@@ -90,21 +92,23 @@ tasks:
     dir: "{{.PROJECT_ROOT}}/testing"
     cmds:
       - |
-        if [ -f software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz ] && [ -f software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz ]; then
+        SPLUNK_VERSION="${SPLUNK_VERSION:-9.1.2}"
+        SPLUNK_BUILD="${SPLUNK_BUILD:-b6b9c8185839}"
+        if [ -f "software/splunk-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-x86_64.tgz" ] && [ -f "software/splunkforwarder-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-x86_64.tgz" ]; then
           echo "✅ Splunk binaries already downloaded"
           ls -la software/
         else
           mkdir -p software
-          echo "📥 Downloading Splunk Enterprise 9.1.2..."
-          curl -L -o software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz "https://download.splunk.com/products/splunk/releases/9.1.2/linux/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
-          echo "📥 Downloading Splunk Universal Forwarder 9.1.2..."
-          curl -L -o software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz "https://download.splunk.com/products/universalforwarder/releases/9.1.2/linux/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz"
+          echo "📥 Downloading Splunk Enterprise ${SPLUNK_VERSION}..."
+          curl -L -o "software/splunk-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-x86_64.tgz" "https://download.splunk.com/products/splunk/releases/${SPLUNK_VERSION}/linux/splunk-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-x86_64.tgz"
+          echo "📥 Downloading Splunk Universal Forwarder ${SPLUNK_VERSION}..."
+          curl -L -o "software/splunkforwarder-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-x86_64.tgz" "https://download.splunk.com/products/universalforwarder/releases/${SPLUNK_VERSION}/linux/splunkforwarder-${SPLUNK_VERSION}-${SPLUNK_BUILD}-Linux-x86_64.tgz"
           echo "✅ Splunk binaries downloaded to testing/software/"
           ls -la software/
         fi
     status:
-      - test -f software/splunk-9.1.2-b6b9c8185839-Linux-x86_64.tgz
-      - test -f software/splunkforwarder-9.1.2-b6b9c8185839-Linux-x86_64.tgz
+      - test -f "software/splunk-${SPLUNK_VERSION:-9.1.2}-${SPLUNK_BUILD:-b6b9c8185839}-Linux-x86_64.tgz"
+      - test -f "software/splunkforwarder-${SPLUNK_VERSION:-9.1.2}-${SPLUNK_BUILD:-b6b9c8185839}-Linux-x86_64.tgz"
 
   network:create:
     desc: Create Docker network for testing (idempotent)
@@ -128,6 +132,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule test -s infra
       - echo "✅ Infrastructure scenario complete!"
@@ -144,6 +152,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule create -s infra
 
@@ -158,6 +170,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule prepare -s infra
 
@@ -179,6 +195,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule destroy -s infra
 
@@ -196,6 +216,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule test -s day0
       - echo "✅ Day 0 scenario complete!"
@@ -212,6 +236,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule converge -s day0
       - echo "✅ Day 0 deployment complete!"
@@ -228,6 +256,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule verify -s day0
 
@@ -245,6 +277,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule test -s day1
       - echo "✅ Day 1 scenario complete!"
@@ -261,6 +297,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule converge -s day1
       - echo "✅ Day 1 operations complete!"
@@ -277,6 +317,10 @@ tasks:
           -w /workspace/testing \
           -e HOST_PROJECT_DIRECTORY={{.PROJECT_ROOT}} \
           -e MOLECULE_ENV={{.ENV}} \
+          -e SPLUNK_ADMIN_PASSWORD \
+          -e SPLUNK_VERSION \
+          -e SPLUNK_BUILD \
+          -e GITEA_SECRET_KEY \
           molecule-runner:latest \
           molecule verify -s day1
 
