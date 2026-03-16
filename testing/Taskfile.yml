@@ -73,19 +73,19 @@ tasks:
     cmds:
       - |
         echo "🔧 Checking/building Splunk testing framework images..."
-        docker images | grep -q splunk-base-almalinux9 || docker build -t splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
-        docker images | grep -q splunk-base-ubuntu2204 || docker build -t splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
-        docker images | grep -q splunk-ansible-controller || docker build -t splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
-        docker images | grep -q splunk-git-server || docker build -t splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
-        docker images | grep -q molecule-runner || docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
+        docker images | grep -q splunk-base-almalinux9:latest || docker build -t splunk-base-almalinux9:latest {{.DOCKER_IMAGES_DIR}}/almalinux9-systemd-sshd/
+        docker images | grep -q splunk-base-ubuntu2204:latest || docker build -t splunk-base-ubuntu2204:latest {{.DOCKER_IMAGES_DIR}}/ubuntu2204-systemd-sshd/
+        docker images | grep -q splunk-ansible-controller:latest || docker build -t splunk-ansible-controller:latest {{.DOCKER_IMAGES_DIR}}/ansible-controller/
+        docker images | grep -q splunk-git-server:latest || docker build -t splunk-git-server:latest {{.DOCKER_IMAGES_DIR}}/git-server/
+        docker images | grep -q molecule-runner:latest || docker build -t molecule-runner:latest {{.DOCKER_IMAGES_DIR}}/molecule-runner/
         echo "✅ All images ready!"
         echo "📝 Note: ansible-controller and molecule-runner images include Molecule v25.12.0 (stable) with native inventory support and molecule-plugins for docker driver scenarios"
     status:
-      - docker images | grep -q splunk-base-almalinux9
-      - docker images | grep -q splunk-base-ubuntu2204
-      - docker images | grep -q splunk-ansible-controller
-      - docker images | grep -q splunk-git-server
-      - docker images | grep -q molecule-runner
+      - docker images | grep -q splunk-base-almalinux9:latest
+      - docker images | grep -q splunk-base-ubuntu2204:latest
+      - docker images | grep -q splunk-ansible-controller:latest
+      - docker images | grep -q splunk-git-server:latest
+      - docker images | grep -q molecule-runner:latest
 
   download:splunk:
     desc: "Download Splunk binaries to testing/software directory (idempotent)"
