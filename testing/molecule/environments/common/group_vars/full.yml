@@ -2,11 +2,8 @@
 # Splunk Enterprise specific variables (not applicable to UF)
 # Environment-specific overrides go in their own group_vars/
 
-# Splunk Enterprise paths and user
+# Splunk Enterprise paths
 splunk_home: /opt/splunk
-splunk_install_path: /opt
-splunk_nix_user: splunk
-splunk_nix_group: splunk
 splunk_nix_home: /home/splunk
 
 # Backup defaults (override splunk_backup: false per-environment to disable)

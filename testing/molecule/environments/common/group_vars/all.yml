@@ -13,6 +13,9 @@ ansible_python_interpreter: /usr/bin/python3
 
 # Splunk configuration (applies to both full and uf)
 splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
+splunk_install_path: /opt
+splunk_nix_user: splunk
+splunk_nix_group: splunk
 
 # Splunk version
 splunk_package_version: 9.4.2
