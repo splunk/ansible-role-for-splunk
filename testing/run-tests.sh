@@ -6,10 +6,17 @@
 #   ./run-tests.sh setup        # Run a specific task command
 #   ./run-tests.sh infra:test   # Run infra test scenario
 #   ./run-tests.sh --list       # List all available tasks
+#   ./run-tests.sh --rebuild    # Force rebuild molecule-runner image
 #
 # Environment variables:
 #   MOLECULE_ENV=prod ./run-tests.sh infra:test   # Override environment
 set -euo pipefail
+
+REBUILD=false
+if [[ "${1:-}" == "--rebuild" ]]; then
+    REBUILD=true
+    shift
+fi
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TESTING_DIR="$PROJECT_ROOT/testing"
@@ -26,8 +33,8 @@ test -f "$SECRETS_DIR/inventory/group_vars/all.yml" || printf -- '---\nsplunk_ad
     "$(dd if=/dev/urandom bs=1 count=100 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 40)" \
     > "$SECRETS_DIR/inventory/group_vars/all.yml"
 
-# Build molecule-runner image if needed
-if ! docker image inspect molecule-runner:latest >/dev/null 2>&1; then
+# Build molecule-runner image if needed (or if --rebuild was requested)
+if [[ "$REBUILD" == true ]] || ! docker image inspect molecule-runner:latest >/dev/null 2>&1; then
     echo "Building molecule-runner image..."
     docker build -t molecule-runner:latest "$TESTING_DIR/docker-images/molecule-runner/"
 fi

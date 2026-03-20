@@ -14,6 +14,7 @@ ansible-role-for-splunk is used by the Splunk@Splunk team to manage Splunk's cor
 1. [Purpose](#purpose)
 1. [Getting Started](#getting-started)
 1. [Extended Documentation](#extended-documentation)
+1. [Testing](#testing)
 1. [Frequently Asked Questions](#frequently-asked-questions)
 1. [Support](#support)
 1. [License](#license)
@@ -177,6 +178,9 @@ Note: Any task with an **adhoc** prefix means that it can be used independently 
 In the `splunk_common` sub-directory is where tasks common to all Splunk installations will live.
 In the future, all common splunk tasks will move to this directory.
 - **splunk_common/clone_prep.yml** - This task runs the `clone-prep-clear-config` command. This removes the `$SPLUNK_HOME/etc/instance,cfg` file and the `serverName` from `$SPLUNK_HOME/etc/system/local/server.conf` file.
+
+## Testing
+See [testing/README.md](testing/README.md) for details on running the local integration test harness.
 
 ## Frequently Asked Questions
 **Q:** What is the difference between this and splunk-ansible?

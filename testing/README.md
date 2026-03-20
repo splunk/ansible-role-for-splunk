@@ -23,6 +23,12 @@ Goals:
 
 # list all available commands
 ./testing/run-tests.sh --list
+
+# force rebuild the molecule-runner image
+./testing/run-tests.sh --rebuild
+
+# rebuild and then run a task
+./testing/run-tests.sh --rebuild setup
 ```
 
 ## Environments
