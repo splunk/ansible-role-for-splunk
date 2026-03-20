@@ -1,7 +1,7 @@
 FROM almalinux:9
 ENV container=docker
 
-RUN dnf -y install systemd systemd-sysv openssh-server sudo python3 passwd authselect && \
+RUN dnf -y install systemd systemd-sysv openssh-server sudo python3 passwd authselect ethtool && \
     dnf clean all
 
 # Fix nsswitch.conf to prioritize local files over sss for user/group lookups

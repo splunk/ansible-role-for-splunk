@@ -24,6 +24,6 @@
   hosts: all:!ansible_controller:!git_server:!jumpbox
   roles:
     - ../../../roles/splunk
-  serial: 3
+  serial: 50
   vars:
     deployment_task: check_splunk.yml

@@ -9,7 +9,8 @@ RUN apt-get update && \
         git \
         openssh-client \
         docker.io \
-        build-essential && \
+        build-essential \
+        ethtool && \
     rm -rf /var/lib/apt/lists/*
 
 # Install uv for fast Python package management

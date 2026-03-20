@@ -44,6 +44,11 @@
       when: ansible_service_mgr == "systemd" and inventory_hostname != 'ansible-controller'
       tags: [ssh]
 
+    - name: Disable veth checksum offloading (prevents large file transfer corruption)
+      ansible.builtin.command: ethtool -K eth0 tx off rx off
+      changed_when: false
+      failed_when: false
+
     - name: Set up SSH infrastructure for all Splunk hosts
       tags: [ssh_keys]
       block:

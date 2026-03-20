@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 ENV container=docker
 
 RUN apt-get update && \
-    apt-get install -y systemd openssh-server sudo python3 passwd && \
+    apt-get install -y systemd openssh-server sudo python3 passwd ethtool && \
     apt-get clean
 
 RUN (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do \
