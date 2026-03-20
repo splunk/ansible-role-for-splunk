@@ -31,8 +31,8 @@ vars:
     -e MOLECULE_ENV={{.ENV}}
   # Disable veth checksum offloading before running molecule (prevents large file transfer corruption)
   _ETHTOOL_FIX: 'ethtool -K eth0 tx off rx off 2>/dev/null;'
-  _MOL: 'docker run --rm {{._DOCKER_ARGS}} molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec $@" --'
-  _MOL_NET: 'docker run --rm --network splunk-test-network {{._DOCKER_ARGS}} molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec $@" --'
+  _MOL: 'docker run --rm {{._DOCKER_ARGS}} molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
+  _MOL_NET: 'docker run --rm --network splunk-test-network {{._DOCKER_ARGS}} molecule-runner:latest bash -c "{{._ETHTOOL_FIX}} exec \$@" --'
 
 tasks:
   default:

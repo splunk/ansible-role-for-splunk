@@ -13,6 +13,7 @@ ansible:
     args:
       ansible_playbook:
         - --inventory=/workspace/testing/.secrets/inventory/
+        - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/common/
         - --inventory=${MOLECULE_SCENARIO_DIRECTORY}/../environments/${MOLECULE_ENV:-small}/
 
 scenario:

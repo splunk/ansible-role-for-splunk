@@ -1,0 +1,26 @@
+---
+# Common variables shared across all test environments
+# Environment-specific overrides go in their own group_vars/all.yml
+
+# SSH connection configuration
+ansible_user: ansible
+ansible_connection: ssh
+ansible_host: "{{ inventory_hostname }}"  # Container name = hostname in Docker network
+ansible_ssh_private_key_file: /workspace/testing/.secrets/id_rsa
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o Compression=no -o TCPKeepAlive=yes'
+ansible_ssh_transfer_method: scp
+ansible_python_interpreter: /usr/bin/python3
+
+# Splunk configuration (applies to both full and uf)
+splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
+
+# Splunk version
+splunk_package_version: 9.4.2
+build_id: e9664af3d956
+
+# Default container image
+docker_image: splunk-base-ubuntu2204:latest
+
+# Local software configuration
+splunk_package_path: "/workspace/testing/software"
+logrotate_file: "/etc/logrotate.d/splunk"
