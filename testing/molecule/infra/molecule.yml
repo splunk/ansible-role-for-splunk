@@ -32,6 +32,5 @@ scenario:
     - destroy
     - create
     - prepare
-    - converge
     - verify
     - destroy

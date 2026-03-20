@@ -52,19 +52,6 @@
     - name: Set up SSH infrastructure for all Splunk hosts
       tags: [ssh_keys]
       block:
-        - name: Remove /run/nologin if it exists (prevent login denials)
-          ansible.builtin.file:
-            path: /run/nologin
-            state: absent
-          when: inventory_hostname != 'ansible-controller'
-
-        - name: Ensure systemd-user-sessions is enabled and started
-          ansible.builtin.systemd:
-            name: systemd-user-sessions
-            state: started
-            enabled: true
-          when: inventory_hostname != 'ansible-controller' and ansible_service_mgr == 'systemd' and ansible_distribution != 'AlmaLinux'
-
         - name: Start SSH service
           ansible.builtin.systemd:
             name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
@@ -259,7 +246,7 @@
             path: "{{ item }}"
             state: directory
             mode: '0755'
-          with_items:
+          loop:
             - /etc/nginx/sites-available
             - /etc/nginx/sites-enabled
           tags: [controller, nginx]

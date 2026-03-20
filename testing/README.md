@@ -18,6 +18,9 @@ Goals:
 # run the full test suite (infra, day0, day1, destroy)
 ./testing/run-tests.sh workflow:full
 
+# quick workflow (infra + day0, keeps containers for debugging)
+./testing/run-tests.sh workflow:quick
+
 # list all available commands
 ./testing/run-tests.sh --list
 ```
@@ -30,7 +33,7 @@ Select a topology via `MOLECULE_ENV`:
 
 Examples:
 ```bash
-MOLECULE_ENV=dev ./testing/run-tests.sh infra:test
+MOLECULE_ENV=dev ./testing/run-tests.sh workflow:full
 MOLECULE_ENV=prod ./testing/run-tests.sh workflow:full
 ```
 
@@ -41,10 +44,10 @@ The Splunk version is set in each environment's group_vars:
 splunk_package_version: 9.4.2
 build_id: e9664af3d956
 ```
-Download URLs and architecture suffixes are derived automatically from the role defaults.
+Download URLs and architecture suffixes are derived automatically from the role defaults. After changing the version, re-run `./testing/run-tests.sh download:splunk` to fetch the new binaries.
 
 ## Secrets
-`run-tests.sh` generates secrets on first run in `testing/.secrets/`:
+`run-tests.sh` creates secrets if they don't exist in `testing/.secrets/`:
 - `inventory/group_vars/all.yml` - YAML vars file with `splunk_admin_password` and `gitea_secret_key`
 - `id_rsa` / `id_rsa.pub` - SSH keys for container communication
 - `ansible_password` - password for the ansible user on the web terminal
@@ -52,7 +55,7 @@ Download URLs and architecture suffixes are derived automatically from the role 
 Secrets are loaded as an Ansible inventory source, making them available as regular variables. None of these files are committed to the repository.
 
 ## Web terminal (password-protected)
-After `./testing/run-tests.sh infra:setup`, a local web terminal is exposed at `http://localhost:3000/ttyd`.
+After running `./testing/run-tests.sh setup` followed by `./testing/run-tests.sh infra:setup`, a web terminal is exposed at `http://localhost:3000/ttyd`.
 - Auth is enabled (`ansible:<password>`).
 - The password is in `testing/.secrets/ansible_password`.
 

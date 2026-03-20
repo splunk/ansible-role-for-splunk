@@ -13,36 +13,23 @@ RUN apt-get update && \
         ethtool && \
     rm -rf /var/lib/apt/lists/*
 
-# Install uv for fast Python package management
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
-
-# Install ansible-dev-tools for complete Ansible development environment
-RUN pip3 install ansible-dev-tools
-
-RUN pip3 install --upgrade molecule==25.12.0
-RUN pip3 install --upgrade molecule-plugins
-
-# Install additional tools
-RUN uv tool install ansible-lint
-
-# Install requests library for Docker modules
-RUN pip3 install requests
+# Install Python packages
+RUN pip3 install --no-cache-dir \
+        ansible-dev-tools \
+        molecule==25.12.0 \
+        molecule-plugins \
+        ansible-lint \
+        requests
 
 # Install go-task
 RUN sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
 
-# Add tools to PATH
-ENV PATH="/root/.local/bin:/root/.local/share/uv/tools/ansible-lint/bin:$PATH"
-
 # Install required Ansible collections
-RUN ansible-galaxy collection install ansible.posix && \
-    ansible-galaxy collection install community.crypto && \
-    ansible-galaxy collection install community.general && \
-    ansible-galaxy collection install community.docker
+RUN ansible-galaxy collection install \
+        ansible.posix \
+        community.crypto \
+        community.general \
+        community.docker
 
-# Create workspace
 WORKDIR /workspace
-
-# Default command
 CMD ["molecule", "--help"]
