@@ -5,7 +5,7 @@
   gather_facts: false
   vars:
     ansible_python_interpreter: /usr/local/bin/python3
-    targets: "{{ groups['full'] | default([]) + groups['git_server'] | default([]) }}"
+    targets: "{{ groups['full'] | default([]) + groups['uf'] | default([]) + groups['git_server'] | default([]) }}"
   tasks:
     - name: Stop and remove ansible-controller
       community.docker.docker_container:

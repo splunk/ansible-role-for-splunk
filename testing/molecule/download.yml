@@ -1,0 +1,31 @@
+---
+# Download Splunk binaries using version and arch from role defaults and environment group_vars
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - ../../roles/splunk/defaults/main.yml
+    - environments/{{ lookup('env', 'MOLECULE_ENV') | default('small') }}/group_vars/all.yml
+  tasks:
+    - name: Create software directory
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../software"
+        state: directory
+        mode: '0755'
+
+    - name: Download Splunk Enterprise
+      ansible.builtin.get_url:
+        url: "{{ splunk_package_url_full }}"
+        dest: "{{ playbook_dir }}/../software/{{ splunk_package_url_full | basename }}"
+      register: full_download
+      retries: 3
+      delay: 10
+      until: full_download is success
+
+    - name: Download Splunk Universal Forwarder
+      ansible.builtin.get_url:
+        url: "{{ splunk_package_url_uf }}"
+        dest: "{{ playbook_dir }}/../software/{{ splunk_package_url_uf | basename }}"
+      register: uf_download
+      retries: 3
+      delay: 10
+      until: uf_download is success

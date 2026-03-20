@@ -7,21 +7,21 @@
   become: true
   tasks:
     - name: Check if Splunk service is running (full instances)
-      systemd:
+      ansible.builtin.systemd:
         name: splunk
       register: splunk_service_status
       when: "'full' in group_names"
       ignore_errors: true
 
     - name: Check if Splunk Universal Forwarder service is running
-      systemd:
+      ansible.builtin.systemd:
         name: splunkforwarder
       register: splunkforwarder_service_status
       when: "'uf' in group_names"
       ignore_errors: true
 
     - name: Verify Splunk is listening on management port
-      wait_for:
+      ansible.builtin.wait_for:
         host: "{{ ansible_host | default(inventory_hostname) }}"
         port: 8089
         timeout: 60
@@ -29,7 +29,7 @@
       ignore_errors: true
 
     - name: Verify Splunk web interface is accessible (search heads)
-      wait_for:
+      ansible.builtin.wait_for:
         host: "{{ ansible_host | default(inventory_hostname) }}"
         port: 8000
         timeout: 60
@@ -40,15 +40,17 @@
   hosts: clustermanager
   become: true
   become_user: splunk
+  vars_files:
+    - ../../../roles/splunk/defaults/main.yml
   tasks:
     - name: Check cluster manager status
-      command: /opt/splunk/bin/splunk show cluster-status -auth admin:changeme
+      ansible.builtin.command: /opt/splunk/bin/splunk show cluster-status -auth {{ splunk_auth }}
       register: cluster_status
       failed_when: false
       changed_when: false
 
     - name: Display cluster status
-      debug:
+      ansible.builtin.debug:
         var: cluster_status.stdout_lines
       when: cluster_status.stdout_lines is defined
 
@@ -56,30 +58,33 @@
   hosts: shdeployer
   become: true
   become_user: splunk
+  vars_files:
+    - ../../../roles/splunk/defaults/main.yml
   tasks:
     - name: Check search head cluster status
-      command: /opt/splunk/bin/splunk show shcluster-status -auth admin:changeme
+      ansible.builtin.command: /opt/splunk/bin/splunk show shcluster-status -auth {{ splunk_auth }}
       register: shc_status
       failed_when: false
       changed_when: false
 
     - name: Display SHC status
-      debug:
+      ansible.builtin.debug:
         var: shc_status.stdout_lines
       when: shc_status.stdout_lines is defined
 
 - name: Verify Git server is accessible
-  hosts: git_server
+  hosts: localhost
+  gather_facts: false
   tasks:
     - name: Check Git server web interface
-      uri:
-        url: "http://{{ ansible_host | default(inventory_hostname) }}:8929"
+      ansible.builtin.uri:
+        url: "http://git-server:8929"
         method: GET
         status_code: [200, 302]
       register: git_check
       ignore_errors: true
 
     - name: Verify Git server response
-      debug:
+      ansible.builtin.debug:
         msg: "Git server is accessible and responding"
       when: git_check.status is defined and git_check.status in [200, 302]

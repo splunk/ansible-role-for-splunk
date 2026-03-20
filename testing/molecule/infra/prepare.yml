@@ -2,6 +2,27 @@
 # Infrastructure Preparation - SSH Setup
 # Sets up SSH connectivity between ansible-controller and all Splunk containers
 
+# Read secrets from molecule-runner (localhost), where /workspace is bind-mounted.
+# Target containers do not have /workspace, so secrets must be read here first.
+- name: Read secrets from molecule-runner
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Slurp SSH keys and password
+      ansible.builtin.slurp:
+        src: "{{ item }}"
+      loop:
+        - /workspace/testing/.secrets/id_rsa
+        - /workspace/testing/.secrets/id_rsa.pub
+        - /workspace/testing/.secrets/ansible_password
+      register: secrets_slurp
+
+    - name: Expose secrets as facts
+      ansible.builtin.set_fact:
+        runner_private_key: "{{ (secrets_slurp.results | selectattr('item', 'equalto', '/workspace/testing/.secrets/id_rsa') | first).content | b64decode }}"
+        runner_public_key: "{{ (secrets_slurp.results | selectattr('item', 'equalto', '/workspace/testing/.secrets/id_rsa.pub') | first).content | b64decode }}"
+        ansible_plain_password: "{{ (secrets_slurp.results | selectattr('item', 'equalto', '/workspace/testing/.secrets/ansible_password') | first).content | b64decode | trim }}"
+
 - name: Setup SSH Infrastructure
   hosts: all:!git_server
   gather_facts: true
@@ -13,120 +34,51 @@
     ansible_user: root
     # Some base images can have restrictive/odd $HOME perms for root; force tmp into /tmp.
     ansible_remote_tmp: /tmp/.ansible/tmp
+    runner_public_key: "{{ hostvars['localhost'].runner_public_key }}"
+    runner_private_key: "{{ hostvars['localhost'].runner_private_key }}"
+    ansible_plain_password: "{{ hostvars['localhost'].ansible_plain_password }}"
   tasks:
     - name: Wait for systemd to be ready
-      wait_for:
+      ansible.builtin.wait_for:
         path: /run/systemd/system
       when: ansible_service_mgr == "systemd" and inventory_hostname != 'ansible-controller'
       tags: [ssh]
-
-    - name: Define host key directory path
-      set_fact:
-        lab_ssh_dir: /workspace/testing/.secrets
-      run_once: true
-      tags: [ssh_keys, controller]
-
-    - name: Check if runner SSH key exists (host bind mount)
-      stat:
-        path: "{{ lab_ssh_dir }}/id_rsa"
-      register: runner_key_stat
-      run_once: true
-      tags: [ssh_keys, controller]
-
-    - name: Assert host SSH keypair exists (run task setup if missing)
-      assert:
-        that:
-          - runner_key_stat.stat.exists | default(false)
-        fail_msg: |
-          Required SSH keypair not found at {{ lab_ssh_dir }}/id_rsa. Run:
-            task -d testing setup
-          This provisions host-side secrets and builds images.
-      run_once: true
-      tags: [ssh_keys, controller]
-
-    - name: Check if ansible password file exists on host
-      stat:
-        path: "{{ lab_ssh_dir }}/ansible_password"
-      register: ansible_pw_stat
-      run_once: true
-      tags: [controller, ssh]
-
-    - name: Assert ansible password file exists on host
-      assert:
-        that:
-          - ansible_pw_stat.stat.exists | default(false)
-        fail_msg: |
-          Required file missing: {{ lab_ssh_dir }}/ansible_password. Run:
-            task -d testing setup
-          This provisions host-side secrets and builds images.
-      run_once: true
-      tags: [controller, ssh]
-
-    - name: Read ansible password from host secrets file
-      slurp:
-        src: "{{ lab_ssh_dir }}/ansible_password"
-      register: ansible_pw_file
-      run_once: true
-      tags: [controller, ssh]
-
-    - name: Set ansible_plain_password fact
-      set_fact:
-        ansible_plain_password: "{{ (ansible_pw_file.content | b64decode).strip() }}"
-      run_once: true
-      tags: [controller, ssh]
 
     - name: Set up SSH infrastructure for all Splunk hosts
       tags: [ssh_keys]
       block:
         - name: Remove /run/nologin if it exists (prevent login denials)
-          file:
+          ansible.builtin.file:
             path: /run/nologin
             state: absent
           when: inventory_hostname != 'ansible-controller'
 
         - name: Ensure systemd-user-sessions is enabled and started
-          systemd:
+          ansible.builtin.systemd:
             name: systemd-user-sessions
             state: started
             enabled: true
           when: inventory_hostname != 'ansible-controller' and ansible_service_mgr == 'systemd' and ansible_distribution != 'AlmaLinux'
 
         - name: Start SSH service
-          systemd:
+          ansible.builtin.systemd:
             name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
             state: started
             enabled: true
           when: inventory_hostname != 'ansible-controller'
 
         - name: Create ansible user SSH directory
-          file:
+          ansible.builtin.file:
             path: /home/ansible/.ssh
             state: directory
             owner: ansible
             group: ansible
             mode: '0700'
 
-    - name: Fetch SSH keys from host bind mount (run once)
-      slurp:
-        src: "{{ item }}"
-      loop:
-        - "{{ lab_ssh_dir }}/id_rsa"
-        - "{{ lab_ssh_dir }}/id_rsa.pub"
-      register: runner_keys
-      run_once: true
-      tags: [controller, ssh_keys]
-
-    - name: Extract runner key contents (run once)
-      set_fact:
-        runner_private_key: "{{ (runner_keys.results | selectattr('item','equalto', lab_ssh_dir + '/id_rsa') | first).content | b64decode }}"
-        runner_public_key: "{{ (runner_keys.results | selectattr('item','equalto', lab_ssh_dir + '/id_rsa.pub') | first).content | b64decode }}"
-      run_once: true
-      tags: [controller, ssh_keys]
-
     - name: Set up SSH infrastructure for all hosts
       block:
         - name: Copy SSH public key to authorized_keys
-          copy:
+          ansible.builtin.copy:
             content: "{{ runner_public_key }}"
             dest: /home/ansible/.ssh/authorized_keys
             owner: ansible
@@ -134,7 +86,7 @@
             mode: '0600'
 
         - name: Configure SSH client settings
-          blockinfile:
+          ansible.builtin.blockinfile:
             path: /home/ansible/.ssh/config
             create: true
             owner: ansible
@@ -147,7 +99,7 @@
                 LogLevel ERROR
 
         - name: Create test data directories
-          file:
+          ansible.builtin.file:
             path: "{{ item }}"
             state: directory
             mode: '0755'
@@ -159,20 +111,20 @@
         - name: Ensure Splunk user and group exist
           block:
             - name: Create splunk group
-              group:
+              ansible.builtin.group:
                 name: splunk
                 state: present
                 local: false
               when: splunk_nix_user | default('splunk') != 'root'
 
             - name: Check for splunk user
-              command: id -u splunk
+              ansible.builtin.command: id -u splunk
               register: splunk_user_id
               changed_when: false
               failed_when: false
 
             - name: Create splunk user
-              user:
+              ansible.builtin.user:
                 name: splunk
                 group: splunk
                 home: /home/splunk
@@ -185,7 +137,7 @@
                 - splunk_user_id.rc != 0
 
             - name: Ensure splunk user has sudo access
-              lineinfile:
+              ansible.builtin.lineinfile:
                 path: /etc/sudoers.d/splunk
                 create: true
                 mode: '0440'
@@ -197,19 +149,19 @@
     - name: Permit user logins on systemd hosts (clear pam_nologin gate)
       block:
         - name: Remove /run/nologin if present
-          file:
+          ansible.builtin.file:
             path: /run/nologin
             state: absent
 
         - name: Start systemd-user-sessions (opens user logins)
-          systemd:
+          ansible.builtin.systemd:
             name: systemd-user-sessions
             state: started
             daemon_reload: true
           when: ansible_distribution != 'AlmaLinux'
 
         - name: Enable systemd-user-sessions at boot (ignore if static)
-          systemd:
+          ansible.builtin.systemd:
             name: systemd-user-sessions
             enabled: true
       when: ansible_service_mgr == "systemd"
@@ -217,14 +169,14 @@
     - name: Configure Ansible Controller
       block:
         - name: Start SSH service on controller
-          systemd:
+          ansible.builtin.systemd:
             name: "{{ 'ssh' if ansible_os_family == 'Debian' else 'sshd' }}"
             state: started
             enabled: true
           tags: [controller, ssh]
 
         - name: Ensure ansible SSH directory on controller
-          file:
+          ansible.builtin.file:
             path: /home/ansible/.ssh
             state: directory
             mode: '0700'
@@ -233,7 +185,7 @@
           tags: [controller, ssh_keys]
 
         - name: Create ttyd service file
-          copy:
+          ansible.builtin.copy:
             dest: /etc/systemd/system/ttyd.service
             content: |
               [Unit]
@@ -257,40 +209,26 @@
           tags: [controller, ttyd]
 
         - name: Enable ttyd service
-          systemd:
+          ansible.builtin.systemd:
             name: ttyd
-            enabled: yes
-            daemon_reload: yes
+            enabled: true
+            daemon_reload: true
           tags: [controller, ttyd]
 
-        - name: Read private key from host path
-          slurp:
-            src: "{{ lab_ssh_dir }}/id_rsa"
-          register: runner_priv
-          run_once: true
-          tags: [controller, ssh_keys]
-
-        - name: Read public key from host path
-          slurp:
-            src: "{{ lab_ssh_dir }}/id_rsa.pub"
-          register: runner_pub
-          run_once: true
-          tags: [controller, ssh_keys]
-
         - name: Copy SSH keys to controller /home/ansible/.ssh
-          copy:
+          ansible.builtin.copy:
             content: "{{ item.content }}"
             dest: "{{ item.dest }}"
             mode: "{{ item.mode }}"
             owner: ansible
             group: ansible
           loop:
-            - { content: "{{ runner_priv.content | b64decode }}", dest: /home/ansible/.ssh/id_rsa, mode: '0600' }
-            - { content: "{{ runner_pub.content | b64decode }}", dest: /home/ansible/.ssh/id_rsa.pub, mode: '0644' }
+            - { content: "{{ runner_private_key }}", dest: /home/ansible/.ssh/id_rsa, mode: '0600' }
+            - { content: "{{ runner_public_key }}", dest: /home/ansible/.ssh/id_rsa.pub, mode: '0644' }
           tags: [controller, ssh_keys]
 
         - name: Install controller authorized_keys
-          copy:
+          ansible.builtin.copy:
             content: "{{ runner_public_key }}"
             dest: /home/ansible/.ssh/authorized_keys
             mode: '0600'
@@ -299,7 +237,7 @@
           tags: [controller, ssh_keys]
 
         - name: Create ansible controller SSH config
-          copy:
+          ansible.builtin.copy:
             content: |
               Host *
                 StrictHostKeyChecking no
@@ -312,7 +250,7 @@
           tags: [controller, ssh_keys]
 
         - name: Ensure nginx sites directories exist
-          file:
+          ansible.builtin.file:
             path: "{{ item }}"
             state: directory
             mode: '0755'
@@ -322,20 +260,20 @@
           tags: [controller, nginx]
 
         - name: Disable default nginx site if present
-          file:
+          ansible.builtin.file:
             path: /etc/nginx/sites-enabled/default
             state: absent
           tags: [controller, nginx]
 
         - name: Ensure ttyd is running
-          systemd:
+          ansible.builtin.systemd:
             name: ttyd
             state: started
             enabled: true
           tags: [controller, ttyd]
 
         - name: Ensure nginx is running
-          systemd:
+          ansible.builtin.systemd:
             name: nginx
             state: started
             enabled: true
@@ -352,7 +290,7 @@
     ansible_connection: docker
   tasks:
     - name: Check Gitea container is running
-      raw: echo 'Git server container running - Gitea will auto-start'
+      ansible.builtin.raw: echo 'Git server container running - Gitea will auto-start'
 
     - name: Create test repositories (placeholder)
-      raw: "echo 'Gitea ready for app repository testing'"
+      ansible.builtin.raw: "echo 'Gitea ready for app repository testing'"

@@ -13,6 +13,18 @@ set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TESTING_DIR="$PROJECT_ROOT/testing"
+SECRETS_DIR="$TESTING_DIR/.secrets"
+
+# Create secrets on the host (runs as current user, not root)
+mkdir -p "$SECRETS_DIR/inventory/group_vars"
+chmod 700 "$SECRETS_DIR"
+test -f "$SECRETS_DIR/id_rsa"                      || ssh-keygen -t rsa -b 2048 -N '' -C 'splunk-test-cluster' -f "$SECRETS_DIR/id_rsa"
+test -f "$SECRETS_DIR/ansible_password"             || dd if=/dev/urandom bs=1 count=100 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 20 > "$SECRETS_DIR/ansible_password"
+test -f "$SECRETS_DIR/inventory/inventory.yml"      || printf -- '---\nall:\n' > "$SECRETS_DIR/inventory/inventory.yml"
+test -f "$SECRETS_DIR/inventory/group_vars/all.yml" || printf -- '---\nsplunk_admin_password: %s\ngitea_secret_key: %s\n' \
+    "$(dd if=/dev/urandom bs=1 count=100 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 20)" \
+    "$(dd if=/dev/urandom bs=1 count=100 2>/dev/null | tr -dc 'A-Za-z0-9' | head -c 40)" \
+    > "$SECRETS_DIR/inventory/group_vars/all.yml"
 
 # Build molecule-runner image if needed
 if ! docker image inspect molecule-runner:latest >/dev/null 2>&1; then
@@ -24,13 +36,12 @@ fi
 docker network inspect splunk-test-network >/dev/null 2>&1 || \
     docker network create splunk-test-network
 
-# Install go-task inside the container at startup
-INIT='sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin >/dev/null 2>&1'
-
 # Mount the project at the SAME host path so that nested docker run commands
 # (executed by the host Docker daemon via the mounted socket) resolve volume
 # mount paths correctly.
-DOCKER_ARGS=(--rm --network splunk-test-network)
+HOST_UID=$(id -u)
+HOST_GID=$(id -g)
+DOCKER_ARGS=(--rm --network splunk-test-network -e "HOST_UID=$HOST_UID" -e "HOST_GID=$HOST_GID")
 
 # Allocate a TTY only when stdin is a terminal
 if [ -t 0 ]; then
@@ -51,9 +62,9 @@ fi
 if [ $# -gt 0 ]; then
     exec docker run "${DOCKER_ARGS[@]}" \
         molecule-runner:latest \
-        bash -c "${INIT} && exec task \"\$@\"" _ "$@"
+        bash -c "exec task \"\$@\"" _ "$@"
 else
     exec docker run "${DOCKER_ARGS[@]}" \
         molecule-runner:latest \
-        bash -c "${INIT} && echo 'task ready - run: task --list' && exec bash"
+        bash -c "echo 'task ready - run: task --list' && exec bash"
 fi

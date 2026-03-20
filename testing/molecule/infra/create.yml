@@ -5,8 +5,8 @@
   gather_facts: false
   vars:
     ansible_python_interpreter: /usr/local/bin/python3
-    targets: "{{ groups['full'] | default([]) + groups['git_server'] | default([]) + groups['ansible_controller'] | default([]) }}"
-    gitea_secret_key: "{{ lookup('env', 'GITEA_SECRET_KEY') | default(lookup('file', '/workspace/testing/.secrets/gitea_secret_key') | trim, true) }}"
+    targets: "{{ groups['full'] | default([]) + groups['uf'] | default([]) + groups['git_server'] | default([]) + groups['ansible_controller'] | default([]) }}"
+
   tasks:
     - name: Ensure Docker network exists
       community.docker.docker_network:
@@ -49,7 +49,7 @@
           - name: splunk-test-network
         volumes:
           - /sys/fs/cgroup:/sys/fs/cgroup:rw
-          - "{{ item }}-data:/opt:rw"
+          - "ansible-splunk-test-{{ item }}-data:/opt:rw"
         tmpfs:
           - /run
           - /run/lock
@@ -73,7 +73,7 @@
           - "2222:22"
           - "8929:8929"
         volumes:
-          - gitea-data:/data:rw
+          - ansible-splunk-test-gitea-data:/data:rw
         restart_policy: unless-stopped
         state: started
       when: "'git_server' in groups"

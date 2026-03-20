@@ -28,6 +28,9 @@ RUN uv tool install ansible-lint
 # Install requests library for Docker modules
 RUN pip3 install requests
 
+# Install go-task
+RUN sh -c "$(curl -fsSL https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+
 # Add tools to PATH
 ENV PATH="/root/.local/bin:/root/.local/share/uv/tools/ansible-lint/bin:$PATH"
 

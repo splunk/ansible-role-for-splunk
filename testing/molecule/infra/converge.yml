@@ -7,19 +7,19 @@
     ansible_python_interpreter: /usr/bin/python3
   tasks:
     - name: Wait for systemd to be ready
-      wait_for:
+      ansible.builtin.wait_for:
         path: /run/systemd/system
       when: ansible_service_mgr == "systemd"
 
     - name: Ensure SSH server is running
-      systemd:
+      ansible.builtin.systemd:
         name: "{{ 'sshd' if ansible_os_family == 'RedHat' else 'ssh' }}"
         state: started
         enabled: true
       when: ansible_distribution != 'Ubuntu' and ansible_distribution != 'AlmaLinux'
 
     - name: Create ansible user SSH directory
-      file:
+      ansible.builtin.file:
         path: /home/ansible/.ssh
         state: directory
         owner: ansible
@@ -27,7 +27,7 @@
         mode: '0700'
 
     - name: Copy SSH public key to authorized_keys
-      copy:
+      ansible.builtin.copy:
         content: "{{ lookup('file', '/workspace/testing/.secrets/id_rsa.pub') }}"
         dest: /home/ansible/.ssh/authorized_keys
         owner: ansible
@@ -35,7 +35,7 @@
         mode: '0600'
 
     - name: Configure SSH client settings
-      blockinfile:
+      ansible.builtin.blockinfile:
         path: /home/ansible/.ssh/config
         create: true
         owner: ansible

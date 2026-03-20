@@ -6,20 +6,20 @@
     ansible_connection: docker  # Use Docker for verification (not SSH)
   tasks:
     - name: Test infrastructure setup
-      command: echo "Infrastructure setup verified - containers created and SSH keys distributed to {{ inventory_hostname }}"
+      ansible.builtin.command: echo "Infrastructure setup verified - containers created and SSH keys distributed to {{ inventory_hostname }}"
       register: infra_test
 
     - name: Display infrastructure test result
-      debug:
+      ansible.builtin.debug:
         msg: "{{ infra_test.stdout }}"
 
     - name: Read PID 1 comm
-      command: cat /proc/1/comm
+      ansible.builtin.command: cat /proc/1/comm
       register: pid1_comm
       changed_when: false
 
     - name: Assert systemd is running as PID 1
-      assert:
+      ansible.builtin.assert:
         that:
           - pid1_comm.stdout | trim == 'systemd'
         fail_msg: "Expected PID 1 to be systemd, got: {{ pid1_comm.stdout | trim | default('') }}"
