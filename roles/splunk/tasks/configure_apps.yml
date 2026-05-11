@@ -24,7 +24,7 @@
       - "'shdeployer' not in group_names"
       - "'deploymentserver' not in group_names"
   # Conditional for block
-  when: "splunk_app_deploy_path is undefined"
+  when: splunk_app_deploy_path is undefined or splunk_app_deploy_path == 'undefined'
 
 # Prep the Ansible host to deploy apps then install them
 - block:
