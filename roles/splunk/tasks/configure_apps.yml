@@ -1,29 +1,29 @@
 ---
 # Configure default splunk_app_deploy_path based on which group the host is a member of
-- block:
-  - name: Set default splunk_app_deploy_path for clustermanager hosts
-    ansible.builtin.set_fact:
-      splunk_app_deploy_path: etc/master-apps
-    when: "'clustermanager' in group_names"
+- name: Set default splunk_app_deploy_path based on group membership
+  block:
+    - name: Set default splunk_app_deploy_path for clustermanager hosts
+      ansible.builtin.set_fact:
+        splunk_app_deploy_path: etc/master-apps
+      when: "'clustermanager' in group_names"
 
-  - name: Set default splunk_app_deploy_path for shdeployer hosts
-    ansible.builtin.set_fact:
-      splunk_app_deploy_path: etc/shcluster/apps
-    when: "'shdeployer' in group_names"
+    - name: Set default splunk_app_deploy_path for shdeployer hosts
+      ansible.builtin.set_fact:
+        splunk_app_deploy_path: etc/shcluster/apps
+      when: "'shdeployer' in group_names"
 
-  - name: Set default splunk_app_deploy_path for deploymentserver hosts
-    ansible.builtin.set_fact:
-      splunk_app_deploy_path: etc/deployment-apps
-    when: "'deploymentserver' in group_names"
+    - name: Set default splunk_app_deploy_path for deploymentserver hosts
+      ansible.builtin.set_fact:
+        splunk_app_deploy_path: etc/deployment-apps
+      when: "'deploymentserver' in group_names"
 
-  - name: "Set default splunk_app_deploy_path all other hosts"
-    ansible.builtin.set_fact:
-      splunk_app_deploy_path: "etc/apps"
-    when:
-      - "'clustermanager' not in group_names"
-      - "'shdeployer' not in group_names"
-      - "'deploymentserver' not in group_names"
-  # Conditional for block
+    - name: "Set default splunk_app_deploy_path all other hosts"
+      ansible.builtin.set_fact:
+        splunk_app_deploy_path: "etc/apps"
+      when:
+        - "'clustermanager' not in group_names"
+        - "'shdeployer' not in group_names"
+        - "'deploymentserver' not in group_names"
   when: splunk_app_deploy_path is undefined or splunk_app_deploy_path == 'undefined'
 
 # Prep the Ansible host to deploy apps then install them
