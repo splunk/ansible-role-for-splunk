@@ -1,0 +1,33 @@
+---
+- name: Poll cluster manager until bundle apply or validate completes
+  ansible.builtin.uri:
+    url: "https://{{ splunk_mgmt_uri }}:{{ splunkd_port }}/services/cluster/manager/info"
+    method: GET
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    return_content: true
+    body: output_mode=json
+  check_mode: false
+  no_log: true
+  changed_when: false
+  register: cm_bundle_info_response
+  retries: "{{ splunk_apply_cluster_bundle_retries | default(3) }}"
+  delay: "{{ splunk_apply_cluster_bundle_delay | default(60) }}"
+  until: >-
+    cm_bundle_info_response.status | default(-1) == 200 and
+    'in progress' not in
+    (cm_bundle_info_response.json.entry[0].content.apply_bundle_status.status | default('') | string)
+
+- name: Set indexer cluster bundle status facts
+  ansible.builtin.set_fact:
+    _cm_bundle_invalid: >-
+      {{ (cm_bundle_info_response.json.entry[0].content.apply_bundle_status.invalid_bundle.checksum
+          | default('') | string | length) > 0 }}
+    _cm_bundle_restart_required: >-
+      {{ (cm_bundle_info_response.json.entry[0].content.last_check_restart_bundle_result
+          | default('false') | string | lower) == 'true' }}
+    _cm_bundle_errors: >-
+      {{ cm_bundle_info_response.json.entry[0].content.apply_bundle_status.invalid_bundle.bundle_validation_errors_on_master
+         | default([]) }}

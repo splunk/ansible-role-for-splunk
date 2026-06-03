@@ -72,6 +72,8 @@ splunk_idxc_rep_port: 9887
 splunk_idxc_label: myidxc
 splunk_apply_cluster_bundle_retries: 3  # How many times to retry indexer cluster bundle apply if it fails
 splunk_apply_cluster_bundle_delay: 60  # Delay in seconds between retries to apply indexer cluster bundle
+splunk_idxc_validate_only: false  # When true, dry-run validate the indexer cluster bundle instead of applying it; reports the result and never fails
+splunk_idxc_validate: false  # When true, validate the bundle before applying and fail if invalid; ignored when splunk_idxc_validate_only is true
 splunk_apply_shcluster_bundle_retries: 3  # How many times to retry SHC bundle apply if it fails
 splunk_apply_shcluster_bundle_delay: 60  #  Delay in seconds between retries to apply SHC bundle
 # SHC Vars

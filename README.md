@@ -97,6 +97,15 @@ You will find additional examples in the included sample [group_vars](https://gi
 You may also override the auto-configured `splunk_app_deploy_path` at the repository level as well. For example, to deploy apps to $SPLUNK_HOME/etc/apps on a deployment server rather than the default of $SPLUNK_HOME/etc/deployment-apps. If not set, configure_apps.yml will determine the app deployment path based on the host's group membership within the inventory.
 **Tip:** If you only use one git server, you may want to define the `git_server` and related values in an all.yml group_var file.
 
+**Validating an indexer cluster bundle without deploying it**
+When deploying apps to a cluster manager (`etc/master-apps` or `etc/manager-apps`), the role applies the indexer cluster bundle by default, distributing it to the peers (which may restart them). Set `splunk_idxc_validate_only` to `true` for a non-destructive dry run instead:
+```
+ansible-playbook playbooks/splunk_app_install.yml -e splunk_idxc_validate_only=true
+```
+The role validates the bundle without distributing it and reports whether it is valid and whether applying would restart peers. It does not fail on an invalid bundle, so you can review the result first. Only `true` or `false` are accepted.
+
+To validate as a safety check immediately before applying, set `splunk_idxc_validate` to `true`: the role validates first and fails (without distributing) if the bundle is invalid. Defaults to `false` (skip validation); ignored when `splunk_idxc_validate_only` is `true`.
+
 **Configure local splunk admin password at install**
 ```
 splunk_admin_username: youradminusername (optional, defaults to admin)

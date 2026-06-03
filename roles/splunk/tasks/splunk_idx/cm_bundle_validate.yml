@@ -1,0 +1,19 @@
+---
+- name: Validate indexer cluster bundle (check-restart, non-destructive)
+  ansible.builtin.uri:
+    url: "https://{{ splunk_mgmt_uri }}:{{ splunkd_port }}/services/cluster/manager/control/control/validate_bundle"
+    method: POST
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    body_format: form-urlencoded
+    body:
+      check-restart: 1
+    status_code: 200
+  check_mode: false
+  no_log: true
+  changed_when: false
+
+- name: Read indexer cluster bundle status
+  ansible.builtin.include_tasks: "{{ role_path }}/tasks/splunk_idx/cm_bundle_status.yml"

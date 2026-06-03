@@ -1,0 +1,46 @@
+---
+- name: Validate that splunk_idxc_validate_only is a recognized boolean value
+  ansible.builtin.assert:
+    that:
+      - splunk_idxc_validate_only | string | lower in ['true', 'false']
+    fail_msg: "splunk_idxc_validate_only must be true or false. Got: '{{ splunk_idxc_validate_only }}'"
+    quiet: true
+
+- name: Validate indexer cluster bundle
+  ansible.builtin.include_tasks: "{{ role_path }}/tasks/splunk_idx/cm_bundle_validate.yml"
+  when: (splunk_idxc_validate_only | default(false) | bool) or (splunk_idxc_validate | default(false) | bool)
+
+- name: Report indexer cluster bundle validation result
+  ansible.builtin.debug:
+    msg: >-
+      {{ 'Indexer cluster bundle INVALID - applying would fail. Errors: '
+           ~ (_cm_bundle_errors | join('; '))
+         if _cm_bundle_invalid | bool
+         else ('Indexer cluster bundle VALID - applying WOULD trigger a rolling restart of peers.'
+               if _cm_bundle_restart_required | bool
+               else 'Indexer cluster bundle VALID - applying would NOT restart peers.') }}
+  when: (splunk_idxc_validate_only | default(false) | bool) or (splunk_idxc_validate | default(false) | bool)
+
+- name: Fail if indexer cluster bundle is invalid
+  ansible.builtin.fail:
+    msg: "Indexer cluster bundle failed validation on the cluster manager; refusing to apply. Errors: {{ _cm_bundle_errors | join('; ') }}"
+  when:
+    - not (splunk_idxc_validate_only | default(false) | bool)
+    - splunk_idxc_validate | default(false) | bool
+    - _cm_bundle_invalid | bool
+
+- name: Apply indexer cluster bundle (distribute to peers)
+  ansible.builtin.uri:
+    url: "https://{{ splunk_mgmt_uri }}:{{ splunkd_port }}/services/cluster/manager/control/default/apply"
+    method: POST
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    force_basic_auth: true
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    body_format: form-urlencoded
+    body:
+      skip-validation: 1
+    status_code: 200
+  no_log: true
+  changed_when: true
+  when: not (splunk_idxc_validate_only | default(false) | bool)

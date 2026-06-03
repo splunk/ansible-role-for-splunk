@@ -98,7 +98,7 @@
         app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
         app_src: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}"
         handler: >-
-          {{ 'apply indexer cluster bundle' if app_dest == 'etc/master-apps' or app_dest == 'etc/manager-apps'
+          {{ 'apply or validate indexer cluster bundle' if app_dest == 'etc/master-apps' or app_dest == 'etc/manager-apps'
               else 'reload deployment server' if app_dest == 'etc/deployment-apps'
               else 'apply shcluster-bundle' if app_dest == 'etc/shcluster/apps'
               else 'restart splunk' }}
