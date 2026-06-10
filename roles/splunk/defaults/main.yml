@@ -62,6 +62,11 @@ git_project: undefined
 git_version: master  # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
 app_relative_path:  # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
 splunk_app_deploy_path: undefined  # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+# S3 app source (used when an app entry has download_app_source: s3).
+# splunk_app_s3_bucket: my-splunk-apps-bucket  # Default bucket; overridable per app with item.bucket
+# splunk_app_s3_bucket_prefix: prod            # Key prefix (directory) under the bucket; forms <prefix>/<app_id>/<version>/
+# s3_access_key_id: "{{ vault_s3_access_key_id }}"      # Omit to use the controller's IAM role / credential chain
+# s3_secret_access_key: "{{ vault_s3_secret_access_key }}"  # Omit to use the controller's IAM role / credential chain
 splunk_auditd_configure: false  # Whether or not to install auditd filtering rules for splunk launched executables
 splunk_db_path: "{{ splunk_home }}/var/lib/splunk" # Path which specifies the location of indexes on indexers and KVStores on other systems - defaults to $SPLUNK_HOME/var/lib/splunk
 # IDXC Vars
