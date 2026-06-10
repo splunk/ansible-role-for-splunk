@@ -83,18 +83,113 @@ In addition, you may want to configure some of the optional variables that are m
 
 As of the v1.0.4 release for this role, an additional variable called `target_shc_group_name` must be defined in the host_vars for each SHC Deployer host. This variable tells Ansible which group of hosts in the inventory contain the SHC members that the SHC Deployer host is managing. This change improves the app deployment process for SHCs by performing a REST call to the first SH in the list from the inventory group whose name matches the value of `target_shc_group_name`. If the SHC is not in a ready state, then the play will halt and no changes will be made. It will also automatically grab the captain URI and use the captain as the deploy target for the `apply shcluster-bundle` handler. An example of how `target_shc_group_name` should be used has been included in the sample inventory at [environments/production/inventory.yml](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/inventory.yml).
 
-In order to use the app management functionality, you will need to configure the following additional variables:
-```
+In order to use the app management functionality, configure the variables below. Each app
+in the `apps` list takes a `download_app_source` key (`git` or `s3`). The legacy `git_apps`
+key still works for backward compatibility.
+
+**Deploy apps from git**
+```yaml
 git_server: ssh://git@git.mydomain.com
 git_key: ~/.ssh/mygit.key
 git_project: FOO
 git_version: bar
-git_apps:
+apps:
   - name: my_app
-    version: master
+    download_app_source: git
+    git_version: master   # per-app override of the global git_version
 ```
-You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. Note that you may also specify `git_server`, `git_key`, `git_project`, and `git_version` within `git_apps` down to the repository (`name`) level.
-You may also override the auto-configured `splunk_app_deploy_path` at the repository level as well. For example, to deploy apps to $SPLUNK_HOME/etc/apps on a deployment server rather than the default of $SPLUNK_HOME/etc/deployment-apps. If not set, configure_apps.yml will determine the app deployment path based on the host's group membership within the inventory.
+
+`app_relative_path` (git only) controls which part of a cloned repo is deployed. It is
+appended to the clone path, so it has two modes:
+
+- **Sub-path** - the app lives in a sub-directory of the repo. Set the path to that
+  sub-directory and only it is synced:
+  ```yaml
+  apps:
+    - name: my_monorepo
+      download_app_source: git
+      app_relative_path: /apps/my_app   # deploy only repo/apps/my_app
+  ```
+- **Multi-app repo** - the repo holds several apps at its root. Set a single trailing
+  slash and every top-level directory is deployed as its own app:
+  ```yaml
+  apps:
+    - name: my_apps_repo
+      download_app_source: git
+      app_relative_path: /             # deploy every app in the repo root
+  ```
+
+Omit `app_relative_path` (the default) to deploy the repo root as one app.
+
+**Deploy apps from S3**
+
+Set `download_app_source: s3`. Objects follow a directory convention; the tarball keeps its
+original (as-downloaded) name. The role derives the directory, lists it, and downloads the
+single archive it finds:
+
+```
+s3://<bucket>/<prefix>/<app_id>/<version>/<original-tarball-name>
+s3://my-splunk-apps-bucket/prod/Splunk_TA_nix/8.8.2/splunk-add-on-for-unix_882.tgz
+```
+
+```yaml
+splunk_app_s3_bucket: my-splunk-apps-bucket
+splunk_app_s3_bucket_prefix: prod
+s3_secret_access_key: "{{ vault_s3_secret_access_key }}"
+# s3_access_key_id omitted -> uses the controller's IAM role / credential chain.
+apps:
+  - name: Splunk_TA_nix
+    download_app_source: s3
+    version: "8.8.2"
+```
+
+The deployed folder name is the archive's own top-level directory (the Splunk app id),
+discovered by listing the extracted tree - it is never renamed and need not match the
+tarball filename. For foreign/shared buckets that do not follow the convention, set a full
+`s3_object` key on the app entry; this skips the listing and GETs that exact object (and
+needs only `s3:GetObject`).
+
+**Required IAM permissions** (replace `<your-bucket>` / `<your-prefix>`; the convention path
+needs both actions, the `s3_object` override path needs only `GetObject`):
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListAppPrefix",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::<your-bucket>",
+      "Condition": { "StringLike": { "s3:prefix": "<your-prefix>/*" } }
+    },
+    {
+      "Sid": "GetAppObjects",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::<your-bucket>/<your-prefix>/*"
+    }
+  ]
+}
+```
+
+**Prerequisite:** the S3 path needs the `amazon.aws` collection plus `boto3`/`botocore` on
+the controller: `ansible-galaxy collection install -r requirements.yml` and
+`pip install boto3 botocore`.
+
+**Mixed git and S3 apps** - both sources can appear in one `apps` list and deploy in one run:
+
+```yaml
+apps:
+  - name: org_search_app
+    download_app_source: git
+    git_version: main
+  - name: Splunk_TA_nix
+    download_app_source: s3
+    version: "8.8.2"
+```
+
+You will find additional examples in the included sample [group_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/group_vars/deploymentserver.yml) and [host_vars](https://github.com/splunk/ansible-role-for-splunk/blob/master/environments/production/host_vars/my-shc-deployer.yml) files. You may specify `git_server`, `git_key`, `git_project`, and `git_version` per app (down to the `name` level), and override the auto-configured `splunk_app_deploy_path` per app as well (for example, to deploy to $SPLUNK_HOME/etc/apps on a deployment server rather than the default $SPLUNK_HOME/etc/deployment-apps). If not set, configure_apps.yml determines the deploy path from the host's group membership.
 **Tip:** If you only use one git server, you may want to define the `git_server` and related values in an all.yml group_var file.
 
 **Configure local splunk admin password at install**
