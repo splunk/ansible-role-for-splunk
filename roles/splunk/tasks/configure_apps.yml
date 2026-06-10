@@ -26,49 +26,66 @@
         - "'deploymentserver' not in group_names"
   when: splunk_app_deploy_path is undefined or splunk_app_deploy_path == 'undefined'
 
-# Prep the Ansible host to deploy apps then install them
-- block:
-    - name: Create local directory for managing repos on the target host
+# Prep the host, batch-fetch every app (git + S3) into a per-destination staging
+# tree, install once per distinct destination, then clean up. Guarded so zero apps
+# means zero side effects (no sudoers edit, no package refresh).
+- name: Deploy apps
+  when: splunk_app_list | length > 0
+  block:
+    - name: Validate app source types
+      ansible.builtin.assert:
+        that: item.download_app_source | default('git') in ['git', 's3']
+        fail_msg: "Unsupported download_app_source '{{ item.download_app_source | default('git') }}' for app '{{ item.name }}'. Allowed: git, s3"
+      loop: "{{ splunk_app_list }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Require a version for convention-path S3 apps
+      ansible.builtin.assert:
+        that: item.version is defined
+        fail_msg: >-
+          S3 app '{{ item.name }}' needs a 'version' (it forms the <app_id>/<version>/
+          prefix). Set version, or use the full-key s3_object override.
+      when:
+        - item.download_app_source | default('git') == 's3'
+        - item.s3_object is not defined
+      loop: "{{ splunk_app_list }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    # ---- partition the list by source + hoist distinct destinations once ----
+    - name: Partition app list by source and collect distinct destinations
+      ansible.builtin.set_fact:
+        _git_apps: "{{ splunk_app_list | rejectattr('download_app_source', 'defined') | list
+                     + splunk_app_list | selectattr('download_app_source', 'defined')
+                       | selectattr('download_app_source', 'equalto', 'git') | list }}"
+        _s3_apps: "{{ splunk_app_list | selectattr('download_app_source', 'defined')
+                    | selectattr('download_app_source', 'equalto', 's3') | list }}"
+        _deploy_paths: "{{ splunk_app_list
+                         | map(attribute='splunk_app_deploy_path', default=splunk_app_deploy_path)
+                         | unique | list }}"
+
+    - name: Create local working directory for app staging
       ansible.builtin.file:
-        path: "{{ git_local_clone_path }}{{ ansible_nodename }}"
+        path: "{{ splunk_app_staging_dir }}"
         state: directory
         mode: "0755"
       delegate_to: localhost
       changed_when: false
 
-    - name: Install .rsync-filter to avoid copying undesirable files and folders to the target host later
-      ansible.builtin.copy:
-        src: rsync-filter
-        dest: "{{ git_local_clone_path }}{{ ansible_nodename }}/.rsync-filter"
-        mode: "0644"
-      delegate_to: localhost
-      changed_when: false
-
-    - name: Download defined Git repos to local Ansible host
-      ansible.builtin.git:
-        accept_hostkey: true
-        repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
-        version: "{{ item.git_version | default(git_version) }}"
-        dest: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}"
-        key_file: "{{ git_key }}"
-        force: true
-      loop: "{{ git_apps }}"
-      delegate_to: localhost
-      changed_when: false
-      check_mode: false
-      retries: 10
-      delay: 10
-      register: git_clone_result
-      until: git_clone_result is not failed
-
-    # Required for connection: local + become_user splunk on synchronize: rsync sender runs as splunk and must read the clone tree.
-    - name: Ensure local clone tree is readable by other local users
+    # Pre-create each destination's staging root BEFORE git/S3 "place" writes into it
+    # (rsync does not reliably create nested parents like etc/master-apps).
+    - name: Create per-destination staging roots
       ansible.builtin.file:
-        path: "{{ git_local_clone_path }}{{ ansible_nodename }}"
-        mode: "a+rX"
-        recurse: true
+        path: "{{ splunk_app_staging_dir }}/{{ _deploy_path }}"
+        state: directory
+        mode: "0755"
       delegate_to: localhost
       changed_when: false
+      loop: "{{ _deploy_paths }}"
+      loop_control:
+        loop_var: _deploy_path
+        label: "{{ _deploy_path }}"
 
     - name: Ensure rsync is installed on target host
       ansible.builtin.package:
@@ -77,7 +94,7 @@
         update_cache: true
       become: true
 
-    - name: "Comment out requiretty in sudoers as it causes synchronize to fail on target host"
+    - name: Comment out requiretty in sudoers as it causes synchronize to fail on target host
       ansible.builtin.lineinfile:
         dest: "/etc/sudoers"
         state: present
@@ -91,40 +108,93 @@
         - "Defaults    requiretty"
       become: true
 
-    - name: Install apps
+    # ---- FETCH (batched per source) ----
+    - name: Clone all git apps into the isolated work area
+      ansible.builtin.git:
+        accept_hostkey: true
+        repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
+        version: "{{ item.git_version | default(git_version) }}"
+        dest: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}"
+        key_file: "{{ git_key }}"
+        force: true
+      loop: "{{ _git_apps }}"
+      delegate_to: localhost
+      changed_when: false
+      check_mode: false
+      retries: 10
+      delay: 10
+      register: _git_clone
+      until: _git_clone is not failed
+      no_log: true                # references git_key
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Place each git app into its destination staging tree
+      ansible.posix.synchronize:                       # preserves master's app_relative_path semantics
+        src: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}"
+        dest: "{{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/"
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=.gitignore"
+      delegate_to: localhost
+      changed_when: false
+      loop: "{{ _git_apps }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Fetch all S3 apps into their destination staging trees
+      ansible.builtin.include_tasks: splunk_apps/fetch_s3.yml
+      loop: "{{ _s3_apps }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    # ---- INSTALL (one synchronize per DISTINCT destination) ----
+    - name: Stage .rsync-filter at each destination's transfer root
+      ansible.builtin.copy:
+        src: rsync-filter
+        dest: "{{ splunk_app_staging_dir }}/{{ _deploy_path }}/.rsync-filter"
+        mode: "0644"
+      delegate_to: localhost
+      changed_when: false
+      loop: "{{ _deploy_paths }}"
+      loop_control:
+        loop_var: _deploy_path
+        label: "{{ _deploy_path }}"
+
+    - name: Make staging tree readable by the splunk rsync sender
+      ansible.builtin.file:
+        path: "{{ splunk_app_staging_dir }}"
+        mode: "a+rX"
+        recurse: true
+      delegate_to: localhost
+      changed_when: false
+
+    - name: Install each destination's apps in one batched sync
       ansible.builtin.include_tasks: splunk_apps/install_apps.yml
-      loop: "{{ git_apps }}"
+      loop: "{{ _deploy_paths }}"
+      loop_control:
+        loop_var: _deploy_path
+        label: "{{ _deploy_path }}"
       vars:
-        app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
-        app_src: "{{ git_local_clone_path }}{{ ansible_nodename }}/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}"
-        handler: >-
-          {{ 'apply indexer cluster bundle' if app_dest == 'etc/master-apps' or app_dest == 'etc/manager-apps'
-              else 'reload deployment server' if app_dest == 'etc/deployment-apps'
-              else 'apply shcluster-bundle' if app_dest == 'etc/shcluster/apps'
-              else 'restart splunk' }}
+        app_dest: "{{ _deploy_path }}"
+        handler: "{{ splunk_app_handler_map[_deploy_path] | default('restart splunk') }}"
 
     - name: Ensure correct ownership of deployed apps on target host
       ansible.builtin.file:
-        path: "{{ splunk_home }}/{{ item }}"
+        path: "{{ splunk_home }}/{{ _deploy_path }}"
         owner: "{{ splunk_nix_user }}"
         group: "{{ splunk_nix_group }}"
         recurse: true
       become: true
-      loop: "{{ git_apps | map(attribute='splunk_app_deploy_path', default=splunk_app_deploy_path) | unique | list }}"
+      loop: "{{ _deploy_paths }}"
+      loop_control:
+        loop_var: _deploy_path
 
   always:
-    - name: Cleanup the local directory that was used to manage repos on the target host
+    - name: Cleanup local app staging directory
       ansible.builtin.file:
-        path: "{{ git_local_clone_path }}{{ ansible_nodename }}"
+        path: "{{ splunk_app_staging_dir }}"
         state: absent
       delegate_to: localhost
       changed_when: false
       check_mode: false
-
-  # Conditional for block
-  when:
-    - git_apps is defined
-    - git_version is defined
-    - git_key != 'undefined'
-    - git_server != 'undefined'
-    - git_project != 'undefined'

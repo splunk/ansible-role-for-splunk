@@ -1,0 +1,4 @@
+---
+# Placeholder - implemented in Task 6
+- name: Fetch S3 app stub
+  ansible.builtin.meta: noop
