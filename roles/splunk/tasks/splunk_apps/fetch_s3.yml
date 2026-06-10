@@ -1,4 +1,100 @@
 ---
-# Placeholder - implemented in Task 6
-- name: Fetch S3 app stub
-  ansible.builtin.meta: noop
+# Fetch one S3-sourced app: derive <prefix>/<app_id>/<version>/, list it, GET the
+# single archive, extract into the isolated __work area, discover the real app
+# folder, then PLACE it into this app's destination staging tree (staging/<dest>/).
+# A full-key item.s3_object overrides the convention and skips the list (GET-only).
+- name: Validate S3 variables are configured for the app
+  ansible.builtin.assert:
+    that:
+      - (item.bucket is defined) or (splunk_app_s3_bucket is defined)
+      - item.version is defined or item.s3_object is defined
+    fail_msg: >-
+      S3 app '{{ item.name }}' needs a bucket (item.bucket or splunk_app_s3_bucket)
+      and either a version (convention path) or a full s3_object key (override path).
+
+- name: List archives under the app/version prefix
+  amazon.aws.s3_object:
+    bucket: "{{ item.bucket | default(splunk_app_s3_bucket) }}"
+    prefix: "{{ splunk_app_s3_prefix }}/{{ item.name }}/{{ item.version }}/"
+    mode: list
+    access_key: "{{ s3_access_key_id | default(omit) }}"
+    secret_key: "{{ s3_secret_access_key | default(omit) }}"
+  delegate_to: localhost
+  register: _s3_listing
+  when: item.s3_object is not defined
+
+- name: Assert exactly one archive exists under the prefix
+  ansible.builtin.assert:
+    that: _s3_listing.s3_keys | reject('match', '.*/$') | list | length == 1
+    fail_msg: >-
+      Expected exactly one archive under
+      {{ splunk_app_s3_prefix }}/{{ item.name }}/{{ item.version }}/, found
+      {{ _s3_listing.s3_keys | reject('match', '.*/$') | list | length }}.
+  when: item.s3_object is not defined
+
+- name: Resolve archive key from the listing (convention path)
+  ansible.builtin.set_fact:
+    _s3_key: "{{ (_s3_listing.s3_keys | reject('match', '.*/$') | list) | first }}"
+  when: item.s3_object is not defined
+
+- name: Use the explicit object key (override path)
+  ansible.builtin.set_fact:
+    _s3_key: "{{ item.s3_object }}"
+  when: item.s3_object is defined
+
+- name: Create the isolated work dir for the app
+  ansible.builtin.file:
+    path: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+  changed_when: false
+
+- name: Download the archive from S3
+  amazon.aws.s3_object:
+    bucket: "{{ item.bucket | default(splunk_app_s3_bucket) }}"
+    object: "{{ _s3_key }}"
+    dest: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}/{{ _s3_key | basename }}"
+    mode: get
+    access_key: "{{ s3_access_key_id | default(omit) }}"
+    secret_key: "{{ s3_secret_access_key | default(omit) }}"
+  delegate_to: localhost
+  no_log: true
+
+- name: Extract the archive into the isolated work dir
+  ansible.builtin.unarchive:
+    src: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}/{{ _s3_key | basename }}"
+    dest: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}"
+    remote_src: false
+  delegate_to: localhost
+
+- name: Discover the extracted app directory
+  ansible.builtin.find:
+    paths: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}"
+    file_type: directory
+    recurse: false
+    excludes: ['__MACOSX']
+  delegate_to: localhost
+  register: _extracted
+
+- name: Assert a single top-level app directory in the archive
+  ansible.builtin.assert:
+    that: _extracted.files | length == 1
+    fail_msg: >-
+      Expected exactly one top-level directory in the {{ item.name }} archive,
+      found {{ _extracted.files | length }}.
+
+- name: Assert the extracted dir matches the declared name (convention path)
+  ansible.builtin.assert:
+    that: _extracted.files[0].path | basename == item.name
+    fail_msg: >-
+      The {{ item.name }} archive extracts to '{{ _extracted.files[0].path | basename }}',
+      not '{{ item.name }}'. On the convention path the declared name must equal the app id.
+  when: item.s3_object is not defined
+
+- name: Place the discovered app into its destination staging tree
+  ansible.posix.synchronize:
+    src: "{{ _extracted.files[0].path }}"                # no trailing slash: copies the app DIR
+    dest: "{{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/"
+  delegate_to: localhost
+  changed_when: false
