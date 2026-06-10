@@ -1,5 +1,6 @@
 ---
-# This task MUST be called by configure_apps.yml to work correctly. Do NOT call this task directly via the deployment_task var!
+# This task MUST be called by configure_apps.yml's install loop (once per distinct deploy_path). Do NOT call directly via the deployment_task var!
+# Per-DESTINATION installer: app_dest (a deploy_path) and handler are passed by the orchestrator.
 
 - name: Check if correct vars are defined for SHC app management
   block:
@@ -47,10 +48,12 @@
 
   when: handler == "apply shcluster-bundle"
 
-# Note: By using the synchronize module, if the repo already exists on the target host, we are able to only update the diff while preserving the local/ folder
-- name: "Synchronize {{ item.name }} repo from local Ansible host to {{ splunk_home }}/{{ app_dest }}/{{ item.name }} on remote host"
+# Batched per-destination sync. delete=true is made safe by the P /* protect rule
+# in the staged .rsync-filter (read via -F) plus synchronize's default --delete-after;
+# unmanaged sibling apps in the dest survive. See files/rsync-filter and the orchestrator.
+- name: "Synchronize staged {{ app_dest }} tree to {{ splunk_home }}/{{ app_dest }}/ on remote host"
   ansible.posix.synchronize:
-    src: "{{ app_src }}"
+    src: "{{ splunk_app_staging_dir }}/{{ app_dest }}/"
     dest: "{{ splunk_home }}/{{ app_dest }}/"
     recursive: true
     delete: true
@@ -65,3 +68,11 @@
   become: true
   become_user: "{{ splunk_nix_user }}"
   notify: "{{ handler }}"
+
+- name: "Remove the leaked .rsync-filter from {{ splunk_home }}/{{ app_dest }}/"
+  ansible.builtin.file:
+    path: "{{ splunk_home }}/{{ app_dest }}/.rsync-filter"
+    state: absent
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  changed_when: false

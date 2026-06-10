@@ -92,7 +92,7 @@
       become: true
 
     - name: Install apps
-      ansible.builtin.include_tasks: install_apps.yml
+      ansible.builtin.include_tasks: splunk_apps/install_apps.yml
       loop: "{{ git_apps }}"
       vars:
         app_dest: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
