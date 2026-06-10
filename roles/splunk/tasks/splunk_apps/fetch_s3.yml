@@ -15,7 +15,7 @@
 - name: List archives under the app/version prefix
   amazon.aws.s3_object:
     bucket: "{{ item.bucket | default(splunk_app_s3_bucket) }}"
-    prefix: "{{ splunk_app_s3_prefix }}/{{ item.name }}/{{ item.version }}/"
+    prefix: "{{ [splunk_app_s3_prefix, item.name, item.version] | reject('equalto', '') | join('/') }}/"
     mode: list
     access_key: "{{ s3_access_key_id | default(omit) }}"
     secret_key: "{{ s3_secret_access_key | default(omit) }}"
@@ -28,7 +28,7 @@
     that: _s3_listing.s3_keys | reject('match', '.*/$') | list | length == 1
     fail_msg: >-
       Expected exactly one archive under
-      {{ splunk_app_s3_prefix }}/{{ item.name }}/{{ item.version }}/, found
+      {{ [splunk_app_s3_prefix, item.name, item.version] | reject('equalto', '') | join('/') }}/, found
       {{ _s3_listing.s3_keys | reject('match', '.*/$') | list | length }}.
   when: item.s3_object is not defined
 

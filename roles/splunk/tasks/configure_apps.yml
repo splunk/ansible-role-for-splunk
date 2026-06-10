@@ -115,7 +115,7 @@
         repo: "{{ item.git_server | default(git_server) }}/{{ item.git_project | default(git_project) }}/{{ item.name }}"
         version: "{{ item.git_version | default(git_version) }}"
         dest: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}"
-        key_file: "{{ git_key }}"
+        key_file: "{{ item.git_key | default(git_key) }}"
         force: true
       loop: "{{ _git_apps }}"
       delegate_to: localhost
