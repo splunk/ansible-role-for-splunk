@@ -1,9 +1,11 @@
-- /.git
+P /*
 - /*/.git
-- /.gitignore
+- /*/.gitignore
 - /*/README.txt
 - /*/README.MD
 - /*/README.md
 - /*/app.manifest
 - /*/githash
 - /*/package.json
+- /*/__MACOSX
+- /*/._*
