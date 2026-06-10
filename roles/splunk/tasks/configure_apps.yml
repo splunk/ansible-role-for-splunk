@@ -125,7 +125,6 @@
       delay: 10
       register: _git_clone
       until: _git_clone is not failed
-      no_log: true                # references git_key
       loop_control:
         label: "{{ item.name }}"
 

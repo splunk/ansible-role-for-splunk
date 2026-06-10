@@ -59,7 +59,6 @@
     access_key: "{{ s3_access_key_id | default(omit) }}"
     secret_key: "{{ s3_secret_access_key | default(omit) }}"
   delegate_to: localhost
-  no_log: true
 
 - name: Extract the archive into the isolated work dir
   ansible.builtin.unarchive:
