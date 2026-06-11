@@ -1,0 +1,38 @@
+---
+- name: Validate app names to remove are safe bare app ids
+  ansible.builtin.assert:
+    that:
+      - item.name is defined
+      - item.name | length > 0
+      - "'/' not in item.name"
+      - "'..' not in item.name"
+      - "'*' not in item.name"
+    fail_msg: "Invalid app name to remove: '{{ item.name | default('') }}'. Must be a bare app id (no '/', '..', or '*')."
+  loop: "{{ splunk_apps_to_remove }}"
+  loop_control:
+    label: "{{ item.name | default('UNDEFINED') }}"
+
+- name: Fail if an app is in both the deploy list and the remove list
+  ansible.builtin.assert:
+    that: _remove_conflicts | length == 0
+    fail_msg: "These apps are in both the deploy list and splunk_apps_to_remove: {{ _remove_conflicts | join(', ') }}. Remove them from one list."
+  vars:
+    _remove_conflicts: "{{ splunk_app_list | map(attribute='name') | list
+                         | intersect(splunk_apps_to_remove | map(attribute='name') | list) }}"
+
+- name: Assert SHC is ready before removing shcluster bundle apps
+  ansible.builtin.include_tasks: ../splunk_shc/assert_ready.yml
+  when: splunk_apps_to_remove
+        | map(attribute='splunk_app_deploy_path', default=splunk_app_deploy_path)
+        | select('equalto', 'etc/shcluster/apps') | list | length > 0
+
+- name: "Remove {{ item.name }} from {{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/ on remote host"
+  ansible.builtin.file:
+    path: "{{ splunk_home }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/{{ item.name }}"
+    state: absent
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  loop: "{{ splunk_apps_to_remove }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: "{{ splunk_app_handler_map[item.splunk_app_deploy_path | default(splunk_app_deploy_path)] | default('restart splunk') }}"
