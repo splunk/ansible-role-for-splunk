@@ -122,10 +122,13 @@
 
     - name: Place each git app into its destination staging tree
       ansible.builtin.command:
-        cmd: >-
-          rsync --archive --exclude=.git --exclude=.gitignore
-          {{ splunk_app_staging_dir }}/__work/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}
-          {{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/
+        argv:
+          - rsync
+          - "--archive"
+          - "--exclude=.git"
+          - "--exclude=.gitignore"
+          - "{{ splunk_app_staging_dir }}/__work/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}"
+          - "{{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/"
       delegate_to: localhost
       changed_when: false
       loop: "{{ _git_apps }}"
