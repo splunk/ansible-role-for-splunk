@@ -12,6 +12,17 @@
   loop_control:
     label: "{{ item.name | default('UNDEFINED') }}"
 
+- name: Validate deploy path for apps to remove is in the allowed set
+  ansible.builtin.assert:
+    that:
+      - "'..' not in (item.splunk_app_deploy_path | default(splunk_app_deploy_path))"
+      - "not (item.splunk_app_deploy_path | default(splunk_app_deploy_path)).startswith('/')"
+      - (item.splunk_app_deploy_path | default(splunk_app_deploy_path)) in (splunk_app_handler_map.keys() | list) + ['etc/apps']
+    fail_msg: "Invalid deploy path '{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}' for app '{{ item.name }}'. Must be one of: {{ (splunk_app_handler_map.keys() | list) + ['etc/apps'] | join(', ') }}."
+  loop: "{{ splunk_apps_to_remove }}"
+  loop_control:
+    label: "{{ item.name | default('UNDEFINED') }}"
+
 - name: Fail if an app is in both the deploy list and the remove list
   ansible.builtin.assert:
     that: _remove_conflicts | length == 0
