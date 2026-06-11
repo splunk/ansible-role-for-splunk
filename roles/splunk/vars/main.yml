@@ -8,21 +8,14 @@ splunk_version: "{{ splunk_product }} {{ splunk_v }} (build {{ splunk_build }})"
 splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
 firewall_service: ufw
 
-# --- App deployment (git + S3) ---
-# Path -> handler map. Single source of truth so git and S3 cannot diverge.
-# Covers both the etc/master-apps and etc/manager-apps spellings of the CM app repo.
 splunk_app_handler_map:
   etc/master-apps: apply indexer cluster bundle
   etc/manager-apps: apply indexer cluster bundle
   etc/deployment-apps: reload deployment server
   etc/shcluster/apps: apply shcluster-bundle
 
-# Per-host local staging root for fetching/extracting apps before sync.
 splunk_app_staging_dir: "{{ git_local_clone_path }}{{ ansible_nodename }}"
 
-# Single internal app list. `apps` is the current key; `git_apps` is the legacy
-# key kept working for back-compat (existing inventories deploy unchanged).
 splunk_app_list: "{{ apps | default(git_apps) | default([]) }}"
 
-# Default S3 object-key prefix (directory) under the bucket. Override per-app.
 splunk_app_s3_prefix: "{{ splunk_app_s3_bucket_prefix | default('') }}"

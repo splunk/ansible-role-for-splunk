@@ -48,9 +48,6 @@
 
   when: handler == "apply shcluster-bundle"
 
-# Batched per-destination sync. delete=true is made safe by the P /* protect rule
-# in the staged .rsync-filter (read via -F) plus synchronize's default --delete-after;
-# unmanaged sibling apps in the dest survive. See files/rsync-filter and the orchestrator.
 - name: "Synchronize staged {{ app_dest }} tree to {{ splunk_home }}/{{ app_dest }}/ on remote host"
   ansible.posix.synchronize:
     src: "{{ splunk_app_staging_dir }}/{{ app_dest }}/"
@@ -60,19 +57,14 @@
     checksum: true
     private_key: "{{ rsync_private_key | default(omit) }}"
     rsync_opts:
+      - "--filter=P_/*"
+      - "--filter=-_/.rsync-filter"
       - "--prune-empty-dirs"
       - "--itemize-changes"
       - "--no-owner"
       - "--no-group"
       - "--no-times"
+      - "--no-perms"
   become: true
   become_user: "{{ splunk_nix_user }}"
   notify: "{{ handler }}"
-
-- name: "Remove the leaked .rsync-filter from {{ splunk_home }}/{{ app_dest }}/"
-  ansible.builtin.file:
-    path: "{{ splunk_home }}/{{ app_dest }}/.rsync-filter"
-    state: absent
-  become: true
-  become_user: "{{ splunk_nix_user }}"
-  changed_when: false

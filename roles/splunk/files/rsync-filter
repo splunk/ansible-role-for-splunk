@@ -1,4 +1,3 @@
-P /*
 - /*/.git
 - /*/.gitignore
 - /*/README.txt
@@ -9,3 +8,6 @@ P /*
 - /*/package.json
 - /*/__MACOSX
 - /*/._*
+- __pycache__/
+- *.pyc
+- *.pyo

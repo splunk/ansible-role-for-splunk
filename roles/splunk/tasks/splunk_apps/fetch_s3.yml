@@ -1,8 +1,4 @@
 ---
-# Fetch one S3-sourced app: derive <prefix>/<app_id>/<version>/, list it, GET the
-# single archive, extract into the isolated __work area, discover the real app
-# folder, then PLACE it into this app's destination staging tree (staging/<dest>/).
-# A full-key item.s3_object overrides the convention and skips the list (GET-only).
 - name: Validate S3 variables are configured for the app
   ansible.builtin.assert:
     that:
@@ -59,6 +55,7 @@
     access_key: "{{ s3_access_key_id | default(omit) }}"
     secret_key: "{{ s3_secret_access_key | default(omit) }}"
   delegate_to: localhost
+  changed_when: false
 
 - name: Extract the archive into the isolated work dir
   ansible.builtin.unarchive:
@@ -66,6 +63,7 @@
     dest: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}"
     remote_src: false
   delegate_to: localhost
+  changed_when: false
 
 - name: Discover the extracted app directory
   ansible.builtin.find:
@@ -92,8 +90,10 @@
   when: item.s3_object is not defined
 
 - name: Place the discovered app into its destination staging tree
-  ansible.posix.synchronize:
-    src: "{{ _extracted.files[0].path }}"                # no trailing slash: copies the app DIR
-    dest: "{{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/"
+  ansible.builtin.command:
+    cmd: >-
+      rsync --archive
+      {{ _extracted.files[0].path }}
+      {{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/
   delegate_to: localhost
   changed_when: false

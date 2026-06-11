@@ -1,5 +1,4 @@
 ---
-# Configure default splunk_app_deploy_path based on which group the host is a member of
 - name: Set default splunk_app_deploy_path based on group membership
   block:
     - name: Set default splunk_app_deploy_path for clustermanager hosts
@@ -26,9 +25,6 @@
         - "'deploymentserver' not in group_names"
   when: splunk_app_deploy_path is undefined or splunk_app_deploy_path == 'undefined'
 
-# Prep the host, batch-fetch every app (git + S3) into a per-destination staging
-# tree, install once per distinct destination, then clean up. Guarded so zero apps
-# means zero side effects (no sudoers edit, no package refresh).
 - name: Deploy apps
   when: splunk_app_list | length > 0
   block:
@@ -53,7 +49,6 @@
       loop_control:
         label: "{{ item.name }}"
 
-    # ---- partition the list by source + hoist distinct destinations once ----
     - name: Partition app list by source and collect distinct destinations
       ansible.builtin.set_fact:
         _git_apps: "{{ splunk_app_list | rejectattr('download_app_source', 'defined') | list
@@ -73,8 +68,6 @@
       delegate_to: localhost
       changed_when: false
 
-    # Pre-create each destination's staging root BEFORE git/S3 "place" writes into it
-    # (rsync does not reliably create nested parents like etc/master-apps).
     - name: Create per-destination staging roots
       ansible.builtin.file:
         path: "{{ splunk_app_staging_dir }}/{{ _deploy_path }}"
@@ -108,7 +101,6 @@
         - "Defaults    requiretty"
       become: true
 
-    # ---- FETCH (batched per source) ----
     - name: Clone all git apps into the isolated work area
       ansible.builtin.git:
         accept_hostkey: true
@@ -129,12 +121,11 @@
         label: "{{ item.name }}"
 
     - name: Place each git app into its destination staging tree
-      ansible.posix.synchronize:                       # preserves master's app_relative_path semantics
-        src: "{{ splunk_app_staging_dir }}/__work/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}"
-        dest: "{{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/"
-        rsync_opts:
-          - "--exclude=.git"
-          - "--exclude=.gitignore"
+      ansible.builtin.command:
+        cmd: >-
+          rsync --archive --exclude=.git --exclude=.gitignore
+          {{ splunk_app_staging_dir }}/__work/{{ item.name }}{{ item.app_relative_path | default(app_relative_path) }}
+          {{ splunk_app_staging_dir }}/{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}/
       delegate_to: localhost
       changed_when: false
       loop: "{{ _git_apps }}"
@@ -147,7 +138,6 @@
       loop_control:
         label: "{{ item.name }}"
 
-    # ---- INSTALL (one synchronize per DISTINCT destination) ----
     - name: Stage .rsync-filter at each destination's transfer root
       ansible.builtin.copy:
         src: rsync-filter
