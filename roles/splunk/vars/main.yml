@@ -8,14 +8,24 @@ splunk_version: "{{ splunk_product }} {{ splunk_v }} (build {{ splunk_build }})"
 splunk_auth: "{{ splunk_admin_username }}:{{ splunk_admin_password }}"
 firewall_service: ufw
 
-splunk_app_handler_map:
+splunk_app_path_registry:
   etc/master-apps: apply indexer cluster bundle
   etc/manager-apps: apply indexer cluster bundle
   etc/deployment-apps: reload deployment server
   etc/shcluster/apps: apply shcluster-bundle
+  etc/apps: restart splunk
 
-splunk_app_staging_dir: "{{ git_local_clone_path }}{{ ansible_nodename }}"
+splunk_app_group_path_map:
+  clustermanager: etc/master-apps
+  shdeployer: etc/shcluster/apps
+  deploymentserver: etc/deployment-apps
 
-splunk_app_list: "{{ apps | default(git_apps) | default([]) }}"
+splunk_app_staging_dir: "{{ git_local_clone_path }}{{ inventory_hostname }}"
 
-splunk_app_s3_prefix: "{{ splunk_app_s3_bucket_prefix | default('') }}"
+splunk_app_list: "{{ (apps | default(git_apps) | default([])) or [] }}"
+
+splunk_apps_remove_list: "{{ (splunk_apps_to_remove | default([])) or [] }}"
+
+splunk_app_name_pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]*$'
+
+splunk_app_remove_path_pattern: '^etc/([A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]*apps$'

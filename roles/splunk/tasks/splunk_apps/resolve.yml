@@ -1,0 +1,151 @@
+---
+- name: Reset the resolved app plan
+  ansible.builtin.set_fact:
+    splunk_apps_resolved: []
+    splunk_apps_remove_resolved: []
+    splunk_apps_staged_names: []
+
+- name: Default the deploy path from group membership
+  ansible.builtin.set_fact:
+    splunk_app_deploy_path: "{{ splunk_app_group_path_map[_matched | first] if _matched | length > 0 else 'etc/apps' }}"
+  vars:
+    _matched: "{{ group_names | select('in', splunk_app_group_path_map) | list }}"
+  when: splunk_app_deploy_path is not defined or splunk_app_deploy_path == 'undefined' or splunk_app_deploy_path is none
+
+- name: Refuse ambiguous app list variables
+  ansible.builtin.assert:
+    that: not (apps is defined and git_apps is defined)
+    fail_msg: "Both 'apps' and 'git_apps' are defined for this host; keep exactly one app list."
+
+- name: Validate app entries are well-formed
+  ansible.builtin.assert:
+    that:
+      - item is mapping
+      - item.name is defined
+      - item.name is string
+      - item.name is match(splunk_app_name_pattern)
+      - item.download_app_source | default('git') in ['git', 's3']
+    fail_msg: >-
+      Invalid app entry '{{ item.name | default(item) }}': every entry needs a bare app id 'name'
+      matching {{ splunk_app_name_pattern }}, and 'Unsupported download_app_source
+      {{ item.download_app_source | default('git') }}' values are rejected (allowed: git, s3).
+  loop: "{{ splunk_app_list }}"
+  loop_control:
+    label: "{{ item.name | default('INVALID') }}"
+
+- name: Resolve the app plan
+  ansible.builtin.set_fact:
+    splunk_apps_resolved: "{{ splunk_apps_resolved + [_entry] }}"
+  vars:
+    _entry:
+      name: "{{ item.name }}"
+      source: "{{ item.download_app_source | default('git') }}"
+      deploy_path: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
+      work_dir: "{{ splunk_app_staging_dir }}/__work/{{ _resolve_idx }}/{{ item.name }}"
+      relative_path: "{{ item.app_relative_path | default(app_relative_path) | default('', true) }}"
+      git_server: "{{ item.git_server | default(git_server) }}"
+      git_project: "{{ item.git_project | default(git_project) }}"
+      git_version: "{{ item.git_version | default(git_version) }}"
+      git_key: "{{ item.git_key | default(git_key) }}"
+      bucket: "{{ item.bucket | default(splunk_app_s3_bucket | default('')) or '' }}"
+      version: "{{ item.version | default('') }}"
+      s3_object: "{{ item.s3_object | default('') or '' }}"
+      s3_prefix: "{{ [splunk_app_s3_bucket_prefix | default('') or '', item.name, item.version | default('') | string] | reject('equalto', '') | join('/') }}"
+  loop: "{{ splunk_app_list }}"
+  loop_control:
+    index_var: _resolve_idx
+    label: "{{ item.name }}"
+
+- name: Validate resolved deploy paths
+  ansible.builtin.assert:
+    that:
+      - item.deploy_path is string
+      - item.deploy_path | length > 0
+      - not item.deploy_path.startswith('/')
+      - "'..' not in item.deploy_path"
+    fail_msg: "App '{{ item.name }}' resolved an invalid splunk_app_deploy_path ('{{ item.deploy_path }}')."
+  loop: "{{ splunk_apps_resolved }}"
+  loop_control:
+    label: "{{ item.name }} -> {{ item.deploy_path }}"
+
+- name: Validate git app requirements
+  ansible.builtin.assert:
+    that:
+      - item.git_server is string
+      - item.git_server != 'undefined'
+      - item.git_project is string
+      - item.git_project != 'undefined'
+      - item.git_key is string
+      - item.git_key != 'undefined'
+      - item.relative_path == '' or (item.relative_path.startswith('/') and '..' not in item.relative_path)
+    fail_msg: >-
+      git app '{{ item.name }}' needs git_server, git_project, and git_key configured
+      (globally or per app) and a valid app_relative_path; one or more is unset or invalid.
+  when: item.source == 'git'
+  loop: "{{ splunk_apps_resolved }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Validate S3 app requirements
+  ansible.builtin.assert:
+    that:
+      - item.bucket | length > 0
+      - item.s3_object is string
+      - "'..' not in item.s3_object"
+      - not item.s3_object.startswith('/')
+      - (item.s3_object | length > 0) or (item.version is string and item.version | length > 0)
+    fail_msg: >-
+      S3 app '{{ item.name }}' needs a 'version' (non-empty string; quote it in YAML) for the
+      convention path or a valid full s3_object key, plus a bucket (item.bucket or splunk_app_s3_bucket).
+  when: item.source == 's3'
+  loop: "{{ splunk_apps_resolved }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Validate the plan has no destination conflicts
+  ansible.builtin.assert:
+    that:
+      - _pairs | unique | length == _pairs | length
+      - _nested | length == 0
+    fail_msg: >-
+      App plan conflict: duplicate name+deploy_path pairs, or a deploy path nested under
+      another one. pairs={{ _pairs | join(', ') }} nested={{ _nested | join(', ') }}
+  vars:
+    _pairs: "{{ splunk_apps_resolved | map(attribute='name')
+              | zip(splunk_apps_resolved | map(attribute='deploy_path')) | map('join', '@') | list }}"
+    _paths: "{{ splunk_apps_resolved | map(attribute='deploy_path') | unique | list }}"
+    _nested: "{{ _paths | select('match', '^(' ~ (_paths | map('regex_escape') | join('|')) ~ ')/') | list }}"
+
+- name: Publish the deployment plan facts
+  ansible.builtin.set_fact:
+    splunk_apps_git: "{{ splunk_apps_resolved | selectattr('source', 'equalto', 'git') | list }}"
+    splunk_apps_s3: "{{ splunk_apps_resolved | selectattr('source', 'equalto', 's3') | list }}"
+    splunk_apps_deploy_paths: "{{ splunk_apps_resolved | map(attribute='deploy_path') | unique | list }}"
+
+- name: Resolve the removal plan
+  ansible.builtin.set_fact:
+    splunk_apps_remove_resolved: "{{ splunk_apps_remove_resolved + [_entry] }}"
+  vars:
+    _entry:
+      name: "{{ item.name | default('') }}"
+      deploy_path: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
+  loop: "{{ splunk_apps_remove_list }}"
+  loop_control:
+    label: "{{ item.name | default('INVALID') }}"
+
+- name: Validate removal entries
+  ansible.builtin.assert:
+    that:
+      - item.name is string
+      - item.name is match(splunk_app_name_pattern)
+      - item.deploy_path is string
+      - "'..' not in item.deploy_path"
+      - not item.deploy_path.startswith('/')
+      - item.deploy_path is match(splunk_app_remove_path_pattern)
+    fail_msg: >-
+      Invalid app name or deploy path for removal of '{{ item.name }}' from '{{ item.deploy_path }}':
+      names must be bare app ids matching {{ splunk_app_name_pattern }} and removal paths must match
+      {{ splunk_app_remove_path_pattern }}.
+  loop: "{{ splunk_apps_remove_resolved }}"
+  loop_control:
+    label: "{{ item.name | default('INVALID') }} -> {{ item.deploy_path }}"

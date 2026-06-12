@@ -1,8 +1,13 @@
 ---
-- name: Trigger failure if target_shc_group_name var is undefined
-  ansible.builtin.fail:
-    msg: "Please add a target_shc_group_name variable to the host_vars for your SH Deployer host(s) before proceeding."
-  when: target_shc_group_name is not defined
+- name: Validate target_shc_group_name resolves to a non-empty inventory group
+  ansible.builtin.assert:
+    that:
+      - target_shc_group_name is defined
+      - target_shc_group_name in groups
+      - groups[target_shc_group_name] | length > 0
+    fail_msg: >-
+      Please set target_shc_group_name in the host_vars for your SH Deployer host(s) to an
+      existing, non-empty inventory group (got '{{ target_shc_group_name | default('undefined') }}').
 
 - name: Trigger failure if splunk_admin_username var is undefined
   ansible.builtin.fail:

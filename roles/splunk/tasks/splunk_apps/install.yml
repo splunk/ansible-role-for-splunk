@@ -1,0 +1,39 @@
+---
+- name: Ensure rsync is installed on the target host
+  ansible.builtin.package:
+    name: rsync
+    state: present
+    update_cache: true
+  become: true
+
+- name: Comment out requiretty in sudoers as it breaks synchronize on the target host
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: "^#?{{ item }}"
+    line: "#{{ item }}"
+    create: true
+    owner: root
+    group: root
+    mode: "0440"
+  loop:
+    - "Defaults    requiretty"
+  become: true
+
+- name: Install each destination in one batched sync
+  ansible.builtin.include_tasks: install_apps.yml
+  loop: "{{ splunk_apps_deploy_paths }}"
+  loop_control:
+    loop_var: _deploy_path
+  vars:
+    app_dest: "{{ _deploy_path }}"
+    handler: "{{ splunk_app_path_registry[_deploy_path] | default('restart splunk') }}"
+
+- name: Ensure correct ownership of deployed apps on the target host
+  ansible.builtin.file:
+    path: "{{ splunk_home }}/{{ item }}"
+    owner: "{{ splunk_nix_user }}"
+    group: "{{ splunk_nix_group }}"
+    recurse: true
+  become: true
+  loop: "{{ splunk_apps_deploy_paths }}"

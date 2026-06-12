@@ -1,10 +1,7 @@
 ---
-# This task MUST be called by configure_apps.yml's install loop (once per distinct deploy_path). Do NOT call directly via the deployment_task var!
-# Per-DESTINATION installer: app_dest (a deploy_path) and handler are passed by the orchestrator.
-
 - name: Assert SHC is ready before pushing a shcluster bundle
   ansible.builtin.include_tasks: ../splunk_shc/assert_ready.yml
-  when: handler == "apply shcluster-bundle"
+  when: handler == 'apply shcluster-bundle'
 
 - name: Enumerate staged apps for this destination
   ansible.builtin.find:
@@ -14,6 +11,31 @@
   delegate_to: localhost
   register: _staged_apps
 
+- name: Enumerate everything staged for this destination
+  ansible.builtin.find:
+    paths: "{{ splunk_app_staging_dir }}/{{ app_dest }}"
+    file_type: any
+    recurse: false
+    hidden: true
+  delegate_to: localhost
+  register: _staged_all
+
+- name: Warn about staged entries that will not deploy
+  ansible.builtin.debug:
+    msg: >-
+      Staged for {{ app_dest }} but not deployable (not plain directories):
+      {{ _undeployable | join(', ') }}.
+  when: _undeployable | length > 0
+  vars:
+    _undeployable: "{{ _staged_all.files | map(attribute='path') | map('basename')
+                     | difference(_staged_apps.files | map(attribute='path') | map('basename'))
+                     | difference(['.rsync-filter']) | list }}"
+
+- name: Record the staged app names
+  ansible.builtin.set_fact:
+    splunk_apps_staged_names: "{{ splunk_apps_staged_names | default([])
+                                + _staged_apps.files | map(attribute='path') | map('basename') | list }}"
+
 - name: Write the app manifest for the batched sync
   ansible.builtin.copy:
     content: "{{ _staged_apps.files | map(attribute='path') | map('basename') | sort | join('\n') }}\n"
@@ -21,6 +43,7 @@
     mode: "0644"
   delegate_to: localhost
   changed_when: false
+  check_mode: false
   register: _app_manifest
 
 - name: "Synchronize staged {{ app_dest }} apps to {{ splunk_home }}/{{ app_dest }}/ on remote host"
@@ -33,6 +56,7 @@
     private_key: "{{ rsync_private_key | default(omit) }}"
     rsync_opts:
       - "--recursive"
+      - "--filter=._{{ _app_manifest.dest | regex_replace('\\.files$', '') }}/.rsync-filter"
       - "--files-from={{ _app_manifest.dest }}"
       - "--prune-empty-dirs"
       - "--itemize-changes"

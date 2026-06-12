@@ -1,0 +1,16 @@
+---
+- name: Stage and install apps
+  block:
+    - name: Stage all apps on the controller
+      ansible.builtin.include_tasks: stage.yml
+
+    - name: Prepare the target and install per destination
+      ansible.builtin.include_tasks: install.yml
+  always:
+    - name: Cleanup the app staging directory
+      ansible.builtin.file:
+        path: "{{ splunk_app_staging_dir }}"
+        state: absent
+      delegate_to: localhost
+      changed_when: false
+      check_mode: false
