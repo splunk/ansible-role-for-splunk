@@ -60,6 +60,19 @@
                          | map(attribute='splunk_app_deploy_path', default=splunk_app_deploy_path)
                          | unique | list }}"
 
+    - name: Require git vars to be configured for git apps
+      ansible.builtin.assert:
+        that:
+          - (item.git_server | default(git_server)) != 'undefined'
+          - (item.git_project | default(git_project)) != 'undefined'
+          - (item.git_key | default(git_key)) != 'undefined'
+        fail_msg: >-
+          git app '{{ item.name }}' needs git_server, git_project, and git_key configured
+          (globally in group_vars or per-app). One or more is still 'undefined'.
+      loop: "{{ _git_apps }}"
+      loop_control:
+        label: "{{ item.name }}"
+
     - name: Create local working directory for app staging
       ansible.builtin.file:
         path: "{{ splunk_app_staging_dir }}"
