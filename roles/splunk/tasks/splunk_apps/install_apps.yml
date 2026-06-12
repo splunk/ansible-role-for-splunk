@@ -6,7 +6,24 @@
   ansible.builtin.include_tasks: ../splunk_shc/assert_ready.yml
   when: handler == "apply shcluster-bundle"
 
-- name: "Synchronize staged {{ app_dest }} tree to {{ splunk_home }}/{{ app_dest }}/ on remote host"
+- name: Enumerate staged apps for this destination
+  ansible.builtin.find:
+    paths: "{{ splunk_app_staging_dir }}/{{ app_dest }}"
+    file_type: directory
+    recurse: false
+  delegate_to: localhost
+  register: _staged_apps
+
+- name: Write the app manifest for the batched sync
+  ansible.builtin.copy:
+    content: "{{ _staged_apps.files | map(attribute='path') | map('basename') | sort | join('\n') }}\n"
+    dest: "{{ splunk_app_staging_dir }}/{{ app_dest }}.files"
+    mode: "0644"
+  delegate_to: localhost
+  changed_when: false
+  register: _app_manifest
+
+- name: "Synchronize staged {{ app_dest }} apps to {{ splunk_home }}/{{ app_dest }}/ on remote host"
   ansible.posix.synchronize:
     src: "{{ splunk_app_staging_dir }}/{{ app_dest }}/"
     dest: "{{ splunk_home }}/{{ app_dest }}/"
@@ -15,14 +32,13 @@
     checksum: true
     private_key: "{{ rsync_private_key | default(omit) }}"
     rsync_opts:
-      - "--filter=P_/*"
-      - "--filter=-_/.rsync-filter"
+      - "--recursive"
+      - "--files-from={{ _app_manifest.dest }}"
       - "--prune-empty-dirs"
       - "--itemize-changes"
       - "--no-owner"
       - "--no-group"
       - "--no-times"
-      - "--no-perms"
   become: true
   become_user: "{{ splunk_nix_user }}"
   notify: "{{ handler }}"
