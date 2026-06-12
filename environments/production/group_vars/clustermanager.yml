@@ -10,7 +10,8 @@ apps:
   - name: Splunk_TA_nix
     download_app_source: s3
     version: "8.8.2"
-# S3 settings (see README). Secret via vault; access key omittable to use an IAM role.
+# S3 settings (see README). Keys via vault; omit BOTH keys (never just one) to
+# use the controller's IAM role / credential chain instead.
 splunk_app_s3_bucket: my-splunk-apps-bucket
 splunk_app_s3_bucket_prefix: prod
 s3_access_key_id: "{{ vault_s3_access_key_id }}"
