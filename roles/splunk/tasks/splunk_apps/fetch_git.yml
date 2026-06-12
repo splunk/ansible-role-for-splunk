@@ -52,17 +52,7 @@
     label: "{{ item.name }}"
 
 - name: Place git apps into their destination staging trees
-  ansible.builtin.command:
-    argv:
-      - rsync
-      - "--archive"
-      - "--exclude=.git"
-      - "--exclude=.gitignore"
-      - "{{ item.work_dir }}{{ item.relative_path }}"
-      - "{{ splunk_app_staging_dir }}/{{ item.deploy_path }}/"
-  delegate_to: localhost
-  changed_when: false
-  check_mode: false
+  ansible.builtin.include_tasks: fetch_git_place.yml
   loop: "{{ splunk_apps_git }}"
   loop_control:
     label: "{{ item.name }}"

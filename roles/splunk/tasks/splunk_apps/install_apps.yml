@@ -9,6 +9,7 @@
     file_type: directory
     recurse: false
   delegate_to: localhost
+  changed_when: false
   register: _staged_apps
 
 - name: Enumerate everything staged for this destination
@@ -18,6 +19,7 @@
     recurse: false
     hidden: true
   delegate_to: localhost
+  changed_when: false
   register: _staged_all
 
 - name: Warn about staged entries that will not deploy

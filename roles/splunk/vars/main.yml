@@ -26,6 +26,4 @@ splunk_app_list: "{{ (apps | default(git_apps) | default([])) or [] }}"
 
 splunk_apps_remove_list: "{{ (splunk_apps_to_remove | default([])) or [] }}"
 
-splunk_app_name_pattern: '^[A-Za-z0-9][A-Za-z0-9_.-]*$'
-
-splunk_app_remove_path_pattern: '^etc/([A-Za-z0-9_.-]+/)*[A-Za-z0-9_.-]*apps$'
+splunk_app_path_pattern: '^etc/([A-Za-z0-9_.-]+/)*([A-Za-z0-9_.-]+-)?apps$'

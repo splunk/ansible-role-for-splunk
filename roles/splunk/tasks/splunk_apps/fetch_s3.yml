@@ -14,6 +14,7 @@
 - name: Resolve the candidate archive keys
   ansible.builtin.set_fact:
     _s3_archives: "{{ _s3_listing.s3_keys | default([]) | reject('match', '.*/$') | list }}"
+  when: item.s3_object | length == 0
 
 - name: Assert exactly one archive exists under the prefix
   ansible.builtin.assert:
@@ -62,6 +63,7 @@
     recurse: false
     excludes: ['__MACOSX']
   delegate_to: localhost
+  changed_when: false
   register: _extracted
 
 - name: Assert a single top-level app directory in the archive
@@ -78,18 +80,6 @@
       The {{ item.name }} archive extracts to '{{ _extracted.files[0].path | basename }}',
       not '{{ item.name }}'. On the convention path the declared name must equal the app id.
   when: item.s3_object | length == 0
-
-- name: Assert the extracted dir is a valid app id
-  ansible.builtin.assert:
-    that:
-      - _extracted_name is match(splunk_app_name_pattern)
-      - _extracted_name not in ['default', 'local', 'metadata', 'lookups', 'bin', 'static', 'appserver', 'users']
-    fail_msg: >-
-      The {{ item.name }} archive extracts to '{{ _extracted_name }}', which is not a valid
-      app id (it must match {{ splunk_app_name_pattern }} and not be a reserved app directory name).
-  when: item.s3_object | length > 0
-  vars:
-    _extracted_name: "{{ _extracted.files[0].path | basename }}"
 
 - name: Check the destination staging slot
   ansible.builtin.stat:

@@ -16,7 +16,8 @@ apps:
 
 - git apps use `git_server`, `git_project`, `git_key`, `git_version` (global or
   per app). `app_relative_path` deploys a repository sub-directory under its own
-  name; a single trailing slash deploys every top-level directory in the repo.
+  name (a leading slash is optional); a single trailing slash deploys every
+  top-level directory in the repo.
 - S3 apps use `splunk_app_s3_bucket` (per-app `bucket` override) and
   `splunk_app_s3_bucket_prefix`. Objects live at
   `<prefix>/<app_id>/<version>/<tarball>` with a quoted per-app `version`, or an
@@ -24,9 +25,15 @@ apps:
   Set both `s3_access_key_id` and `s3_secret_access_key`, or omit both to use
   the controller's IAM role / credential chain. Requires the `amazon.aws`
   collection and `boto3`/`botocore` on the controller.
-- Deploy paths default by group via `splunk_app_group_path_map`; handlers per
-  path come from `splunk_app_path_registry`, with `restart splunk` for unlisted
-  paths.
+- Deploy paths default by group via `splunk_app_group_path_map`; a host in
+  several mapped groups gets the alphabetically first match, so combined-role
+  hosts should set `splunk_app_deploy_path` explicitly. Deploy and removal
+  destinations must be app directories matching `splunk_app_path_pattern`
+  (under `etc/`, outside `etc/system`). Handlers per path come from
+  `splunk_app_path_registry`, with `restart splunk` for unlisted paths.
+- The manifest and filter paths passed to rsync are derived from
+  `splunk_app_staging_dir` on the controller; they never come from inventory
+  data.
 
 ## Removing apps
 
@@ -42,10 +49,11 @@ deployment server, remove the app from `serverclass.conf` first.
 
 ## Behavior notes
 
-- The whole plan is validated before any change; the play fails on: unconfigured
-  git settings, `apps` and `git_apps` both defined, non-string or unquoted
-  `version` values, invalid app names or deploy paths, duplicate name+path
-  pairs, one deploy path nested under another, and invalid removal entries.
+- The plan is validated before any change; the play fails on: unconfigured git
+  settings, `apps` and `git_apps` both defined, names containing path
+  separators, destinations outside the allowed app directories, one deploy path
+  nested under another, non-string `version` values, and invalid removal
+  entries. Two entries landing on the same staged directory fail at fetch time.
   Earlier releases skipped silently in several of these cases.
 - Deployment never deletes apps it did not stage in the same run; dropping an
   entry leaves the app on the target until listed in `splunk_apps_to_remove`.
@@ -55,10 +63,10 @@ deployment server, remove the app from `serverclass.conf` first.
 ## Flow
 
 - [resolve.yml](resolve.yml) - builds one fully-resolved entry per app
-  ([plan](resolve.yml#L36), per-entry work dirs) and validates
-  [entries](resolve.yml#L20), [deploy paths](resolve.yml#L59),
-  [git](resolve.yml#L71) and [S3](resolve.yml#L89) requirements,
-  [plan conflicts](resolve.yml#L105), and [removals](resolve.yml#L136).
+  ([plan](resolve.yml#L39), per-entry work dirs, relative-path normalization)
+  and validates [entries](resolve.yml#L20), [deploy paths](resolve.yml#L63),
+  [git](resolve.yml#L79) and [S3](resolve.yml#L97) requirements,
+  [path nesting](resolve.yml#L111), and [removals](resolve.yml#L136).
 - [deploy.yml](deploy.yml#L2) - stages then installs; `always:` removes the
   staging directory.
 - [stage.yml](stage.yml) - creates the [staging trees](stage.yml#L2), includes
@@ -68,13 +76,18 @@ deployment server, remove the app from `serverclass.conf` first.
 - [fetch_git.yml](fetch_git.yml) - runs
   [concurrent git clones](fetch_git.yml#L2), [waits for them](fetch_git.yml#L20),
   [retries failures serially](fetch_git.yml#L35), and
-  [places each app](fetch_git.yml#L54) into its destination staging tree.
+  [includes fetch_git_place.yml per app](fetch_git.yml#L54).
+- [fetch_git_place.yml](fetch_git_place.yml) - resolves the
+  [directory names the entry stages](fetch_git_place.yml#L12), refuses
+  [staging collisions](fetch_git_place.yml#L27), and
+  [places the app](fetch_git_place.yml#L37).
 - [fetch_s3.yml](fetch_s3.yml) - [lists the convention prefix](fetch_s3.yml#L2),
-  [downloads](fetch_s3.yml#L37) and [extracts](fetch_s3.yml#L49) the archive,
-  validates the extracted directory ([exactly one](fetch_s3.yml#L67),
-  [name match](fetch_s3.yml#L74) or [valid app id](fetch_s3.yml#L82),
-  [no staging collision](fetch_s3.yml#L100)), and
-  [places it](fetch_s3.yml#L107).
+  [downloads](fetch_s3.yml#L38) and [extracts](fetch_s3.yml#L50) the archive,
+  validates the extracted directory ([exactly one](fetch_s3.yml#L69),
+  [name match on the convention path](fetch_s3.yml#L76),
+  [no staging collision](fetch_s3.yml#L90)), and
+  [places it](fetch_s3.yml#L97). On the `s3_object` override path the archive's
+  own top-level directory name deploys as-is.
 - [install.yml](install.yml) - installs [rsync](install.yml#L2), fixes
   [requiretty](install.yml#L9), runs
   [one batched install per destination](install.yml#L23), and sets
@@ -82,8 +95,8 @@ deployment server, remove the app from `serverclass.conf` first.
 - [install_apps.yml](install_apps.yml) - gates on
   [SHC readiness](install_apps.yml#L2), builds the
   [manifest from the staged tree](install_apps.yml#L6), warns about
-  [undeployable staged entries](install_apps.yml#L23), and
-  [synchronizes](install_apps.yml#L49) the manifest with the staged filter
+  [undeployable staged entries](install_apps.yml#L25), and
+  [synchronizes](install_apps.yml#L51) the manifest with the staged filter
   applied as a global merge, notifying the path's handler.
 - [remove_apps.yml](remove_apps.yml) - [refuses conflicts](remove_apps.yml#L2),
   [gates SHC paths](remove_apps.yml#L13), and
