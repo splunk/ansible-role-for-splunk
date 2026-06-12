@@ -22,7 +22,7 @@
     method: GET
     user: "{{ splunk_admin_username }}"
     password: "{{ splunk_admin_password }}"
-    validate_certs: false
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
     return_content: true
     status_code: 200
     body: output_mode=json
