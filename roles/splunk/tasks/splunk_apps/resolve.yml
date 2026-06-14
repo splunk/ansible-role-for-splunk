@@ -28,10 +28,11 @@
       - "'..' not in item.name"
       - item.name != '.'
       - item.download_app_source | default('git') in ['git', 's3']
+      - item.download_app_source | default('git') != 's3' or item.s3_object is defined or item.version is not defined or item.version is string
     fail_msg: >-
-      Invalid app entry '{{ item.name | default(item) }}': every entry needs a bare app id 'name'
-      (no '/', '..', or '.'), and 'Unsupported download_app_source
-      {{ item.download_app_source | default('git') }}' values are rejected (allowed: git, s3).
+      Invalid app entry '{{ item.name | default(item) }}': needs a bare app id 'name'
+      (no '/', '..', or '.'), a download_app_source of git or s3, and (for an S3
+      convention-path app) a quoted string 'version' (an unquoted 8.10 becomes 8.1).
   loop: "{{ splunk_app_list }}"
   loop_control:
     label: "{{ item.name | default('INVALID') }}"

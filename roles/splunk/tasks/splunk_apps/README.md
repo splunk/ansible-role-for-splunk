@@ -31,9 +31,9 @@ apps:
   destinations must be app directories matching `splunk_app_path_pattern`
   (under `etc/`, outside `etc/system`). Handlers per path come from
   `splunk_app_path_registry`, with `restart splunk` for unlisted paths.
-- The manifest and filter paths passed to rsync are derived from
-  `splunk_app_staging_dir` on the controller; they never come from inventory
-  data.
+- The manifest and filter paths passed to rsync are built by the role from
+  `splunk_app_staging_dir` (which includes `inventory_hostname`), never from
+  app-entry fields, so an app definition cannot inject rsync arguments.
 
 ## Removing apps
 
