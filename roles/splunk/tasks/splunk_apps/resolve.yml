@@ -126,14 +126,16 @@
   loop_control:
     label: "{{ item.name }}"
 
-- name: Validate the plan has no duplicate or nested destinations
+- name: Validate the plan has no conflicting destinations
   ansible.builtin.assert:
     that:
       - _pairs | unique | length == _pairs | length
       - _nested | length == 0
+      - not ('etc/master-apps' in _paths and 'etc/manager-apps' in _paths)
     fail_msg: >-
       App plan conflict: an app+deploy_path appears twice ({{ _pairs | join(', ') }}),
-      or a deploy path nests under another ({{ _nested | join(', ') }}).
+      a deploy path nests under another ({{ _nested | join(', ') }}), or the plan targets
+      both etc/master-apps and etc/manager-apps (Splunk allows only one; prefer manager-apps).
   vars:
     _pairs: "{{ splunk_apps_resolved | map(attribute='name')
               | zip(splunk_apps_resolved | map(attribute='deploy_path')) | map('join', '@') | list }}"
