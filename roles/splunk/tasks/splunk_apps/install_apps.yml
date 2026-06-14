@@ -33,10 +33,11 @@
                      | difference(_staged_apps.files | map(attribute='path') | map('basename'))
                      | difference(['.rsync-filter']) | list }}"
 
-- name: Record the staged app names
+- name: Record the staged app name@deploy_path pairs
   ansible.builtin.set_fact:
-    splunk_apps_staged_names: "{{ splunk_apps_staged_names | default([])
-                                + _staged_apps.files | map(attribute='path') | map('basename') | list }}"
+    splunk_apps_staged_pairs: "{{ splunk_apps_staged_pairs | default([])
+                                + (_staged_apps.files | map(attribute='path') | map('basename') | list
+                                   | product([app_dest]) | map('join', '@') | list) }}"
 
 - name: Write the app manifest for the batched sync
   ansible.builtin.copy:

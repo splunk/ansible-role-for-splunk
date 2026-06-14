@@ -3,7 +3,7 @@
   ansible.builtin.set_fact:
     splunk_apps_resolved: []
     splunk_apps_remove_resolved: []
-    splunk_apps_staged_names: []
+    splunk_apps_staged_pairs: []
 
 - name: Default the deploy path from group membership
   ansible.builtin.set_fact:
@@ -61,9 +61,25 @@
     index_var: _resolve_idx
     label: "{{ item.name }}"
 
-- name: Validate resolved deploy paths
+- name: Resolve the removal plan
+  ansible.builtin.set_fact:
+    splunk_apps_remove_resolved: "{{ splunk_apps_remove_resolved + [_entry] }}"
+  vars:
+    _entry:
+      name: "{{ item.name | default('') }}"
+      deploy_path: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
+  loop: "{{ splunk_apps_remove_list }}"
+  loop_control:
+    label: "{{ item.name | default('INVALID') }}"
+
+- name: Validate resolved names and deploy paths
   ansible.builtin.assert:
     that:
+      - item.name is string
+      - item.name | length > 0
+      - "'/' not in item.name"
+      - "'..' not in item.name"
+      - item.name != '.'
       - item.deploy_path is string
       - item.deploy_path | length > 0
       - not item.deploy_path.startswith('/')
@@ -71,11 +87,12 @@
       - not item.deploy_path.startswith('etc/system')
       - item.deploy_path is match(splunk_app_path_pattern)
     fail_msg: >-
-      App '{{ item.name }}' resolved an invalid splunk_app_deploy_path ('{{ item.deploy_path }}'):
-      destinations must be app directories matching {{ splunk_app_path_pattern }} outside etc/system.
-  loop: "{{ splunk_apps_resolved }}"
+      Invalid name or deploy path for '{{ item.name }}' -> '{{ item.deploy_path }}':
+      names must be bare app ids (no '/', '..', or '.') and deploy paths must match
+      {{ splunk_app_path_pattern }} outside etc/system.
+  loop: "{{ splunk_apps_resolved + splunk_apps_remove_resolved }}"
   loop_control:
-    label: "{{ item.name }} -> {{ item.deploy_path }}"
+    label: "{{ item.name | default('INVALID') }} -> {{ item.deploy_path | default('?') }}"
 
 - name: Validate git app requirements
   ansible.builtin.assert:
@@ -128,35 +145,3 @@
     splunk_apps_git: "{{ splunk_apps_resolved | selectattr('source', 'equalto', 'git') | list }}"
     splunk_apps_s3: "{{ splunk_apps_resolved | selectattr('source', 'equalto', 's3') | list }}"
     splunk_apps_deploy_paths: "{{ splunk_apps_resolved | map(attribute='deploy_path') | unique | list }}"
-
-- name: Resolve the removal plan
-  ansible.builtin.set_fact:
-    splunk_apps_remove_resolved: "{{ splunk_apps_remove_resolved + [_entry] }}"
-  vars:
-    _entry:
-      name: "{{ item.name | default('') }}"
-      deploy_path: "{{ item.splunk_app_deploy_path | default(splunk_app_deploy_path) }}"
-  loop: "{{ splunk_apps_remove_list }}"
-  loop_control:
-    label: "{{ item.name | default('INVALID') }}"
-
-- name: Validate removal entries
-  ansible.builtin.assert:
-    that:
-      - item.name is string
-      - item.name | length > 0
-      - "'/' not in item.name"
-      - "'..' not in item.name"
-      - item.name != '.'
-      - item.deploy_path is string
-      - "'..' not in item.deploy_path"
-      - not item.deploy_path.startswith('/')
-      - not item.deploy_path.startswith('etc/system')
-      - item.deploy_path is match(splunk_app_path_pattern)
-    fail_msg: >-
-      Invalid app name or deploy path for removal of '{{ item.name }}' from '{{ item.deploy_path }}':
-      names must be bare app ids (no '/', '..', or '.') and removal paths must match
-      {{ splunk_app_path_pattern }} outside etc/system.
-  loop: "{{ splunk_apps_remove_resolved }}"
-  loop_control:
-    label: "{{ item.name | default('INVALID') }} -> {{ item.deploy_path }}"
