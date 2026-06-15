@@ -13,3 +13,11 @@ apps:
     splunk_app_deploy_path: etc/apps
   - name: disable_rest
     download_app_source: git
+
+# Apps to remove, processed after deployment. Deploy path defaults like
+# deployments, so override it for apps placed off the group default. On a
+# deployment server, also remove the app from serverclass.conf.
+splunk_apps_to_remove:
+  - name: my_old_outputs
+    splunk_app_deploy_path: etc/apps
+  - name: deprecated_ta

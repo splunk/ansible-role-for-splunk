@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `apps` list as the primary app-declaration variable (`git_apps` still honored).
 - Opt-in app removal via `splunk_apps_to_remove`.
 - Fail-fast validation of the app and removal plan.
-- `requirements.yml` declaring collection dependencies.
+- S3 support depends on the `amazon.aws` collection and `boto3`/`botocore` on the controller.
 
 ### Changed
 

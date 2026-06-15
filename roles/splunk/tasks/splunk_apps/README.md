@@ -23,8 +23,9 @@ apps:
   `<prefix>/<app_id>/<version>/<tarball>` with a quoted per-app `version`, or an
   exact `s3_object` key deploys the archive's own top-level directory.
   Set both `s3_access_key_id` and `s3_secret_access_key`, or omit both to use
-  the controller's IAM role / credential chain. Requires the `amazon.aws`
-  collection and `boto3`/`botocore` on the controller.
+  the controller's IAM role / credential chain. S3 apps require the `amazon.aws`
+  collection (`ansible-galaxy collection install amazon.aws`) and
+  `boto3`/`botocore` on the controller; git-only deployments need neither.
 - Deploy paths default by group via `splunk_app_group_path_map`; a host in
   several mapped groups gets the alphabetically first match, so combined-role
   hosts should set `splunk_app_deploy_path` explicitly. Deploy and removal
