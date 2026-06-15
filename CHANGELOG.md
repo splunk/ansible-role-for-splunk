@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - App tasks restructured into resolve/stage/install/remove phases under `splunk_apps/`.
+- Faster deploys: one batched rsync per destination (previously one per app), and
+  git apps cloned concurrently during staging instead of serially.
 - Deployment never deletes an app it did not stage; dropping an app from a monorepo
   no longer removes it from targets (use `splunk_apps_to_remove`). Previously a
   trailing-slash `app_relative_path` monorepo pruned dropped apps on the next run.
