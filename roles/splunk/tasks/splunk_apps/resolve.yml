@@ -118,9 +118,12 @@
       - item.bucket | length > 0
       - item.s3_object is string
       - (item.s3_object | length > 0) or (item.version is string and item.version | length > 0)
+      - (s3_access_key_id | default('') | length > 0) == (s3_secret_access_key | default('') | length > 0)
     fail_msg: >-
       S3 app '{{ item.name }}' needs a 'version' (non-empty string; quote it in YAML) for the
-      convention path or a full s3_object key, plus a bucket (item.bucket or splunk_app_s3_bucket).
+      convention path or a full s3_object key, plus a bucket (item.bucket or splunk_app_s3_bucket);
+      and S3 credentials must be a pair - set both s3_access_key_id and s3_secret_access_key, or
+      neither (omit both to use the controller's IAM role / credential chain).
   when: item.source == 's3'
   loop: "{{ splunk_apps_resolved }}"
   loop_control:
