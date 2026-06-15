@@ -1,0 +1,29 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [2.2.0] - 2026-06-15
+
+### Added
+
+- S3 app source (`download_app_source: s3`), mixable with git in one run.
+- `apps` list as the primary app-declaration variable (`git_apps` still honored).
+- Opt-in app removal via `splunk_apps_to_remove`.
+- Fail-fast validation of the app and removal plan.
+- `requirements.yml` declaring collection dependencies.
+
+### Changed
+
+- App tasks restructured into resolve/stage/install/remove phases under `splunk_apps/`.
+- Deployment never deletes an app it did not stage; dropping an app from a monorepo
+  no longer removes it from targets (use `splunk_apps_to_remove`). Previously a
+  trailing-slash `app_relative_path` monorepo pruned dropped apps on the next run.
+
+### Security
+
+- rsync invocations hardened so an app definition cannot inject arguments.
+
+[2.2.0]: https://github.com/splunk/ansible-role-for-splunk/compare/v2.1.7...v2.2.0
