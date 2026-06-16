@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - App tasks restructured into resolve/stage/install/remove phases under `splunk_apps/`.
 - Faster deploys: one batched rsync per destination (previously one per app), and
   git apps cloned concurrently during staging instead of serially.
+- Git clones default to shallow, single-branch, and non-recursive (`git_depth: 1`,
+  `git_single_branch: true`, `git_recursive: false`; each global or per app),
+  changing the previous full/recursive clone. For a commit-SHA `git_version` set
+  `git_single_branch: false` (and `git_depth: 0`); set `git_recursive: true` for
+  submodule repos.
 - Deployment never deletes an app it did not stage; dropping an app from a monorepo
   no longer removes it from targets (use `splunk_apps_to_remove`). Previously a
   trailing-slash `app_relative_path` monorepo pruned dropped apps on the next run.

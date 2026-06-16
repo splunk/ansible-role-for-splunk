@@ -60,6 +60,9 @@ git_server: undefined  # e.g. ssh://git@mygithost:1234 - Note that this may be s
 git_key: undefined  # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or per app in the apps list
 git_project: undefined
 git_version: master  # Configure default version to clone, overridable per app in the apps list
+git_depth: 1
+git_single_branch: true
+git_recursive: false
 app_relative_path:  # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
 splunk_app_deploy_path: undefined  # App directory under $SPLUNK_HOME to deploy to (an apps directory under etc/, e.g. etc/apps or etc/deployment-apps) - may be set in group_vars, host_vars, playbook vars, or per app in the apps list
 # S3 app source (used when an app entry has download_app_source: s3).

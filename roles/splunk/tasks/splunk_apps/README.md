@@ -15,7 +15,12 @@ apps:
 ```
 
 - git apps use `git_server`, `git_project`, `git_key`, `git_version` (global or
-  per app). `app_relative_path` deploys a repository sub-directory under its own
+  per app). Clones default to shallow, single-branch, and non-recursive
+  (`git_depth: 1`, `git_single_branch: true`, `git_recursive: false`, each global
+  or per app). For a `git_version` pinned to a commit SHA rather than a branch or
+  tag, set `git_single_branch: false` (and `git_depth: 0`) so the commit is
+  fetchable; set `git_recursive: true` for repos with submodules.
+  `app_relative_path` deploys a repository sub-directory under its own
   name (a leading slash is optional); a single trailing slash deploys every
   top-level directory in the repo.
 - S3 apps use `splunk_app_s3_bucket` (per-app `bucket` override) and

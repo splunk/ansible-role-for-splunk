@@ -6,6 +6,9 @@
     version: "{{ item.git_version }}"
     dest: "{{ item.work_dir }}"
     key_file: "{{ item.git_key }}"
+    depth: "{{ item.git_depth }}"
+    single_branch: "{{ item.git_single_branch }}"
+    recursive: "{{ item.git_recursive }}"
     force: true
   loop: "{{ splunk_apps_git }}"
   delegate_to: localhost
@@ -39,6 +42,9 @@
     version: "{{ item.git_version }}"
     dest: "{{ item.work_dir }}"
     key_file: "{{ item.git_key }}"
+    depth: "{{ item.git_depth }}"
+    single_branch: "{{ item.git_single_branch }}"
+    recursive: "{{ item.git_recursive }}"
     force: true
   loop: "{{ _git_clone_wait.results | select('failed') | map(attribute='item') | map(attribute='item') | list }}"
   delegate_to: localhost
