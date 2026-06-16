@@ -1,0 +1,106 @@
+---
+- name: List archives under the app convention prefix
+  amazon.aws.s3_object_info:
+    bucket_name: "{{ item.bucket }}"
+    prefix: "{{ item.s3_prefix }}/"
+    access_key: "{{ s3_access_key_id | default(omit) }}"
+    secret_key: "{{ s3_secret_access_key | default(omit) }}"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  register: _s3_listing
+  when: item.s3_object | length == 0
+
+- name: Resolve the candidate archive keys
+  ansible.builtin.set_fact:
+    _s3_archives: "{{ _s3_listing.s3_keys | default([]) | reject('match', '.*/$') | list }}"
+  when: item.s3_object | length == 0
+
+- name: Assert exactly one archive exists under the prefix
+  ansible.builtin.assert:
+    that: _s3_archives | length == 1
+    fail_msg: "Expected exactly one archive under {{ item.s3_prefix }}/, found {{ _s3_archives | length }}."
+  when: item.s3_object | length == 0
+
+- name: Select the object key for download
+  ansible.builtin.set_fact:
+    _s3_key: "{{ item.s3_object if item.s3_object | length > 0 else _s3_archives | first }}"
+
+- name: Create the app work area
+  ansible.builtin.file:
+    path: "{{ item.work_dir }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+
+- name: Download the archive
+  amazon.aws.s3_object:
+    bucket: "{{ item.bucket }}"
+    object: "{{ _s3_key }}"
+    dest: "{{ item.work_dir }}/{{ _s3_key | basename }}"
+    mode: get
+    access_key: "{{ s3_access_key_id | default(omit) }}"
+    secret_key: "{{ s3_secret_access_key | default(omit) }}"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+
+- name: Extract the archive
+  ansible.builtin.unarchive:
+    src: "{{ item.work_dir }}/{{ _s3_key | basename }}"
+    dest: "{{ item.work_dir }}"
+    remote_src: false
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+
+- name: Discover the extracted app directory
+  ansible.builtin.find:
+    paths: "{{ item.work_dir }}"
+    file_type: directory
+    recurse: false
+    excludes: ['__MACOSX']
+  delegate_to: localhost
+  changed_when: false
+  register: _extracted
+
+- name: Assert a single top-level app directory in the archive
+  ansible.builtin.assert:
+    that: _extracted.files | length == 1
+    fail_msg: >-
+      Expected exactly one top-level directory in the {{ item.name }} archive,
+      found {{ _extracted.files | length }}.
+
+- name: Assert the extracted dir matches the declared name
+  ansible.builtin.assert:
+    that: _extracted.files[0].path | basename == item.name
+    fail_msg: >-
+      The {{ item.name }} archive extracts to '{{ _extracted.files[0].path | basename }}',
+      not '{{ item.name }}'. On the convention path the declared name must equal the app id.
+  when: item.s3_object | length == 0
+
+- name: Check the destination staging slot
+  ansible.builtin.stat:
+    path: "{{ splunk_app_staging_dir }}/{{ item.deploy_path }}/{{ _extracted.files[0].path | basename }}"
+  delegate_to: localhost
+  register: _staged_slot
+
+- name: Assert the app does not collide with an already-staged app
+  ansible.builtin.assert:
+    that: not _staged_slot.stat.exists
+    fail_msg: >-
+      The {{ item.name }} archive extracts to '{{ _extracted.files[0].path | basename }}', which is
+      already staged for {{ item.deploy_path }} by another entry.
+
+- name: Place the app into its destination staging tree
+  ansible.builtin.command:
+    argv:
+      - rsync
+      - "--archive"
+      - "{{ _extracted.files[0].path }}"
+      - "{{ splunk_app_staging_dir }}/{{ item.deploy_path }}/"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false

@@ -1,0 +1,64 @@
+---
+- name: Start concurrent git clones into their work areas
+  ansible.builtin.git:
+    accept_hostkey: true
+    repo: "{{ item.git_server }}/{{ item.git_project }}/{{ item.name }}"
+    version: "{{ item.git_version }}"
+    dest: "{{ item.work_dir }}"
+    key_file: "{{ item.git_key }}"
+    depth: "{{ item.git_depth }}"
+    single_branch: "{{ item.git_single_branch }}"
+    recursive: "{{ item.git_recursive }}"
+    force: true
+  loop: "{{ splunk_apps_git }}"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  async: 600
+  poll: 0
+  register: _git_clone_jobs
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Wait for the git clones to finish
+  ansible.builtin.async_status:
+    jid: "{{ item.ansible_job_id }}"
+  delegate_to: localhost
+  loop: "{{ _git_clone_jobs.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  register: _git_clone_wait
+  until: _git_clone_wait.finished
+  retries: 120
+  delay: 5
+  changed_when: false
+  check_mode: false
+  ignore_errors: true
+
+- name: Retry failed git clones serially
+  ansible.builtin.git:
+    accept_hostkey: true
+    repo: "{{ item.git_server }}/{{ item.git_project }}/{{ item.name }}"
+    version: "{{ item.git_version }}"
+    dest: "{{ item.work_dir }}"
+    key_file: "{{ item.git_key }}"
+    depth: "{{ item.git_depth }}"
+    single_branch: "{{ item.git_single_branch }}"
+    recursive: "{{ item.git_recursive }}"
+    force: true
+  loop: "{{ _git_clone_wait.results | select('failed') | map(attribute='item') | map(attribute='item') | list }}"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  retries: 10
+  delay: 10
+  register: _git_clone_retry
+  until: _git_clone_retry is not failed
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Place git apps into their destination staging trees
+  ansible.builtin.include_tasks: fetch_git_place.yml
+  loop: "{{ splunk_apps_git }}"
+  loop_control:
+    label: "{{ item.name }}"

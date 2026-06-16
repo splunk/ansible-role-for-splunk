@@ -1,0 +1,71 @@
+---
+- name: Assert SHC is ready before pushing a shcluster bundle
+  ansible.builtin.include_tasks: ../splunk_shc/assert_ready.yml
+  when: handler == 'apply shcluster-bundle'
+
+- name: Enumerate staged apps for this destination
+  ansible.builtin.find:
+    paths: "{{ splunk_app_staging_dir }}/{{ app_dest }}"
+    file_type: directory
+    recurse: false
+  delegate_to: localhost
+  changed_when: false
+  register: _staged_apps
+
+- name: Enumerate everything staged for this destination
+  ansible.builtin.find:
+    paths: "{{ splunk_app_staging_dir }}/{{ app_dest }}"
+    file_type: any
+    recurse: false
+    hidden: true
+  delegate_to: localhost
+  changed_when: false
+  register: _staged_all
+
+- name: Warn about staged entries that will not deploy
+  ansible.builtin.debug:
+    msg: >-
+      Staged for {{ app_dest }} but not deployable (not plain directories):
+      {{ _undeployable | join(', ') }}.
+  when: _undeployable | length > 0
+  vars:
+    _undeployable: "{{ _staged_all.files | map(attribute='path') | map('basename')
+                     | difference(_staged_apps.files | map(attribute='path') | map('basename'))
+                     | difference(['.rsync-filter']) | list }}"
+
+- name: Record the staged app name@deploy_path pairs
+  ansible.builtin.set_fact:
+    splunk_apps_staged_pairs: "{{ splunk_apps_staged_pairs | default([])
+                                + (_staged_apps.files | map(attribute='path') | map('basename') | list
+                                   | product([app_dest]) | map('join', '@') | list) }}"
+
+- name: Write the app manifest for the batched sync
+  ansible.builtin.copy:
+    content: "{{ _staged_apps.files | map(attribute='path') | map('basename') | sort | join('\n') }}\n"
+    dest: "{{ splunk_app_staging_dir }}/{{ app_dest }}.files"
+    mode: "0644"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  register: _app_manifest
+
+- name: "Synchronize staged {{ app_dest }} apps to {{ splunk_home }}/{{ app_dest }}/ on remote host"
+  ansible.posix.synchronize:
+    src: "{{ splunk_app_staging_dir }}/{{ app_dest }}/"
+    dest: "{{ splunk_home }}/{{ app_dest }}/"
+    recursive: true
+    delete: true
+    checksum: true
+    private_key: "{{ rsync_private_key | default(omit) }}"
+    rsync_opts:
+      - "--recursive"
+      - "--filter=._{{ _app_manifest.dest | regex_replace('\\.files$', '') }}/.rsync-filter"
+      - "--files-from={{ _app_manifest.dest }}"
+      - "--prune-empty-dirs"
+      - "--itemize-changes"
+      - "--no-owner"
+      - "--no-group"
+      - "--no-times"
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  notify: "{{ handler }}"

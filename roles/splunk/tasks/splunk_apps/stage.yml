@@ -1,0 +1,39 @@
+---
+- name: Create the destination staging trees
+  ansible.builtin.file:
+    path: "{{ splunk_app_staging_dir }}/{{ item }}"
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  loop: "{{ splunk_apps_deploy_paths }}"
+
+- name: Fetch git apps into their destination staging trees
+  ansible.builtin.include_tasks: fetch_git.yml
+  when: splunk_apps_git | length > 0
+
+- name: Fetch S3 apps into their destination staging trees
+  ansible.builtin.include_tasks: fetch_s3.yml
+  loop: "{{ splunk_apps_s3 }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Stage the rsync filter at each destination transfer root
+  ansible.builtin.copy:
+    src: rsync-filter
+    dest: "{{ splunk_app_staging_dir }}/{{ item }}/.rsync-filter"
+    mode: "0644"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false
+  loop: "{{ splunk_apps_deploy_paths }}"
+
+- name: Make the staging tree readable by the rsync sender
+  ansible.builtin.file:
+    path: "{{ splunk_app_staging_dir }}"
+    mode: "a+rX"
+    recurse: true
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false

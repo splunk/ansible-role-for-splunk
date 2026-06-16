@@ -1,0 +1,32 @@
+---
+- name: Refuse removals that conflict with the deploy plan
+  ansible.builtin.assert:
+    that: _conflicts | length == 0
+    fail_msg: >-
+      These app+deploy_path pairs are in both the deploy list (declared or staged) and
+      splunk_apps_to_remove: {{ _conflicts | join(', ') }}. Remove them from one list.
+  vars:
+    _declared: "{{ splunk_apps_resolved | map(attribute='name')
+                 | zip(splunk_apps_resolved | map(attribute='deploy_path')) | map('join', '@') | list }}"
+    _remove: "{{ splunk_apps_remove_resolved | map(attribute='name')
+               | zip(splunk_apps_remove_resolved | map(attribute='deploy_path')) | map('join', '@') | list }}"
+    _conflicts: "{{ (_declared + (splunk_apps_staged_pairs | default([]))) | unique | intersect(_remove) }}"
+
+- name: Assert SHC is ready before removing shcluster bundle apps
+  ansible.builtin.include_tasks: ../splunk_shc/assert_ready.yml
+  when: splunk_apps_remove_resolved | map(attribute='deploy_path') | select('in', _shc_paths) | list | length > 0
+  vars:
+    _shc_paths: "{{ splunk_app_path_registry | dict2items
+                  | selectattr('value', 'equalto', 'apply shcluster-bundle')
+                  | map(attribute='key') | list }}"
+
+- name: Remove each app from its deploy path on the remote host
+  ansible.builtin.file:
+    path: "{{ splunk_home }}/{{ item.deploy_path }}/{{ item.name }}"
+    state: absent
+  become: true
+  become_user: "{{ splunk_nix_user }}"
+  loop: "{{ splunk_apps_remove_resolved }}"
+  loop_control:
+    label: "{{ item.name }} -> {{ item.deploy_path }}"
+  notify: "{{ splunk_app_path_registry[item.deploy_path] | default('restart splunk') }}"

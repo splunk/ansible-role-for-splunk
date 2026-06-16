@@ -1,0 +1,47 @@
+---
+- name: Validate target_shc_group_name resolves to a non-empty inventory group
+  ansible.builtin.assert:
+    that:
+      - target_shc_group_name is defined
+      - target_shc_group_name in groups
+      - groups[target_shc_group_name] | length > 0
+    fail_msg: >-
+      Please set target_shc_group_name in the host_vars for your SH Deployer host(s) to an
+      existing, non-empty inventory group (got '{{ target_shc_group_name | default('undefined') }}').
+
+- name: Trigger failure if splunk_admin_username var is undefined
+  ansible.builtin.fail:
+    msg: "Please add a splunk_admin_username variable to the host_vars for your SHC hosts before proceeding."
+  when: splunk_admin_username is not defined
+
+- name: Trigger failure if splunk_admin_password var is undefined
+  ansible.builtin.fail:
+    msg:
+      - "Please add a splunk_admin_password variable to the host_vars or group_vars for your SHC hosts before proceeding."
+      - "Tip: To encrypt the var value, you can use: ansible-vault encrypt_string --ask-vault-pass 'var_value_to_encrypt' --name 'splunk_admin_password' then, use the --ask-vault-pass argument when running the play."
+  when: splunk_admin_password is not defined
+
+- name: Get SHC status from first SH under the "target_shc_group_name" inventory group specified in the shdeployer host_vars
+  ansible.builtin.uri:
+    url: "https://{{ groups[target_shc_group_name] | first }}:{{ splunkd_port }}/services/shcluster/status"
+    method: GET
+    user: "{{ splunk_admin_username }}"
+    password: "{{ splunk_admin_password }}"
+    validate_certs: "{{ splunk_validate_certs | default(false) }}"
+    return_content: true
+    status_code: 200
+    body: output_mode=json
+  check_mode: false
+  no_log: true
+  changed_when: false
+  register: shc_status_response
+
+- name: Set vars for deployment based on SHC status
+  ansible.builtin.set_fact:
+    service_ready_state: "{{ shc_status_response.json.entry[0].content.captain.service_ready_flag | bool }}"
+    deploy_target: "{{ shc_status_response.json.entry[0].content.captain.mgmt_uri }}"
+
+- name: Trigger failure if SHC is NOT ready
+  ansible.builtin.fail:
+    msg: "The SHC has service ready state of FALSE. Please investigate and re-run Ansible play after resolving."
+  when: not service_ready_state

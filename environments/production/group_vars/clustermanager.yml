@@ -1,7 +1,18 @@
 ---
 # group vars for cluster manager
-splunk_app_deploy_path: etc/master-apps  # default subdirectory in splunk_home that apps from git should be installed to, overridable in git_apps if you want to install to etc/apps
+splunk_app_deploy_path: etc/master-apps  # default subdir under splunk_home; overridable per app
 git_version: 1.0.0
-git_apps:
+# Mixed example: a git app and an S3 app deployed in one run.
+apps:
   - name: my_outputs
+    download_app_source: git
+  # S3 convention path: object at <prefix>/Splunk_TA_nix/8.8.2/<original-tarball-name>
   - name: Splunk_TA_nix
+    download_app_source: s3
+    version: "8.8.2"
+# S3 settings (see README). Keys via vault; omit BOTH keys (never just one) to
+# use the controller's IAM role / credential chain instead.
+splunk_app_s3_bucket: my-splunk-apps-bucket
+splunk_app_s3_bucket_prefix: prod
+s3_access_key_id: "{{ vault_s3_access_key_id }}"
+s3_secret_access_key: "{{ vault_s3_secret_access_key }}"

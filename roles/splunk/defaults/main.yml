@@ -56,12 +56,20 @@ splunk_disable_mgmt_port: false  # If set to true, will disable splunkd manageme
 splunk_mgmt_uri: "{{ ansible_fqdn }}"  # If the `ansible_fqdn` is not resolvable by other hosts, you can set it to something like `ansible_facts.default_ipv4.address` in `host_vars` or `group_vars` to use the IP address instead.
 splunkd_port: 8089  # If changed, will overwrite the default port number used by splunkd
 git_local_clone_path: ~/  # Base directory under which repositories for app deplyoment should be cloned to
-git_server: undefined  # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
-git_key: undefined  # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or inside the git_apps dictionary within host_vars
+git_server: undefined  # e.g. ssh://git@mygithost:1234 - Note that this may be set in an all.yml group_var or per app in the apps list
+git_key: undefined  # Path to SSH key for cloning repositories - Note that this may be set in an all.yml group_var or per app in the apps list
 git_project: undefined
-git_version: master  # Configure default version to clone, overridable inside the git_apps dictionary within host_vars
+git_version: master  # Configure default version to clone, overridable per app in the apps list
+git_depth: 1
+git_single_branch: true
+git_recursive: false
 app_relative_path:  # set a sub-path you want to sync within a repo. If the repo contains multiple apps in the root directory, just set this to a trailing slash.
-splunk_app_deploy_path: undefined  # Path under $SPLUNK_HOME/ to deploy apps to - Note that this may be set in group_vars, host_vars, playbook vars, or inside the git_apps dictionary within host_vars
+splunk_app_deploy_path: undefined  # App directory under $SPLUNK_HOME to deploy to (an apps directory under etc/, e.g. etc/apps or etc/deployment-apps) - may be set in group_vars, host_vars, playbook vars, or per app in the apps list
+# S3 app source (used when an app entry has download_app_source: s3).
+# splunk_app_s3_bucket: my-splunk-apps-bucket  # Default bucket; overridable per app with item.bucket
+# splunk_app_s3_bucket_prefix: prod            # Key prefix (directory) under the bucket; forms <prefix>/<app_id>/<version>/
+# s3_access_key_id: "{{ vault_s3_access_key_id }}"      # Omit to use the controller's IAM role / credential chain
+# s3_secret_access_key: "{{ vault_s3_secret_access_key }}"  # Omit to use the controller's IAM role / credential chain
 splunk_auditd_configure: false  # Whether or not to install auditd filtering rules for splunk launched executables
 splunk_db_path: "{{ splunk_home }}/var/lib/splunk" # Path which specifies the location of indexes on indexers and KVStores on other systems - defaults to $SPLUNK_HOME/var/lib/splunk
 # IDXC Vars

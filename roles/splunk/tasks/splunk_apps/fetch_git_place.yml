@@ -1,0 +1,48 @@
+---
+- name: Enumerate the app directories this entry stages
+  ansible.builtin.find:
+    paths: "{{ item.work_dir }}{{ item.relative_path }}"
+    file_type: directory
+    recurse: false
+  delegate_to: localhost
+  changed_when: false
+  register: _git_src_dirs
+  when: item.relative_path.endswith('/')
+
+- name: Resolve the staged directory names for this entry
+  ansible.builtin.set_fact:
+    _git_staged_names: "{{ (_git_src_dirs.files | map(attribute='path') | map('basename') | list)
+                         if item.relative_path.endswith('/')
+                         else [(item.work_dir ~ item.relative_path) | basename] }}"
+
+- name: Enumerate apps already staged for this destination
+  ansible.builtin.find:
+    paths: "{{ splunk_app_staging_dir }}/{{ item.deploy_path }}"
+    file_type: directory
+    recurse: false
+  delegate_to: localhost
+  changed_when: false
+  register: _existing_staged
+
+- name: Assert the app does not collide with an already-staged app
+  ansible.builtin.assert:
+    that: _collisions | length == 0
+    fail_msg: >-
+      git app '{{ item.name }}' stages {{ _collisions | join(', ') }}, already staged for
+      {{ item.deploy_path }} by another entry.
+  vars:
+    _collisions: "{{ _git_staged_names
+                   | intersect(_existing_staged.files | map(attribute='path') | map('basename') | list) }}"
+
+- name: Place the app into its destination staging tree
+  ansible.builtin.command:
+    argv:
+      - rsync
+      - "--archive"
+      - "--exclude=.git"
+      - "--exclude=.gitignore"
+      - "{{ item.work_dir }}{{ item.relative_path }}"
+      - "{{ splunk_app_staging_dir }}/{{ item.deploy_path }}/"
+  delegate_to: localhost
+  changed_when: false
+  check_mode: false

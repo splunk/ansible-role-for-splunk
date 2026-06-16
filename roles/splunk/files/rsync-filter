@@ -1,9 +1,13 @@
-- /.git
 - /*/.git
-- /.gitignore
+- /*/.gitignore
 - /*/README.txt
 - /*/README.MD
 - /*/README.md
 - /*/app.manifest
 - /*/githash
 - /*/package.json
+- /*/__MACOSX
+- /*/._*
+- __pycache__/
+- *.pyc
+- *.pyo
