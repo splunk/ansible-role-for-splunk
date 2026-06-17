@@ -1,6 +1,17 @@
 ---
+- name: Run splunk version command to check currently installed version
+  ansible.builtin.include_tasks: check_splunk_version.yml
+
+# Splunk version >= 8.1 supports mode=peer
+# https://docs.splunk.com/Documentation/Splunk/latest/Indexer/ConfigurepeerswithCLI
+# Splunk version < 8.1 supports mode=slave
+# https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/ConfigurepeerswithCLI
+- name: Setting clustering mode based on Splunk version number
+  ansible.builtin.set_fact:
+    management_uri_switch: "{{ (splunk_version_release is version('8.1', '<')) | ternary('master_uri', 'manager_uri') }}"
+
 - name: Configure search head to join indexer cluster
-  ansible.builtin.command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode searchhead -master_uri {{ splunk_uri_cm }} -secret {{ splunk_idxc_key }} -auth {{ splunk_auth }}"
+  ansible.builtin.command: "{{ splunk_home }}/bin/splunk edit cluster-config -mode searchhead -{{ management_uri_switch }} {{ splunk_uri_cm }} -secret {{ splunk_idxc_key }} -auth {{ splunk_auth }}"
   become: true
   become_user: "{{ splunk_nix_user }}"
   register: idxc_sh_join_result
