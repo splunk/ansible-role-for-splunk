@@ -14,4 +14,6 @@
     - { option: "LimitDATA", value: "infinity" }
     - { option: "LimitCORE", value: "infinity" }
     - { option: "TasksMax", value: "infinity" }
+    # Add Option for CAP_SYSLOG to read dmesg even with dmesg_restrict active
+    - { option: "AmbientCapabilities", value: "CAP_SYSLOG"}
   notify: reload systemctl daemon
