@@ -5,8 +5,8 @@
 - name: Configure DMC as an IDXC member
   ansible.builtin.include_tasks: configure_idxc_sh.yml
 
-# Add all hosts to the DMC except indexer cluster hosts as per the docs
-- name: Configure systems as search peers to be monitored except indexers
+# Add enterprise/full hosts to the DMC except indexer cluster hosts as per the docs
+- name: Configure enterprise/full systems as search peers to be monitored except indexers
   ansible.builtin.shell: |
     {{ splunk_home }}/bin/splunk add search-server https://{{ item }}:{{ splunkd_port }} -auth "{{ splunk_auth }}" -remoteUsername "{{ splunk_admin_username }}" -remotePassword "{{ splunk_admin_password }}"
   loop: "{{ query('inventory_hostnames', 'all:&full:!indexer') }}"
