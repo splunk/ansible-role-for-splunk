@@ -6,5 +6,7 @@
   register: shc_init_result
   changed_when: shc_init_result.rc == 0
   failed_when: shc_init_result.rc != 0
-  notify: restart splunk
+  notify:
+    - restart splunk
+    - wait for splunkd
   no_log: true
