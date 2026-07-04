@@ -2,11 +2,11 @@
 - name: Run splunk version command to check currently installed version
   ansible.builtin.include_tasks: check_splunk_version.yml
 
-# Splunk version >= 8.1 supports mode=peer
+# Splunk version >= 8.1 supports manager_uri
 # https://docs.splunk.com/Documentation/Splunk/latest/Indexer/ConfigurepeerswithCLI
-# Splunk version < 8.1 supports mode=slave
+# Splunk version < 8.1 supports master_uri
 # https://docs.splunk.com/Documentation/Splunk/8.0.9/Indexer/ConfigurepeerswithCLI
-- name: Setting clustering mode based on Splunk version number
+- name: Setting cluster management URI flag based on Splunk version number
   ansible.builtin.set_fact:
     management_uri_switch: "{{ (splunk_version_release is version('8.1', '<')) | ternary('master_uri', 'manager_uri') }}"
 
